@@ -1,0 +1,16 @@
+name: docs_mdpath
+channels:
+
+  - defaults
+dependencies:
+    # Base depends
+  - python
+  - pip
+  
+
+
+
+    # Pip-only installs
+  - pip:
+    - -e ../
+
