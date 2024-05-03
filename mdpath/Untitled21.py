@@ -1,57 +1,61 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
+import os
 import MDAnalysis as mda
-from MDAnalysisTests.datafiles import GRO, XTC
 import pandas as pd
 from MDAnalysis.analysis.dihedrals import Dihedral
 from sklearn.metrics import mutual_info_score
 import numpy as np
 from Bio import PDB
 import networkx as nx
+from scipy.stats import entropy
 from tqdm import tqdm
 from itertools import combinations
+from multiprocessing import Pool
    
-# Distance between atoms 
+
+# Initial inputs
+num_parallel_processes = os.cpu_count() // 2
+psf_file = "./centered_top.pdb"
+xtc_file = "./centered_traj.dcd"
+traj = mda.Universe(psf_file, xtc_file)
+first_res_num = 1000
+last_res_num = 1500
+num_residues = last_res_num - first_res_num
+
+
+# Normalized distance between atoms 
 def calculate_distance(atom1, atom2):
     distance_vector = atom1 - atom2
     distance = np.linalg.norm(distance_vector)
     return distance
 
-# Define paths to PSF and XTC files
-psf_file = "D:/OT/Mu sim/run1/11882_dyn_199.psf"
-xtc_file = "D:/OT/Mu sim/run1/11888_trj_199.xtc"
-
-# Create Universe with only the last 1000 frames
-u = mda.Universe(psf_file, xtc_file, start=-1000)
-x = 351
-y = 64
 
 # Dihedral angle movements
-df_all_residues = pd.DataFrame()
-for i in tqdm(range(y, x + 1), desc="Processing residues"):
-    try:
-        res = u.residues[i]
-        if res is None:
-            continue  
-        ags = [res.phi_selection()]
-        R = Dihedral(ags).run()
-        dihedrals = R.results.angles
-        dihedral_movements = np.diff(dihedrals, axis=0)
-        df_residue = pd.DataFrame(dihedral_movements, columns=[f'Res {i}'])
-        df_all_residues = pd.concat([df_all_residues, df_residue], axis=1)
-    except Exception as e:
-        continue
+def calc_dihedral_angle_movement(i, traj):
+    res = traj.residues[i]  
+    ags = [res.phi_selection()]
+    R = Dihedral(ags).run()
+    dihedrals = R.results.angles
+    dihedral_angle_movement = np.diff(dihedrals, axis=0)
+    return i, dihedral_angle_movement
 
+def calc_dihedral_angle_movement_wrapper(args):
+    residue_id, traj = args
+    return calc_dihedral_angle_movement(residue_id, traj)
 
-# In[2]:
+def update_progress(res):
+    pbar.update()
+    return res
 
+with Pool(processes=num_parallel_processes) as pool:
+    residue_args = [(i, traj) for i in range(first_res_num, last_res_num + 1)]
+    dihedral_angle_movements = {}
+    with tqdm(total=num_residues, ascii=True, desc="Processing residue dihedral movements: ") as pbar:
+        for res_id, result in pool.imap(calc_dihedral_angle_movement_wrapper, residue_args):
+            dihedral_angle_movements[res_id] = result
+            pbar = update_progress(pbar)
 
-import numpy as np
-from scipy.stats import entropy
+print(dihedral_angle_movements)
+
 
 
 normalized_mutual_info = {}
@@ -129,9 +133,6 @@ print(residue_graph)
 print(mi_diff_df)
 
 
-# In[3]:
-
-
 import pandas as pd
 from itertools import combinations
 from tqdm import tqdm
@@ -164,10 +165,6 @@ df_distant_residues = pd.DataFrame(distant_residues, columns=['Residue1', 'Resid
 print(df_distant_residues)
 df_distant_residues.to_excel("distant_residues3.xlsx", index=False)
 
-
-# In[4]:
-
-
 import networkx as nx
 
 # Find the shortest path based on maximum mutual information
@@ -191,10 +188,6 @@ sorted_paths = sorted(path_total_weights, key=lambda x: x[1], reverse=True)
 #remove this later
 for path, total_weight in sorted_paths[:500]:
     print("Path:", path, "Total Weight:", total_weight)
-
-
-# In[6]:
-
 
 import pandas as pd
 from itertools import combinations
@@ -225,9 +218,6 @@ for chain in model:
 df_close_residues = pd.DataFrame(close_residues, columns=['Residue1', 'Residue2'])
 
 
-# In[8]:
-
-
 import tqdm
 import pandas as pd
 
@@ -249,14 +239,8 @@ for i, path1 in enumerate(tqdm.tqdm(pathways)):
 
 print(overlap_df)
 
-
-# In[9]:
-
-
 overlap_df.to_excel("overlap_data.xlsx", index=False)
 
-
-# In[2]:
 
 
 import pandas as pd
@@ -277,10 +261,6 @@ fig.update_layout(title='Hierarchical Clustering Dendrogram',
                   xaxis_tickangle=-90)
 
 fig.show()
-
-
-
-# In[ ]:
 
 
 
