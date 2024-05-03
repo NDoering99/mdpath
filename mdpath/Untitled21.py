@@ -10,7 +10,7 @@ from scipy.stats import entropy
 from tqdm import tqdm
 from itertools import combinations
 from multiprocessing import Pool
-import pandas
+import pandas as pd
 
 
 # Normalized distance between atoms 
@@ -37,7 +37,63 @@ def update_progress(res):
     res.update()
     return res
 
+
+def NMI_calc(df_all_residues, num_bins = 35):
+        normalized_mutual_info = {}
+        total_iterations = len(df_all_residues.columns) ** 2
+        progress_bar = tqdm(total=total_iterations, desc="Calculating Normalized Mutual Information")
+        for col1 in df_all_residues.columns:
+            for col2 in df_all_residues.columns:
+                if col1 != col2:
+                    hist_col1, _ = np.histogram(df_all_residues[col1], bins=num_bins)
+                    hist_col2, _ = np.histogram(df_all_residues[col2], bins=num_bins)
+                    hist_joint, _, _ = np.histogram2d(df_all_residues[col1], df_all_residues[col2], bins=num_bins)
+                    mi = mutual_info_score(hist_col1, hist_col2, contingency=hist_joint)
+                    entropy_col1 = entropy(hist_col1)
+                    entropy_col2 = entropy(hist_col2)
+                    nmi = mi / np.sqrt(entropy_col1 * entropy_col2)
+                    normalized_mutual_info[(col1, col2)] = nmi
+                    progress_bar.update(1)
+        progress_bar.close()
+        mi_diff_df = pd.DataFrame(normalized_mutual_info.items(), columns=['Residue Pair', 'MI Difference'])
+        max_mi_diff = mi_diff_df['MI Difference'].max()
+        mi_diff_df['MI Difference'] = max_mi_diff - mi_diff_df['MI Difference'] #Calculate the the weights
+        return mi_diff_df
+
+
+def graph_building(pdb_file, end, dist = 5.0):
+    residue_graph = nx.Graph()
+    parser = PDB.PDBParser(QUIET=True)
+    structure = parser.get_structure('pdb_structure', pdb_file)
+    heavy_atoms = ['C', 'N', 'O', 'S']
+    for model in structure:
+        for chain in model:
+            residues = [res for res in chain if res.get_id()[0] == ' ']
+            for res1, res2 in tqdm(combinations(residues, 2), desc="Processing residues", total=len(residues)*(len(residues)-1)//2):
+                res1_id = res1.get_id()[1]
+                res2_id = res2.get_id()[1]
+                if res1_id <= end and res2_id <= end: 
+                    for atom1 in res1:
+                        if atom1.element in heavy_atoms:
+                            for atom2 in res2:
+                                if atom2.element in heavy_atoms:
+                                    distance = calculate_distance(atom1.coord, atom2.coord)
+                                    if distance <= dist:
+                                        residue_graph.add_edge(res1.get_id()[1], res2.get_id()[1], weight=0)
+    return residue_graph
+
+    
+def graph_assign_weights(residue_graph, mi_diff_df):
+    for edge in residue_graph.edges():
+        u, v = edge  
+        pair = ('Res ' + str(u), 'Res ' + str(v))
+        if pair in mi_diff_df['Residue Pair'].apply(tuple).values:
+            weight = mi_diff_df.loc[mi_diff_df['Residue Pair'].apply(tuple) == pair, 'MI Difference'].values[0]
+            residue_graph.edges[edge]['weight'] = weight
+    return residue_graph
+
 def main():
+    import pandas as pd
     parser = argparse.ArgumentParser(
         prog="mdpath",
         description="Calculate signal transduction paths in your MD trajectories",
@@ -75,80 +131,24 @@ def main():
 
     with Pool(processes=num_parallel_processes) as pool:
         residue_args = [(i, traj) for i in range(first_res_num, last_res_num + 1)]
-        dihedral_angle_movements = {}
+        df_all_residues = pd.DataFrame()
         with tqdm(total=num_residues, ascii=True, desc="Processing residue dihedral movements: ") as pbar:
             for res_id, result in pool.imap(calc_dihedral_angle_movement_wrapper, residue_args):
-                dihedral_angle_movements[res_id] = result
+                df_residue = pd.DataFrame(result, columns=[f'Res {res_id}'])
+                df_all_residues = pd.concat([df_all_residues, df_residue], axis=1)
                 pbar = update_progress(pbar)
 
-
-    df_all_residues = pandas.DataFrame.from_dict({k: v.tolist() for k, v in dihedral_angle_movements.items()}, orient='index')
     print(df_all_residues.head())
 
-    
-def NMI_calc(df_all_residues, num_bins = 35):
-    normalized_mutual_info = {}
-    total_iterations = len(df_all_residues.columns) ** 2
-    progress_bar = tqdm(total=total_iterations, desc="Calculating Normalized Mutual Information")
-    for col1 in df_all_residues.columns:
-        for col2 in df_all_residues.columns:
-            if col1 != col2:
-                hist_col1, _ = np.histogram(df_all_residues[col1], bins=num_bins)
-                hist_col2, _ = np.histogram(df_all_residues[col2], bins=num_bins)
-                hist_joint, _, _ = np.histogram2d(df_all_residues[col1], df_all_residues[col2], bins=num_bins)
-                mi = mutual_info_score(hist_col1, hist_col2, contingency=hist_joint)
-                entropy_col1 = entropy(hist_col1)
-                entropy_col2 = entropy(hist_col2)
-                nmi = mi / np.sqrt(entropy_col1 * entropy_col2)
-                normalized_mutual_info[(col1, col2)] = nmi
-                progress_bar.update(1)
-    progress_bar.close()
-    mi_diff_df = pd.DataFrame(normalized_mutual_info.items(), columns=['Residue Pair', 'MI Difference'])
-    max_mi_diff = mi_diff_df['MI Difference'].max()
-    mi_diff_df['MI Difference'] = max_mi_diff - mi_diff_df['MI Difference'] #Calculate the the weights
-    return mi_diff_df
 
+    mi_diff_df = NMI_calc(df_all_residues, num_bins = 35)
+    print(mi_diff_df)
 
-def graph_building(pdb_file, end, dist = 5.0):
-    residue_graph = nx.Graph()
-    parser = PDB.PDBParser(QUIET=True)
-    structure = parser.get_structure('pdb_structure', pdb_file)
-    heavy_atoms = ['C', 'N', 'O', 'S']
-    for model in structure:
-        for chain in model:
-            residues = [res for res in chain if res.get_id()[0] == ' ']
-            for res1, res2 in tqdm(combinations(residues, 2), desc="Processing residues", total=len(residues)*(len(residues)-1)//2):
-                res1_id = res1.get_id()[1]
-                res2_id = res2.get_id()[1]
-                if res1_id <= end and res2_id <= end: 
-                    for atom1 in res1:
-                        if atom1.element in heavy_atoms:
-                            for atom2 in res2:
-                                if atom2.element in heavy_atoms:
-                                    distance = calculate_distance(atom1.coord, atom2.coord)
-                                    if distance <= dist:
-                                        residue_graph.add_edge(res1.get_id()[1], res2.get_id()[1], weight=0)
-    return residue_graph
+    residue_graph = graph_building("first_frame.pdb", 90, dist = 5.0)
+    residue_graph = graph_assign_weights(residue_graph, mi_diff_df)
 
-    
-def graph_assign_weights(residue_graph, mi_diff_df):
     for edge in residue_graph.edges():
-        u, v = edge  
-        pair = ('Res ' + str(u), 'Res ' + str(v))
-        if pair in mi_diff_df['Residue Pair'].apply(tuple).values:
-            weight = mi_diff_df.loc[mi_diff_df['Residue Pair'].apply(tuple) == pair, 'MI Difference'].values[0]
-            residue_graph.edges[edge]['weight'] = weight
-    return residue_graph
-
-
-mi_diff_df = NMI_calc(df_all_residues, num_bins = 35)
-print(mi_diff_df)
-
-residue_graph = graph_building("first_frame.pdb", 90, dist = 5.0)
-residue_graph = graph_assign_weights(residue_graph, mi_diff_df)
-
-for edge in residue_graph.edges():
-    print(edge, residue_graph.edges[edge]['weight'])
+        print(edge, residue_graph.edges[edge]['weight'])
 
 
 
