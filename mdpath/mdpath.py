@@ -103,24 +103,104 @@ def graph_building(pdb_file, end, dist=5.0):
 
 def graph_assign_weights(residue_graph, mi_diff_df):
     for edge in residue_graph.edges():
-        u, v = edge  
-        pair = ('Res ' + str(u), 'Res ' + str(v))
-        if pair in mi_diff_df['Residue Pair'].apply(tuple).tolist():
-            weight = mi_diff_df.loc[mi_diff_df['Residue Pair'].apply(tuple) == pair, 'MI Difference'].values[0]
-            residue_graph.edges[edge]['weight'] = weight
+        u, v = edge
+        pair = ("Res " + str(u), "Res " + str(v))
+        if pair in mi_diff_df["Residue Pair"].apply(tuple).tolist():
+            weight = mi_diff_df.loc[
+                mi_diff_df["Residue Pair"].apply(tuple) == pair, "MI Difference"
+            ].values[0]
+            residue_graph.edges[edge]["weight"] = weight
     return residue_graph
 
 
+def faraway_residues(pdb_file, end, dist=12.0):
+    parser = PDB.PDBParser(QUIET=True)
+    structure = parser.get_structure("pdb_structure", pdb_file)
+    heavy_atoms = ["C", "N", "O", "S"]
+    distant_residues = []
+    for model in structure:
+        for chain in model:
+            residues = [res for res in chain if res.get_id()[0] == " "]
+            for res1, res2 in tqdm(
+                combinations(residues, 2),
+                desc="Processing residues",
+                total=len(residues) * (len(residues) - 1) // 2,
+            ):
+                res1_id = res1.get_id()[1]
+                res2_id = res2.get_id()[1]
+                if res1_id <= end and res2_id <= end:
+                    are_distant = True
+                    for atom1 in res1:
+                        if atom1.element in heavy_atoms:
+                            for atom2 in res2:
+                                if atom2.element in heavy_atoms:
+                                    distance = calculate_distance(
+                                        atom1.coord, atom2.coord
+                                    )
+                                    if distance <= dist:
+                                        are_distant = False
+                                        break
+                            if not are_distant:
+                                break
+                    if are_distant:
+                        distant_residues.append((res1.get_id()[1], res2.get_id()[1]))
+    return pd.DataFrame(distant_residues, columns=["Residue1", "Residue2"])
 
 
-mi_diff_df = NMI_calc(df_all_residues, num_bins = 35)
-print(mi_diff_df)
+def max_weight_shortest_path(graph, source, target):
+    shortest_path = nx.dijkstra_path(graph, source, target, weight="weight")
+    total_weight = sum(
+        graph[shortest_path[i]][shortest_path[i + 1]]["weight"]
+        for i in range(len(shortest_path) - 1)
+    )
+    return shortest_path, total_weight
 
-residue_graph = graph_building("first_frame.pdb", 352, dist = 5.0)
-residue_graph = graph_assign_weights(residue_graph, mi_diff_df)
 
-for edge in residue_graph.edges():
-    print(edge, residue_graph.edges[edge]['weight'])
+def collect_path_total_weights(residue_graph, df_distant_residues):
+    path_total_weights = []
+    for index, row in df_distant_residues.iterrows():
+        try:
+            shortest_path, total_weight = max_weight_shortest_path(
+                residue_graph, row["Residue1"], row["Residue2"]
+            )
+            path_total_weights.append((shortest_path, total_weight))
+        except nx.NetworkXNoPath:
+            continue
+    return path_total_weights
+
+
+def close_residues(pdb_file, end, dist=10.0):
+    parser = PDB.PDBParser(QUIET=True)
+    structure = parser.get_structure("pdb_structure", pdb_file)
+    heavy_atoms = ["C", "N", "O", "S"]
+    close_residues = []
+    for model in structure:
+        for chain in model:
+            residues = [res for res in chain if res.get_id()[0] == " "]
+            for res1, res2 in tqdm(
+                combinations(residues, 2),
+                desc="Processing residues",
+                total=len(residues) * (len(residues) - 1) // 2,
+            ):
+                res1_id = res1.get_id()[1]
+                res2_id = res2.get_id()[1]
+                if res1_id <= x and res2_id <= x:
+                    are_close = False
+                    for atom1 in res1:
+                        if atom1.element in heavy_atoms:
+                            for atom2 in res2:
+                                if atom2.element in heavy_atoms:
+                                    distance = calculate_distance(
+                                        atom1.coord, atom2.coord
+                                    )
+                                    if distance <= 10.0:
+                                        are_close = True
+                                        break
+                            if are_close:
+                                break
+                    if are_close:
+                        close_residues.append((res1_id, res2_id))
+    return pd.DataFrame(close_residues, columns=["Residue1", "Residue2"])
 
 
 def main():
@@ -199,99 +279,20 @@ def main():
     for edge in residue_graph.edges():
         print(edge, residue_graph.edges[edge]["weight"])
 
-    import pandas as pd
-from itertools import combinations
-from tqdm import tqdm
+    df_distant_residues = faraway_residues("first_frame.pdb", last_res_num, dist=12.0)
+    print(df_distant_residues)
 
-def faraway_residues(pdb_file, end, dist = 12.0):
-    parser = PDB.PDBParser(QUIET=True)
-    structure = parser.get_structure('pdb_structure', pdb_file)
-    heavy_atoms = ['C', 'N', 'O', 'S']
-    distant_residues = []
-    for model in structure:
-        for chain in model:
-            residues = [res for res in chain if res.get_id()[0] == ' ']
-            for res1, res2 in tqdm(combinations(residues, 2), desc="Processing residues", total=len(residues)*(len(residues)-1)//2):
-                res1_id = res1.get_id()[1]
-                res2_id = res2.get_id()[1]
-                if res1_id <= end and res2_id <= end:  
-                    are_distant = True
-                    for atom1 in res1:
-                        if atom1.element in heavy_atoms:
-                            for atom2 in res2:
-                                if atom2.element in heavy_atoms:
-                                    distance = calculate_distance(atom1.coord, atom2.coord)
-                                    if distance <= dist:
-                                        are_distant = False
-                                        break 
-                            if not are_distant:
-                                break 
-                    if are_distant:
-                        distant_residues.append((res1.get_id()[1], res2.get_id()[1]))  
-    return pd.DataFrame(distant_residues, columns=['Residue1', 'Residue2'])
-   
+    import networkx as nx
 
-df_distant_residues = faraway_residues("first_frame.pdb", 352, dist = 12.0)
-print(df_distant_residues)
+    path_total_weights = collect_path_total_weights(residue_graph, df_distant_residues)
 
-import networkx as nx
+    # Sort paths based on the sum of their weights
+    sorted_paths = sorted(path_total_weights, key=lambda x: x[1], reverse=True)
 
-def max_weight_shortest_path(graph, source, target):
-    shortest_path = nx.dijkstra_path(graph, source, target, weight='weight')
-    total_weight = sum(graph[shortest_path[i]][shortest_path[i + 1]]['weight'] for i in range(len(shortest_path) - 1))
-    return shortest_path, total_weight
-
-def collect_path_total_weights(residue_graph, df_distant_residues):
-    path_total_weights = []
-    for index, row in df_distant_residues.iterrows():
-        try:
-            shortest_path, total_weight = max_weight_shortest_path(residue_graph, row['Residue1'], row['Residue2'])
-            path_total_weights.append((shortest_path, total_weight))
-        except nx.NetworkXNoPath:
-            continue
-    return path_total_weights
-
-
-path_total_weights = collect_path_total_weights(residue_graph, df_distant_residues) 
-
-# Sort paths based on the sum of their weights
-sorted_paths = sorted(path_total_weights, key=lambda x: x[1], reverse=True)
-
-#remove this later
-for path, total_weight in sorted_paths[:500]:
-    print("Path:", path, "Total Weight:", total_weight)
-import pandas as pd
-from itertools import combinations
-from tqdm import tqdm
-
-def close_residues(pdb_file, end, dist = 10.0):
-    parser = PDB.PDBParser(QUIET=True)
-    structure = parser.get_structure('pdb_structure', pdb_file)
-    heavy_atoms = ['C', 'N', 'O', 'S']
-    close_residues = []
-    for model in structure:
-        for chain in model:
-            residues = [res for res in chain if res.get_id()[0] == ' ']
-            for res1, res2 in tqdm(combinations(residues, 2), desc="Processing residues", total=len(residues)*(len(residues)-1)//2):
-                res1_id = res1.get_id()[1]
-                res2_id = res2.get_id()[1]
-                if res1_id <= x and res2_id <= x:
-                    are_close = False
-                    for atom1 in res1:
-                        if atom1.element in heavy_atoms:
-                            for atom2 in res2:
-                                if atom2.element in heavy_atoms:
-                                    distance = calculate_distance(atom1.coord, atom2.coord)
-                                    if distance <= 10.0:
-                                        are_close = True
-                                        break  
-                            if are_close:
-                                break 
-                    if are_close:
-                        close_residues.append((res1_id, res2_id))
-    return pd.DataFrame(close_residues, columns=['Residue1', 'Residue2'])
-
-close_residues = close_residues("first_frame.pdb", 352, dist = 12.0)
+    # remove this later
+    for path, total_weight in sorted_paths[:500]:
+        print("Path:", path, "Total Weight:", total_weight)
+    close_residues = close_residues("first_frame.pdb", last_res_num, dist=12.0)
     # TODO multiprocess this
     # Computation of overlap by comparing every residue of every path with each other
     pathways = [path for path, _ in sorted_paths[:500]]
@@ -313,74 +314,89 @@ close_residues = close_residues("first_frame.pdb", 352, dist = 12.0)
                 {"Pathway1": i, "Pathway2": j, "Overlap": count_true}, ignore_index=True
             )
 
-    print(overlap_df)
+        print(overlap_df)
 
-    overlap_df.to_excel("overlap_data.xlsx", index=False)
+        overlap_df.to_excel("overlap_data.xlsx", index=False)
 
-   import pandas as pd
-from scipy.cluster import hierarchy
-import plotly.figure_factory as ff
-import plotly.graph_objs as go
-from sklearn.metrics import silhouette_score
-from scipy.cluster.hierarchy import fcluster
+    import pandas as pd
+    from scipy.cluster import hierarchy
+    import plotly.figure_factory as ff
+    import plotly.graph_objs as go
+    from sklearn.metrics import silhouette_score
+    from scipy.cluster.hierarchy import fcluster
 
-overlap_df = pd.read_excel("overlap_data.xlsx")
+    overlap_df = pd.read_excel("overlap_data.xlsx")
 
-# Distance matrix based on overlap
-overlap_matrix = overlap_df.pivot(index='Pathway1', columns='Pathway2', values='Overlap').fillna(0)
-distance_matrix = 1 - overlap_matrix
-linkage_matrix = hierarchy.linkage(distance_matrix.values, method='complete')
+    # Distance matrix based on overlap
+    overlap_matrix = overlap_df.pivot(
+        index="Pathway1", columns="Pathway2", values="Overlap"
+    ).fillna(0)
+    distance_matrix = 1 - overlap_matrix
+    linkage_matrix = hierarchy.linkage(distance_matrix.values, method="complete")
 
-# Calculate silhouette score for different numbers of clusters
-silhouette_scores = []
-for n_clusters in range(2, len(overlap_matrix) + 1):
-    cluster_labels = fcluster(linkage_matrix, n_clusters, criterion='maxclust')
-    silhouette_scores.append(silhouette_score(distance_matrix, cluster_labels))
+    # Calculate silhouette score for different numbers of clusters
+    silhouette_scores = []
+    for n_clusters in range(2, len(overlap_matrix) + 1):
+        cluster_labels = fcluster(linkage_matrix, n_clusters, criterion="maxclust")
+        silhouette_scores.append(silhouette_score(distance_matrix, cluster_labels))
 
-# Optimal number of clusters
-optimal_num_clusters = silhouette_scores.index(max(silhouette_scores)) + 2  
+    # Optimal number of clusters
+    optimal_num_clusters = silhouette_scores.index(max(silhouette_scores)) + 2
 
-print("Optimal number of clusters:", optimal_num_clusters)
+    print("Optimal number of clusters:", optimal_num_clusters)
 
-# Cutting dendrogram -> optimal number
-cluster_labels = fcluster(linkage_matrix, optimal_num_clusters, criterion='maxclust')
+    # Cutting dendrogram -> optimal number
+    cluster_labels = fcluster(
+        linkage_matrix, optimal_num_clusters, criterion="maxclust"
+    )
 
-# Create a dictionary to store pathways for each cluster
-cluster_pathways = {cluster: [] for cluster in range(1, optimal_num_clusters + 1)}
+    # Create a dictionary to store pathways for each cluster
+    cluster_pathways = {cluster: [] for cluster in range(1, optimal_num_clusters + 1)}
 
-for i, label in enumerate(cluster_labels):
-    cluster_pathways[label].append(overlap_matrix.index[i])
+    for i, label in enumerate(cluster_labels):
+        cluster_pathways[label].append(overlap_matrix.index[i])
 
-# Remove me later
-for cluster, pathways in cluster_pathways.items():
-    print(f"Cluster {cluster}:")
-    for pathway in pathways:
-        print(" - ", pathway)
+    # Remove me later
+    for cluster, pathways in cluster_pathways.items():
+        print(f"Cluster {cluster}:")
+        for pathway in pathways:
+            print(" - ", pathway)
 
+    silhouette_avg = silhouette_score(distance_matrix, cluster_labels)
 
-silhouette_avg = silhouette_score(distance_matrix, cluster_labels)
+    print("Silhouette Score:", silhouette_avg)
 
-print("Silhouette Score:", silhouette_avg)
+    # Remove me later
+    fig = ff.create_dendrogram(
+        distance_matrix.values, orientation="bottom", labels=overlap_matrix.index
+    )
+    fig.update_layout(
+        title="Hierarchical Clustering Dendrogram",
+        xaxis=dict(title="Pathways"),
+        yaxis=dict(title="Distance"),
+        xaxis_tickangle=-90,
+    )
+    fig.add_shape(
+        type="line",
+        x0=optimal_num_clusters - 0.5,
+        y0=0,
+        x1=optimal_num_clusters - 0.5,
+        y1=silhouette_avg,
+        line=dict(color="Red", width=3),
+    )
+    fig.show()
 
-# Remove me later
-fig = ff.create_dendrogram(distance_matrix.values, orientation='bottom', labels=overlap_matrix.index)
-fig.update_layout(title='Hierarchical Clustering Dendrogram',
-                  xaxis=dict(title='Pathways'),
-                  yaxis=dict(title='Distance'),
-                  xaxis_tickangle=-90)
-fig.add_shape(type="line",
-              x0=optimal_num_clusters - 0.5, y0=0, x1=optimal_num_clusters - 0.5, y1=silhouette_avg,
-              line=dict(color="Red", width=3))
-fig.show()
+    # Sort clusters based on size
+    sorted_clusters = sorted(
+        cluster_pathways.items(), key=lambda x: len(x[1]), reverse=True
+    )
 
-# Sort clusters based on size
-sorted_clusters = sorted(cluster_pathways.items(), key=lambda x: len(x[1]), reverse=True)
+    # remove me later
+    for cluster, pathways in sorted_clusters[:3]:
+        print(f"Cluster {cluster} (Size: {len(pathways)}):")
+        for pathway in pathways:
+            print(" - ", pathway)
 
-# remove me later
-for cluster, pathways in sorted_clusters[:3]:
-    print(f"Cluster {cluster} (Size: {len(pathways)}):")
-    for pathway in pathways:
-        print(" - ", pathway)
 
 if __name__ == "__main__":
     main()
