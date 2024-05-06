@@ -9,8 +9,14 @@ import networkx as nx
 from scipy.stats import entropy
 from tqdm import tqdm
 from itertools import combinations
-from multiprocessing import Pool
+from multiprocessing import Pool, Manager
 import pandas as pd
+from scipy.cluster import hierarchy
+import plotly.figure_factory as ff
+import plotly.graph_objs as go
+from sklearn.metrics import silhouette_score
+from scipy.cluster.hierarchy import fcluster
+
 
 
 # Normalized distance between atoms
@@ -184,7 +190,7 @@ def close_residues(pdb_file, end, dist=10.0):
             ):
                 res1_id = res1.get_id()[1]
                 res2_id = res2.get_id()[1]
-                if res1_id <= x and res2_id <= x:
+                if res1_id <= end and res2_id <= end:
                     are_close = False
                     for atom1 in res1:
                         if atom1.element in heavy_atoms:
@@ -193,7 +199,7 @@ def close_residues(pdb_file, end, dist=10.0):
                                     distance = calculate_distance(
                                         atom1.coord, atom2.coord
                                     )
-                                    if distance <= 10.0:
+                                    if distance <= dist:
                                         are_close = True
                                         break
                             if are_close:
@@ -202,6 +208,112 @@ def close_residues(pdb_file, end, dist=10.0):
                         close_residues.append((res1_id, res2_id))
     return pd.DataFrame(close_residues, columns=["Residue1", "Residue2"])
 
+def calculate_overlap(args):
+    i, j, path1, path2, df, counter_queue = args
+    count_true = 0
+    for res1 in path1:
+        for res2 in path2:
+            if ((df["Residue1"] == res1) & (df["Residue2"] == res2)).any() or \
+               ((df["Residue1"] == res2) & (df["Residue2"] == res1)).any():
+                count_true += 1
+    
+    # Increment counter
+    counter_queue.put(1)
+    
+    return i, j, count_true
+
+def calculate_overlap_multiprocess(pathways, df, num_processes):
+    overlap_df = pd.DataFrame(columns=["Pathway1", "Pathway2", "Overlap"])
+    args_list = []
+    manager = Manager()
+    counter_queue = manager.Queue()
+
+    for i, path1 in enumerate(pathways):
+        for j, path2 in enumerate(pathways):
+            args_list.append((i, j, path1, path2, df, counter_queue))
+
+    with Pool(processes=num_processes) as pool:
+        results = list(tqdm(pool.imap(calculate_overlap, args_list), total=len(args_list)))
+        
+    while not counter_queue.empty():
+        counter_queue.get()
+    
+    for result in results:
+        i, j, count_true = result
+        overlap_df = overlap_df.append({"Pathway1": i, "Pathway2": j, "Overlap": count_true}, ignore_index=True)
+    return overlap_df
+
+def pathways_cluster(overlap_df, n_top_clust=3):
+    overlap_matrix = overlap_df.pivot(index="Pathway1", columns="Pathway2", values="Overlap").fillna(0)
+    distance_matrix = 1 - overlap_matrix
+    linkage_matrix = hierarchy.linkage(distance_matrix.values, method="complete")
+    silhouette_scores = []
+    for n_clusters in range(2, len(overlap_matrix) + 1):
+        cluster_labels = fcluster(linkage_matrix, n_clusters, criterion="maxclust")
+        silhouette_scores.append(silhouette_score(distance_matrix, cluster_labels))
+    optimal_num_clusters = silhouette_scores.index(max(silhouette_scores)) + 2
+    print("Optimal number of clusters:", optimal_num_clusters)
+    cluster_labels = fcluster(linkage_matrix, optimal_num_clusters, criterion="maxclust")
+    cluster_pathways = {cluster: [] for cluster in range(1, optimal_num_clusters + 1)}
+    for i, label in enumerate(cluster_labels):
+        cluster_pathways[label].append(overlap_matrix.index[i])
+    silhouette_avg = silhouette_score(distance_matrix, cluster_labels)
+    print("Silhouette Score:", silhouette_avg)
+    fig = ff.create_dendrogram(distance_matrix.values, orientation="bottom", labels=overlap_matrix.index)
+    fig.update_layout(title="Hierarchical Clustering Dendrogram", xaxis=dict(title="Pathways"), yaxis=dict(title="Distance"), xaxis_tickangle=-90,)
+    fig.add_shape(type="line", x0=optimal_num_clusters - 0.5, y0=0, x1=optimal_num_clusters - 0.5, y1=silhouette_avg, line=dict(color="Red", width=3),)
+    sorted_clusters = sorted(cluster_pathways.items(), key=lambda x: len(x[1]), reverse=True)
+    clusters = {}
+    for cluster, pathways in sorted_clusters[:n_top_clust]:
+        print(f"Cluster {cluster} (Size: {len(pathways)})")
+        clusters[cluster] = pathways
+    return clusters
+
+def residue_CA_coordinates(pdb_file, end):
+    residue_coordinates_dict = {}
+    parser = PDB.PDBParser(QUIET=True)
+    structure = parser.get_structure("pdb_structure", pdb_file)
+    for model in structure:
+        for chain in model:
+            residues = [res for res in chain if res.get_id()[0] == " "]
+            for res in tqdm(residues, desc="Processing residues"):
+                res_id = res.get_id()[1]
+                if res_id <= end:
+                    for atom in res:
+                        if atom.name == "CA":
+                            if res_id not in residue_coordinates_dict:
+                                residue_coordinates_dict[res_id] = []
+                            residue_coordinates_dict[res_id].append(atom.coord)
+    return residue_coordinates_dict
+
+
+def cluster_prep_for_visualisaton(cluster, pdb_file):
+        cluster = []
+        for pathway in cluster:
+            pathways = []
+            for residue in pathway:
+                parser = PDB.PDBParser(QUIET=True)
+                structure = parser.get_structure("pdb_structure", pdb_file)
+                res_id = ('', residue, '')
+                try:
+                    res = structure[0][res_id]
+                    atom = res["CA"]
+                    coord = atom.get_coord()
+                    pathways.append(coord)
+                except KeyError:
+                    print(res + " not found.")
+                cluster.append(pathways)
+        return preped_cluster
+def apply_backtracking(original_dict, translation_dict):
+    updated_dict = original_dict.copy() 
+    
+    for key, lists_of_lists in original_dict.items():
+        for i, inner_list in enumerate(lists_of_lists):
+            for j, item in enumerate(inner_list):
+                if item in translation_dict:
+                    updated_dict[key][i][j] = translation_dict[item]
+    
+    return updated_dict
 
 def main():
     import pandas as pd
@@ -241,6 +353,14 @@ def main():
         help="ID of the residue last residue in your chain",
         required=True,
     )
+    
+    parser.add_argument(
+        "-lig",
+        dest="lig_interaction",
+        help="Protein ligand interacting residues",
+        default=False,
+    )
+    
     args = parser.parse_args()
     # Initial inputs
     num_parallel_processes = int(args.num_parallel_processes)
@@ -250,36 +370,44 @@ def main():
     first_res_num = int(args.first_res_num)
     last_res_num = int(args.last_res_num)
     num_residues = last_res_num - first_res_num
+    lig_interaction = args.lig_interaction
 
     first_frame = traj.trajectory[-1]
     with mda.Writer("first_frame.pdb", multiframe=False) as pdb:
         pdb.write(traj.atoms)
 
-    with Pool(processes=num_parallel_processes) as pool:
-        residue_args = [(i, traj) for i in range(first_res_num, last_res_num + 1)]
-        df_all_residues = pd.DataFrame()
-        with tqdm(
-            total=num_residues,
-            ascii=True,
-            desc="Processing residue dihedral movements: ",
-        ) as pbar:
-            for res_id, result in pool.imap(
-                calc_dihedral_angle_movement_wrapper, residue_args
-            ):
-                df_residue = pd.DataFrame(result, columns=[f"Res {res_id}"])
-                df_all_residues = pd.concat([df_all_residues, df_residue], axis=1)
-                pbar = update_progress(pbar)
+    try:
+        with Pool(processes=num_parallel_processes) as pool:
+            residue_args = [(i, traj) for i in range(first_res_num, last_res_num + 1)]
+            df_all_residues = pd.DataFrame()
+            with tqdm(total=num_residues, ascii=True, desc="Processing residue dihedral movements: ",) as pbar:
+                for res_id, result in pool.imap_unordered(calc_dihedral_angle_movement_wrapper, residue_args):
+                    try:
+                        df_residue = pd.DataFrame(result, columns=[f"Res {res_id}"])
+                        df_all_residues = pd.concat([df_all_residues, df_residue], axis=1)
+                        pbar.update(1)  # Update progress bar
+                    except Exception as e:
+                        print(f"Error processing residue {res_id}: {e}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
     mi_diff_df = NMI_calc(df_all_residues, num_bins=35)
     print(mi_diff_df)
 
-    residue_graph = graph_building("first_frame.pdb", 90, dist=5.0)
+    residue_graph = graph_building("first_frame.pdb", last_res_num, dist=5.0)
     residue_graph = graph_assign_weights(residue_graph, mi_diff_df)
 
     for edge in residue_graph.edges():
         print(edge, residue_graph.edges[edge]["weight"])
 
     df_distant_residues = faraway_residues("first_frame.pdb", last_res_num, dist=12.0)
+    if lig_interaction:
+        with open(lig_interaction, "r") as file:
+            content = file.read()
+            numbers_as_strings = content.split(",")
+            lig_interaction = [int(num.strip()) for num in numbers_as_strings]
+        df_distant_residues = df_distant_residues[(df_distant_residues["Residue1"].isin(lig_interaction)) | (df_distant_residues["Residue2"].isin(lig_interaction))]
+
     print(df_distant_residues)
 
     import networkx as nx
@@ -292,111 +420,31 @@ def main():
     # remove this later
     for path, total_weight in sorted_paths[:500]:
         print("Path:", path, "Total Weight:", total_weight)
-    close_residues = close_residues("first_frame.pdb", last_res_num, dist=12.0)
+    close_res = close_residues("first_frame.pdb", last_res_num, dist=12.0)
     # TODO multiprocess this
     # Computation of overlap by comparing every residue of every path with each other
     pathways = [path for path, _ in sorted_paths[:500]]
-    overlap_df = pd.DataFrame(columns=["Pathway1", "Pathway2", "Overlap"])
-
-    def overlap(df, res1, res2):
-        return ((df["Residue1"] == res1) & (df["Residue2"] == res2)) | (
-            (df["Residue1"] == res2) & (df["Residue2"] == res1)
-        )
-
-    for i, path1 in enumerate(tqdm.tqdm(pathways)):
-        for j, path2 in enumerate(pathways):
-            count_true = 0
-            for res1 in path1:
-                for res2 in path2:
-                    if overlap(df_close_residues, res1, res2).any():
-                        count_true += 1
-            overlap_df = overlap_df.append(
-                {"Pathway1": i, "Pathway2": j, "Overlap": count_true}, ignore_index=True
-            )
-
-        print(overlap_df)
-
-        overlap_df.to_excel("overlap_data.xlsx", index=False)
-
-    import pandas as pd
+    overlap_df = calculate_overlap_multiprocess(pathways, close_res, num_parallel_processes)
+    
     from scipy.cluster import hierarchy
-    import plotly.figure_factory as ff
-    import plotly.graph_objs as go
-    from sklearn.metrics import silhouette_score
     from scipy.cluster.hierarchy import fcluster
-
-    overlap_df = pd.read_excel("overlap_data.xlsx")
-
-    # Distance matrix based on overlap
-    overlap_matrix = overlap_df.pivot(
-        index="Pathway1", columns="Pathway2", values="Overlap"
-    ).fillna(0)
-    distance_matrix = 1 - overlap_matrix
-    linkage_matrix = hierarchy.linkage(distance_matrix.values, method="complete")
-
-    # Calculate silhouette score for different numbers of clusters
-    silhouette_scores = []
-    for n_clusters in range(2, len(overlap_matrix) + 1):
-        cluster_labels = fcluster(linkage_matrix, n_clusters, criterion="maxclust")
-        silhouette_scores.append(silhouette_score(distance_matrix, cluster_labels))
-
-    # Optimal number of clusters
-    optimal_num_clusters = silhouette_scores.index(max(silhouette_scores)) + 2
-
-    print("Optimal number of clusters:", optimal_num_clusters)
-
-    # Cutting dendrogram -> optimal number
-    cluster_labels = fcluster(
-        linkage_matrix, optimal_num_clusters, criterion="maxclust"
-    )
-
-    # Create a dictionary to store pathways for each cluster
-    cluster_pathways = {cluster: [] for cluster in range(1, optimal_num_clusters + 1)}
-
-    for i, label in enumerate(cluster_labels):
-        cluster_pathways[label].append(overlap_matrix.index[i])
-
-    # Remove me later
-    for cluster, pathways in cluster_pathways.items():
-        print(f"Cluster {cluster}:")
-        for pathway in pathways:
-            print(" - ", pathway)
-
-    silhouette_avg = silhouette_score(distance_matrix, cluster_labels)
-
-    print("Silhouette Score:", silhouette_avg)
-
-    # Remove me later
-    fig = ff.create_dendrogram(
-        distance_matrix.values, orientation="bottom", labels=overlap_matrix.index
-    )
-    fig.update_layout(
-        title="Hierarchical Clustering Dendrogram",
-        xaxis=dict(title="Pathways"),
-        yaxis=dict(title="Distance"),
-        xaxis_tickangle=-90,
-    )
-    fig.add_shape(
-        type="line",
-        x0=optimal_num_clusters - 0.5,
-        y0=0,
-        x1=optimal_num_clusters - 0.5,
-        y1=silhouette_avg,
-        line=dict(color="Red", width=3),
-    )
-    fig.show()
-
-    # Sort clusters based on size
-    sorted_clusters = sorted(
-        cluster_pathways.items(), key=lambda x: len(x[1]), reverse=True
-    )
-
-    # remove me later
-    for cluster, pathways in sorted_clusters[:3]:
-        print(f"Cluster {cluster} (Size: {len(pathways)}):")
-        for pathway in pathways:
-            print(" - ", pathway)
-
-
+    from sklearn.metrics import silhouette_score
+    import plotly.figure_factory as ff
+    
+    clusters=pathways_cluster(overlap_df)
+    cluster_pathways_dict = {}
+    for cluster_num, cluster_pathways in clusters.items():
+        cluster_pathways_list = []
+    for pathway_id in cluster_pathways:
+        pathway = sorted_paths[pathway_id]
+        cluster_pathways_list.append(pathway[0])
+    cluster_pathways_dict[cluster_num] = cluster_pathways_list
+    print(cluster_pathways_dict)
+    # Coord dict for backtracking
+  
+    residue_coordinates_dict= residue_CA_coordinates("first_frame.pdb", 352)
+    updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)
+    print(updated_dict)
+     
 if __name__ == "__main__":
     main()
