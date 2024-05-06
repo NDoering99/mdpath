@@ -442,7 +442,7 @@ def main():
     print(cluster_pathways_dict)
     # Coord dict for backtracking
   
-    residue_coordinates_dict= residue_CA_coordinates("first_frame.pdb", 352)
+    residue_coordinates_dict= residue_CA_coordinates("first_frame.pdb", last_res_num)
     updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)
     print(updated_dict)
      
