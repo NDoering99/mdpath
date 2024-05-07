@@ -1,48 +1,56 @@
 import pandas as pd
+import numpy as np
 from multiprocessing import Pool, Manager
 from tqdm import tqdm
 from scipy.cluster import hierarchy
 from sklearn.metrics import silhouette_score
+import plotly.figure_factory as ff
+import plotly.graph_objs as go
 
 
-def calculate_overlap(args):
-    i, j, path1, path2, df, counter_queue = args
-    count_true = 0
-    for res1 in path1:
-        for res2 in path2:
-            if ((df["Residue1"] == res1) & (df["Residue2"] == res2)).any() or (
-                (df["Residue1"] == res2) & (df["Residue2"] == res1)
-            ).any():
-                count_true += 1
-    counter_queue.put(1)
-
-    return i, j, count_true
-
-
-def calculate_overlap_multiprocess(pathways, df, num_processes):
+def calculate_overlap(pathways, df):
     overlap_df = pd.DataFrame(columns=["Pathway1", "Pathway2", "Overlap"])
-    args_list = []
-    manager = Manager()
-    counter_queue = manager.Queue()
-
-    for i, path1 in enumerate(pathways):
-        for j, path2 in enumerate(pathways):
-            args_list.append((i, j, path1, path2, df, counter_queue))
-
-    with Pool(processes=num_processes) as pool:
-        results = list(
-            tqdm(pool.imap(calculate_overlap, args_list), total=len(args_list))
-        )
-
-    while not counter_queue.empty():
-        counter_queue.get()
-
-    for result in results:
-        i, j, count_true = result
-        overlap_df = overlap_df.append(
-            {"Pathway1": i, "Pathway2": j, "Overlap": count_true}, ignore_index=True
-        )
+    for i in tqdm(range(len(pathways))):
+        path1 = pathways[i]
+        for j in range(i + 1, len(pathways)):
+            path2 = pathways[j]
+            overlap_counter = 0
+            for res1 in path1:
+                for res2 in path2:
+                    if ((df["Residue1"] == res1) & (df["Residue2"] == res2)).any() or ((df["Residue1"] == res2) & (df["Residue2"] == res1)).any():
+                        overlap_counter += 1
+            overlap_df._append({"Pathway1": i, "Pathway2": j, "Overlap": overlap_counter}, ignore_index=True)
+            overlap_df._append({"Pathway1": j, "Pathway2": i, "Overlap": overlap_counter}, ignore_index=True)
+            
     return overlap_df
+
+
+def calculate_overlap_for_pathway(args):
+    i, path1, pathways, df = args
+    result = []
+    for j in range(i + 1, len(pathways)):
+        if i != j:
+            path2 = pathways[j]
+            overlap_counter = 0
+            for res1 in path1:
+                for res2 in path2:
+                    if ((df["Residue1"] == res1) & (df["Residue2"] == res2)).any() or ((df["Residue1"] == res2) & (df["Residue2"] == res1)).any():
+                        overlap_counter += 1
+            result.append({"Pathway1": i, "Pathway2": j, "Overlap": overlap_counter})
+            result.append({"Pathway1": j, "Pathway2": i, "Overlap": overlap_counter})
+    return result  
+
+
+def calculate_overlap_parallel(pathways, df, num_processes):
+    overlap_df = pd.DataFrame(columns=["Pathway1", "Pathway2", "Overlap"])
+    with Pool(processes=num_processes) as pool:
+        with tqdm(total=(((len(pathways) ** 2 + len(pathways)) / 2) - len(pathways)), ascii=True, desc="Calculating pathway residue overlapp: ") as pbar:
+            for result in pool.map(calculate_overlap_for_pathway, [(i, path, pathways, df) for i, path in enumerate(pathways)]):
+                for row in result:
+                    overlap_df = overlap_df._append(row, ignore_index=True)
+                    pbar.update(1)
+    print(overlap_df.head())
+    return overlap_df     
 
 
 def pathways_cluster(overlap_df, n_top_clust=3):

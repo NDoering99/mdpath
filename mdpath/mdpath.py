@@ -16,7 +16,7 @@ from mdpath.src.graph import (
     graph_assign_weights,
     collect_path_total_weights,
 )
-from mdpath.src.cluster import calculate_overlap_multiprocess, pathways_cluster
+from mdpath.src.cluster import calculate_overlap_parallel, pathways_cluster, calculate_overlap
 from mdpath.src.visualization import (
     residue_CA_coordinates,
     apply_backtracking,
@@ -77,7 +77,7 @@ def main():
     first_res_num = int(args.first_res_num)
     last_res_num = int(args.last_res_num)
     num_residues = last_res_num - first_res_num
-    lig_interaction = args.lig_interaction
+    lig_interaction = bool(args.lig_interaction)
 
     first_frame = traj.trajectory[-1]
     with mda.Writer("first_frame.pdb", multiframe=False) as pdb:
@@ -88,7 +88,6 @@ def main():
     )
 
     mi_diff_df = NMI_calc(df_all_residues, num_bins=35)
-    print(mi_diff_df)
 
     residue_graph = graph_building("first_frame.pdb", last_res_num, dist=5.0)
     residue_graph = graph_assign_weights(residue_graph, mi_diff_df)
@@ -119,7 +118,7 @@ def main():
         print("Path:", path, "Total Weight:", total_weight)
     close_res = close_residues("first_frame.pdb", last_res_num, dist=12.0)
     pathways = [path for path, _ in sorted_paths[:500]]
-    overlap_df = calculate_overlap_multiprocess(
+    overlap_df = calculate_overlap_parallel(
         pathways, close_res, num_parallel_processes
     )
 
