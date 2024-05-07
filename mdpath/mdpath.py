@@ -5,11 +5,23 @@ import numpy as np
 import MDAnalysis as mda
 
 
-from mdpath.src.structure import calculate_dihedral_movement_parallel, faraway_residues, close_residues
+from mdpath.src.structure import (
+    calculate_dihedral_movement_parallel,
+    faraway_residues,
+    close_residues,
+)
 from mdpath.src.mutual_information import NMI_calc
-from mdpath.src.graph import graph_building, graph_assign_weights, collect_path_total_weights
+from mdpath.src.graph import (
+    graph_building,
+    graph_assign_weights,
+    collect_path_total_weights,
+)
 from mdpath.src.cluster import calculate_overlap_multiprocess, pathways_cluster
-from mdpath.src.visualization import residue_CA_coordinates, apply_backtracking, cluster_prep_for_visualisaton
+from mdpath.src.visualization import (
+    residue_CA_coordinates,
+    apply_backtracking,
+    cluster_prep_for_visualisaton,
+)
 
 
 def main():
@@ -48,14 +60,14 @@ def main():
         help="ID of the residue last residue in your chain",
         required=True,
     )
-    
+
     parser.add_argument(
         "-lig",
         dest="lig_interaction",
         help="Protein ligand interacting residues",
         default=False,
     )
-    
+
     args = parser.parse_args()
     # Initial inputs
     num_parallel_processes = int(args.num_parallel_processes)
@@ -71,8 +83,10 @@ def main():
     with mda.Writer("first_frame.pdb", multiframe=False) as pdb:
         pdb.write(traj.atoms)
 
-    df_all_residues = calculate_dihedral_movement_parallel(num_parallel_processes, first_res_num, last_res_num, num_residues, traj)
-    
+    df_all_residues = calculate_dihedral_movement_parallel(
+        num_parallel_processes, first_res_num, last_res_num, num_residues, traj
+    )
+
     mi_diff_df = NMI_calc(df_all_residues, num_bins=35)
     print(mi_diff_df)
 
@@ -88,7 +102,10 @@ def main():
             content = file.read()
             numbers_as_strings = content.split(",")
             lig_interaction = [int(num.strip()) for num in numbers_as_strings]
-        df_distant_residues = df_distant_residues[(df_distant_residues["Residue1"].isin(lig_interaction)) | (df_distant_residues["Residue2"].isin(lig_interaction))]
+        df_distant_residues = df_distant_residues[
+            (df_distant_residues["Residue1"].isin(lig_interaction))
+            | (df_distant_residues["Residue2"].isin(lig_interaction))
+        ]
 
     print(df_distant_residues)
 
@@ -102,10 +119,11 @@ def main():
         print("Path:", path, "Total Weight:", total_weight)
     close_res = close_residues("first_frame.pdb", last_res_num, dist=12.0)
     pathways = [path for path, _ in sorted_paths[:500]]
-    overlap_df = calculate_overlap_multiprocess(pathways, close_res, num_parallel_processes)
+    overlap_df = calculate_overlap_multiprocess(
+        pathways, close_res, num_parallel_processes
+    )
 
-    
-    clusters=pathways_cluster(overlap_df)
+    clusters = pathways_cluster(overlap_df)
     cluster_pathways_dict = {}
     for cluster_num, cluster_pathways in clusters.items():
         cluster_pathways_list = []
@@ -114,10 +132,11 @@ def main():
         cluster_pathways_list.append(pathway[0])
     cluster_pathways_dict[cluster_num] = cluster_pathways_list
     print(cluster_pathways_dict)
-  
-    residue_coordinates_dict= residue_CA_coordinates("first_frame.pdb", last_res_num)
+
+    residue_coordinates_dict = residue_CA_coordinates("first_frame.pdb", last_res_num)
     updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)
     print(updated_dict)
-     
+
+
 if __name__ == "__main__":
     main()

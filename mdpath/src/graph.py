@@ -48,7 +48,6 @@ def graph_assign_weights(residue_graph, mi_diff_df):
     return residue_graph
 
 
-
 def max_weight_shortest_path(graph, source, target):
     shortest_path = nx.dijkstra_path(graph, source, target, weight="weight")
     total_weight = sum(

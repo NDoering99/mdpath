@@ -27,17 +27,27 @@ def update_progress(res):
     return res
 
 
-def calculate_dihedral_movement_parallel(num_parallel_processes, first_res_num, last_res_num, num_residues, traj):
+def calculate_dihedral_movement_parallel(
+    num_parallel_processes, first_res_num, last_res_num, num_residues, traj
+):
     try:
         with Pool(processes=num_parallel_processes) as pool:
             residue_args = [(i, traj) for i in range(first_res_num, last_res_num + 1)]
             df_all_residues = pd.DataFrame()
-            with tqdm(total=num_residues, ascii=True, desc="Processing residue dihedral movements: ",) as pbar:
-                for res_id, result in pool.imap_unordered(calc_dihedral_angle_movement_wrapper, residue_args):
+            with tqdm(
+                total=num_residues,
+                ascii=True,
+                desc="Processing residue dihedral movements: ",
+            ) as pbar:
+                for res_id, result in pool.imap_unordered(
+                    calc_dihedral_angle_movement_wrapper, residue_args
+                ):
                     try:
                         df_residue = pd.DataFrame(result, columns=[f"Res {res_id}"])
-                        df_all_residues = pd.concat([df_all_residues, df_residue], axis=1)
-                        pbar.update(1)  
+                        df_all_residues = pd.concat(
+                            [df_all_residues, df_residue], axis=1
+                        )
+                        pbar.update(1)
                     except Exception as e:
                         print(f"Error processing residue {res_id}: {e}")
     except Exception as e:
@@ -117,4 +127,3 @@ def close_residues(pdb_file, end, dist=10.0):
                     if are_close:
                         close_residues.append((res1_id, res2_id))
     return pd.DataFrame(close_residues, columns=["Residue1", "Residue2"])
-
