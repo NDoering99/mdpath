@@ -38,6 +38,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
   "pytest>=6.1.2",
+  "pytest-runner"
 ]
 
 [tool.setuptools]
@@ -60,9 +61,9 @@ zip-safe = false
 # (instead of using 'find'). With 'find', the 'tests' subpackage is discovered
 # recursively because of its __init__.py file, but the data subdirectory is excluded
 # with include-package-data = false and namespaces = false.
-include-package-data = false
+include-package-data = true
 [tool.setuptools.packages.find]
-namespaces = false
+namespaces = true
 where = ["."]
 
 # Ref https://setuptools.pypa.io/en/latest/userguide/datafiles.html#package-data
