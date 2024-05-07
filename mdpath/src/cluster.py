@@ -45,7 +45,7 @@ def calculate_overlap_parallel(pathways, df, num_processes):
     overlap_df = pd.DataFrame(columns=["Pathway1", "Pathway2", "Overlap"])
     with Pool(processes=num_processes) as pool:
         with tqdm(total=(((len(pathways) ** 2 + len(pathways)) / 2) - len(pathways)), ascii=True, desc="Calculating pathway residue overlapp: ") as pbar:
-            for result in pool.map(calculate_overlap_for_pathway, [(i, path, pathways, df) for i, path in enumerate(pathways)]):
+            for result in pool.imap_unordered(calculate_overlap_for_pathway, [(i, path, pathways, df) for i, path in enumerate(pathways)]):
                 for row in result:
                     overlap_df = overlap_df._append(row, ignore_index=True)
                     pbar.update(1)
