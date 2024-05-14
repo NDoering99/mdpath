@@ -5,6 +5,10 @@ import numpy as np
 import MDAnalysis as mda
 
 
+import multiprocessing
+from tqdm import tqdm
+import numpy as np
+
 from mdpath.src.structure import (
     calculate_dihedral_movement_parallel,
     faraway_residues,
@@ -68,6 +72,43 @@ def main():
         default=False,
     )
 
+    parser.add_argument(
+        "-bs",
+        dest="bootstrap",
+        help="How often bootstrapping should be performed.",
+        default=False,
+    )
+
+    def create_bootstrap_sample(df):
+        bootstrap_sample = pd.DataFrame()
+        for col in df.columns:
+            bootstrap_sample[col] = df[col].sample(n=len(df), replace=True).reset_index(drop=True)
+        return bootstrap_sample
+
+    def process_bootstrap_sample(df_all_residues, residue_graph_empty, df_distant_residues, pathways_set, num_bins=35):
+        bootstrap_sample = create_bootstrap_sample(df_all_residues)
+        bootstrap_mi_diff = NMI_calc(bootstrap_sample, num_bins=num_bins)
+        bootstrap_residue_graph = graph_assign_weights(residue_graph_empty, bootstrap_mi_diff)
+        bootstrap_path_total_weights = collect_path_total_weights(bootstrap_residue_graph, df_distant_residues)
+        bootstrap_sorted_paths = sorted(bootstrap_path_total_weights, key=lambda x: x[1], reverse=True)
+        bootstrap_pathways = [path for path, _ in bootstrap_sorted_paths[:500]]
+        bootstrap_set = set(tuple(path) for path in bootstrap_pathways)  # Convert to tuple
+        common_elements = bootstrap_set.intersection(pathways_set)
+        common_count = len(common_elements)
+        return common_count
+        
+    def bootstrap_analysis(df_all_residues, residue_graph_empty, df_distant_residues, pathways_set, num_bootstrap_samples, num_bins=35):
+        results = []
+        for _ in range(num_bootstrap_samples):
+            result = process_bootstrap_sample(df_all_residues, residue_graph_empty, df_distant_residues, pathways_set, num_bins=num_bins)
+            results.append(result)
+        common_counts = np.array(results)
+        standard_error = np.std(common_counts) / np.sqrt(num_bootstrap_samples)
+        print("Standard error:", standard_error)
+        return common_counts
+
+    
+
     args = parser.parse_args()
     # Initial inputs
     num_parallel_processes = int(args.num_parallel_processes)
@@ -78,6 +119,7 @@ def main():
     last_res_num = int(args.last_res_num)
     num_residues = last_res_num - first_res_num
     lig_interaction = bool(args.lig_interaction)
+    bootstrap = args.bootstrap
 
     first_frame = traj.trajectory[-1]
     with mda.Writer("first_frame.pdb", multiframe=False) as pdb:
@@ -89,8 +131,8 @@ def main():
 
     mi_diff_df = NMI_calc(df_all_residues, num_bins=35)
 
-    residue_graph = graph_building("first_frame.pdb", last_res_num, dist=5.0)
-    residue_graph = graph_assign_weights(residue_graph, mi_diff_df)
+    residue_graph_empty = graph_building("first_frame.pdb", last_res_num, dist=5.0)
+    residue_graph = graph_assign_weights(residue_graph_empty, mi_diff_df)
 
     for edge in residue_graph.edges():
         print(edge, residue_graph.edges[edge]["weight"])
@@ -118,24 +160,29 @@ def main():
         print("Path:", path, "Total Weight:", total_weight)
     close_res = close_residues("first_frame.pdb", last_res_num, dist=12.0)
     pathways = [path for path, _ in sorted_paths[:500]]
-    overlap_df = calculate_overlap_parallel(
-        pathways, close_res, num_parallel_processes
-    )
+   # overlap_df = calculate_overlap_parallel(
+   #     pathways, close_res, num_parallel_processes
+   # )
 
-    clusters = pathways_cluster(overlap_df)
-    cluster_pathways_dict = {}
-    for cluster_num, cluster_pathways in clusters.items():
-        cluster_pathways_list = []
-    for pathway_id in cluster_pathways:
-        pathway = sorted_paths[pathway_id]
-        cluster_pathways_list.append(pathway[0])
-    cluster_pathways_dict[cluster_num] = cluster_pathways_list
-    print(cluster_pathways_dict)
+   # clusters = pathways_cluster(overlap_df)
+  #  cluster_pathways_dict = {}
+   # for cluster_num, cluster_pathways in clusters.items():
+  #      cluster_pathways_list = []
+  #  for pathway_id in cluster_pathways:
+  #      pathway = sorted_paths[pathway_id]
+   #     cluster_pathways_list.append(pathway[0])
+  #  cluster_pathways_dict[cluster_num] = cluster_pathways_list
+   # print(cluster_pathways_dict)
 
-    residue_coordinates_dict = residue_CA_coordinates("first_frame.pdb", last_res_num)
-    updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)
-    print(updated_dict)
+  #  residue_coordinates_dict = residue_CA_coordinates("first_frame.pdb", last_res_num)
+  #  updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)
+  #  print(updated_dict)
 
-
+    if bootstrap:
+        num_bootstrap_samples = int(bootstrap)
+        pathways_set = set(tuple(path) for path in pathways)  
+        common_counts = bootstrap_analysis(df_all_residues, residue_graph_empty, df_distant_residues, pathways_set, num_bootstrap_samples)
+ 
+    
 if __name__ == "__main__":
     main()
