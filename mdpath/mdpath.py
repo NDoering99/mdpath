@@ -22,7 +22,7 @@ from mdpath.src.visualization import (
     apply_backtracking,
     cluster_prep_for_visualisaton,
 )
-from mdapath.src.bootstrap import create_bootstrap_sample, process_bootstrap_sample, bootstrap_analysis
+from mdpath.src.bootstrap import create_bootstrap_sample, process_bootstrap_sample, bootstrap_analysis
 
 
 def main():
