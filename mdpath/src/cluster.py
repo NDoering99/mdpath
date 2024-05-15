@@ -4,8 +4,7 @@ from multiprocessing import Pool, Manager
 from tqdm import tqdm
 from scipy.cluster import hierarchy
 from sklearn.metrics import silhouette_score
-import plotly.figure_factory as ff
-import plotly.graph_objs as go
+import matplotlib.pyplot as plt
 
 
 def calculate_overlap(pathways, df):
@@ -44,7 +43,7 @@ def calculate_overlap_for_pathway(args):
 def calculate_overlap_parallel(pathways, df, num_processes):
     overlap_df = pd.DataFrame(columns=["Pathway1", "Pathway2", "Overlap"])
     with Pool(processes=num_processes) as pool:
-        with tqdm(total=(((len(pathways) ** 2 + len(pathways)) / 2) - len(pathways)), ascii=True, desc="Calculating pathway residue overlapp: ") as pbar:
+        with tqdm(total=(len(pathways) ** 2 - len(pathways)), ascii=True, desc="Calculating pathway residue overlapp: ") as pbar:
             for result in pool.imap_unordered(calculate_overlap_for_pathway, [(i, path, pathways, df) for i, path in enumerate(pathways)]):
                 for row in result:
                     overlap_df = overlap_df._append(row, ignore_index=True)
@@ -75,23 +74,22 @@ def pathways_cluster(overlap_df, n_top_clust=3):
         cluster_pathways[label].append(overlap_matrix.index[i])
     silhouette_avg = silhouette_score(distance_matrix, cluster_labels)
     print("Silhouette Score:", silhouette_avg)
-    fig = ff.create_dendrogram(
-        distance_matrix.values, orientation="bottom", labels=overlap_matrix.index
-    )
-    fig.update_layout(
-        title="Hierarchical Clustering Dendrogram",
-        xaxis=dict(title="Pathways"),
-        yaxis=dict(title="Distance"),
-        xaxis_tickangle=-90,
-    )
-    fig.add_shape(
-        type="line",
-        x0=optimal_num_clusters - 0.5,
-        y0=0,
-        x1=optimal_num_clusters - 0.5,
-        y1=silhouette_avg,
-        line=dict(color="Red", width=3),
-    )
+    
+    linked = hierarchy.linkage(distance_matrix.values, 'single')
+
+    # Create dendrogram
+    plt = plt.figure(figsize=(10, 7))
+    dendro = hierarchy.dendrogram(linked, labels=overlap_matrix.index, orientation='top', color_threshold=0)
+
+    plt.title("Hierarchical Clustering Dendrogram")
+    plt.xlabel("Pathways")
+    plt.ylabel("Distance")
+
+    # Add line
+    plt.axvline(x=optimal_num_clusters - 0.5, ymin=0, ymax=1, color='Red', linewidth=3)
+
+    plt.save("dendrogram.png")
+    
     sorted_clusters = sorted(
         cluster_pathways.items(), key=lambda x: len(x[1]), reverse=True
     )
