@@ -58,7 +58,7 @@ def format_dict(updated_dict):
             if isinstance(item, np.ndarray):
                 transformed.append(item.tolist())
             elif isinstance(item, list):
-                transformed.extend(transform_list(item))  # Extend instead of append
+                transformed.append(transform_list(item))  # Append instead of extend
             else:
                 transformed.append(item)
         return transformed
