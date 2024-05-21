@@ -122,7 +122,7 @@ def main():
     first_res_num = int(args.first_res_num)
     last_res_num = int(args.last_res_num)
     num_residues = last_res_num - first_res_num
-    lig_interaction = bool(args.lig_interaction)
+    lig_interaction = args.lig_interaction
     bootstrap = args.bootstrap
 
     first_frame = traj.trajectory[-1]
@@ -143,7 +143,7 @@ def main():
 
     df_distant_residues = faraway_residues("first_frame.pdb", last_res_num, dist=12.0)
     if lig_interaction:
-        with open(lig_interaction, "r") as file:
+        with open(str(lig_interaction), "r") as file:
             content = file.read()
             numbers_as_strings = content.split(",")
             lig_interaction = [int(num.strip()) for num in numbers_as_strings]
