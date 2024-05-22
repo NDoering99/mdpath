@@ -94,21 +94,6 @@ def pathways_cluster(overlap_df, n_top_clust=3):
 
     linked = hierarchy.linkage(distance_matrix.values, "single")
 
-    # Create dendrogram
-    plt = plt.figure(figsize=(10, 7))
-    dendro = hierarchy.dendrogram(
-        linked, labels=overlap_matrix.index, orientation="top", color_threshold=0
-    )
-
-    plt.title("Hierarchical Clustering Dendrogram")
-    plt.xlabel("Pathways")
-    plt.ylabel("Distance")
-
-    # Add line
-    plt.axvline(x=optimal_num_clusters - 0.5, ymin=0, ymax=1, color="Red", linewidth=3)
-
-    plt.save("dendrogram.png")
-
     sorted_clusters = sorted(
         cluster_pathways.items(), key=lambda x: len(x[1]), reverse=True
     )

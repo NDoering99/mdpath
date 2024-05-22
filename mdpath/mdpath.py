@@ -7,6 +7,7 @@ import json
 import multiprocessing
 from tqdm import tqdm
 import numpy as np
+
 from mdpath.src.structure import (
     calculate_dihedral_movement_parallel,
     faraway_residues,
@@ -28,6 +29,7 @@ from mdpath.src.visualization import (
     apply_backtracking,
     cluster_prep_for_visualisaton,
     format_dict,
+    visualise_graph,
 )
 from mdpath.src.bootstrap import bootstrap_analysis
 
@@ -107,6 +109,7 @@ def main():
 
     residue_graph_empty = graph_building("first_frame.pdb", last_res_num, dist=5.0)
     residue_graph = graph_assign_weights(residue_graph_empty, mi_diff_df)
+    visualise_graph(residue_graph)
 
     for edge in residue_graph.edges():
         print(edge, residue_graph.edges[edge]["weight"])

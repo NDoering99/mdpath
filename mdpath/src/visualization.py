@@ -2,7 +2,8 @@ from Bio import PDB
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
-
+import networkx as nx
+import matplotlib.pyplot as plt
 
 def residue_CA_coordinates(pdb_file, end):
     residue_coordinates_dict = {}
@@ -69,3 +70,12 @@ def format_dict(updated_dict):
         key: transform_list(value) for key, value in updated_dict.items()
     }
     return transformed_dict
+
+def visualise_graph(graph, k=0.1, node_size=200):
+    labels = {i: str(i) for i in graph.nodes()}
+    plt.figure(figsize=(20, 20))
+    pos = nx.spring_layout(graph, k=k)  
+    nx.draw(graph, pos, node_size=node_size, with_labels=True, labels=labels, font_size=8, edge_color='gray', node_color='blue')
+    plt.savefig('graph.png', dpi=300, bbox_inches='tight')
+
+
