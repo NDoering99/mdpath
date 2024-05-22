@@ -3,6 +3,7 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 
+
 def residue_CA_coordinates(pdb_file, end):
     residue_coordinates_dict = {}
     parser = PDB.PDBParser(QUIET=True)
@@ -51,6 +52,7 @@ def apply_backtracking(original_dict, translation_dict):
 
     return updated_dict
 
+
 def format_dict(updated_dict):
     def transform_list(nested_list):
         transformed = []
@@ -62,6 +64,8 @@ def format_dict(updated_dict):
             else:
                 transformed.append(item)
         return transformed
-    
-    transformed_dict = {key: transform_list(value) for key, value in updated_dict.items()}
+
+    transformed_dict = {
+        key: transform_list(value) for key, value in updated_dict.items()
+    }
     return transformed_dict

@@ -4,12 +4,9 @@ import pandas as pd
 import numpy as np
 import MDAnalysis as mda
 import json
-
-
 import multiprocessing
 from tqdm import tqdm
 import numpy as np
-
 from mdpath.src.structure import (
     calculate_dihedral_movement_parallel,
     faraway_residues,
@@ -21,13 +18,18 @@ from mdpath.src.graph import (
     graph_assign_weights,
     collect_path_total_weights,
 )
-from mdpath.src.cluster import calculate_overlap_parallel, pathways_cluster, calculate_overlap
+from mdpath.src.cluster import (
+    calculate_overlap_parallel,
+    pathways_cluster,
+    calculate_overlap,
+)
 from mdpath.src.visualization import (
     residue_CA_coordinates,
     apply_backtracking,
     cluster_prep_for_visualisaton,
     format_dict,
 )
+from mdpath.src.bootstrap import bootstrap_analysis
 
 
 def main():
@@ -81,38 +83,6 @@ def main():
         default=False,
     )
 
-    def create_bootstrap_sample(df):
-        bootstrap_sample = pd.DataFrame()
-        for col in df.columns:
-            bootstrap_sample[col] = df[col].sample(n=len(df), replace=True).reset_index(drop=True)
-        return bootstrap_sample
-
-    def process_bootstrap_sample(df_all_residues, residue_graph_empty, df_distant_residues, pathways_set, num_bins=35):
-        bootstrap_sample = create_bootstrap_sample(df_all_residues)
-        bootstrap_mi_diff = NMI_calc(bootstrap_sample, num_bins=num_bins)
-        bootstrap_residue_graph = graph_assign_weights(residue_graph_empty, bootstrap_mi_diff)
-        bootstrap_path_total_weights = collect_path_total_weights(bootstrap_residue_graph, df_distant_residues)
-        bootstrap_sorted_paths = sorted(bootstrap_path_total_weights, key=lambda x: x[1], reverse=True)
-        bootstrap_pathways = [path for path, _ in bootstrap_sorted_paths[:500]]
-        bootstrap_set = set(tuple(path) for path in bootstrap_pathways)  # Convert to tuple
-        common_elements = bootstrap_set.intersection(pathways_set)
-        common_count = len(common_elements)
-        return common_count
-        
-    def bootstrap_analysis(df_all_residues, residue_graph_empty, df_distant_residues, pathways_set, num_bootstrap_samples, num_bins=35):
-        results = []
-        for _ in range(num_bootstrap_samples):
-            result = process_bootstrap_sample(df_all_residues, residue_graph_empty, df_distant_residues, pathways_set, num_bins=num_bins)
-            results.append(result)
-        common_counts = np.array(results)
-        standard_error = np.std(common_counts) / np.sqrt(num_bootstrap_samples)
-        print("Standard error:", standard_error)
-        return common_counts
-
-
-
-    
-
     args = parser.parse_args()
     # Initial inputs
     num_parallel_processes = int(args.num_parallel_processes)
@@ -164,9 +134,7 @@ def main():
         print("Path:", path, "Total Weight:", total_weight)
     close_res = close_residues("first_frame.pdb", last_res_num, dist=12.0)
     pathways = [path for path, _ in sorted_paths[:500]]
-    overlap_df = calculate_overlap_parallel(
-        pathways, close_res, num_parallel_processes
-    )
+    overlap_df = calculate_overlap_parallel(pathways, close_res, num_parallel_processes)
 
     clusters = pathways_cluster(overlap_df)
     cluster_pathways_dict = {}
@@ -181,16 +149,20 @@ def main():
     residue_coordinates_dict = residue_CA_coordinates("first_frame.pdb", last_res_num)
     updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)
     formated_dict = format_dict(updated_dict)
-    with open('clusters_paths.json', 'w') as json_file:
+    with open("clusters_paths.json", "w") as json_file:
         json.dump(formated_dict, json_file)
-
-
 
     if bootstrap:
         num_bootstrap_samples = int(bootstrap)
-        pathways_set = set(tuple(path) for path in pathways)  
-        common_counts = bootstrap_analysis(df_all_residues, residue_graph_empty, df_distant_residues, pathways_set, num_bootstrap_samples)
- 
-    
+        pathways_set = set(tuple(path) for path in pathways)
+        common_counts = bootstrap_analysis(
+            df_all_residues,
+            residue_graph_empty,
+            df_distant_residues,
+            pathways_set,
+            num_bootstrap_samples,
+        )
+
+
 if __name__ == "__main__":
     main()
