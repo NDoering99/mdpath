@@ -8,6 +8,22 @@ from Bio import PDB
 from itertools import combinations
 
 
+def res_num_from_pdb(pdb):
+    parser = PDB.PDBParser(QUIET=True)
+    structure = parser.get_structure("protein", pdb)
+    first_res_num = float('inf')
+    last_res_num = float('-inf')
+    for res in structure.get_residues():
+        if PDB.Polypeptide.is_aa(res):
+            res_num = res.id[1]
+            if res_num < first_res_num:
+                first_res_num = res_num
+            if res_num > last_res_num:
+                last_res_num = res_num
+    return int(first_res_num), int(last_res_num)
+
+
+
 def calc_dihedral_angle_movement(i, traj):
     res = traj.residues[i]
     ags = [res.phi_selection()]
