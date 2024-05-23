@@ -12,6 +12,7 @@ from mdpath.src.structure import (
     calculate_dihedral_movement_parallel,
     faraway_residues,
     close_residues,
+    res_num_from_pdb,
 )
 from mdpath.src.mutual_information import NMI_calc
 from mdpath.src.graph import (
@@ -59,48 +60,31 @@ def main():
         default=(os.cpu_count() // 2),
     )
     parser.add_argument(
-        "-first",
-        dest="first_res_num",
-        help="ID of the residue start residue in your chain",
-        required=True,
-    )
-    parser.add_argument(
-        "-last",
-        dest="last_res_num",
-        help="ID of the residue last residue in your chain",
-        required=True,
-    )
-
-    parser.add_argument(
         "-lig",
         dest="lig_interaction",
         help="Protein ligand interacting residues",
         default=False,
     )
-
     parser.add_argument(
         "-bs",
         dest="bootstrap",
         help="How often bootstrapping should be performed.",
         default=False,
     )
-
     args = parser.parse_args()
     # Initial inputs
     num_parallel_processes = int(args.num_parallel_processes)
     topology = args.topology
     trajectory = args.trajectory
-    traj = mda.Universe(topology, trajectory)
-    first_res_num = int(args.first_res_num)
-    last_res_num = int(args.last_res_num)
-    num_residues = last_res_num - first_res_num
+    traj = mda.Universe(topology, trajectory) 
     lig_interaction = args.lig_interaction
     bootstrap = args.bootstrap
-
     first_frame = traj.trajectory[-1]
     with mda.Writer("first_frame.pdb", multiframe=False) as pdb:
         pdb.write(traj.atoms)
-
+    first_res_num, last_res_num = res_num_from_pdb("first_frame.pdb")
+    print(first_res_num, last_res_num) #remove me 
+    num_residues = last_res_num - first_res_num
     df_all_residues = calculate_dihedral_movement_parallel(
         num_parallel_processes, first_res_num, last_res_num, num_residues, traj
     )
@@ -180,7 +164,7 @@ def main():
                     path_str = ' -> '.join(map(str, path))
                     file.write(f"{path_str}: Mean={mean}, 2.5%={lower}, 97.5%={upper}\n")
 
-    print(f'Path confidence intervals have been saved to {file_name}')
+        print(f'Path confidence intervals have been saved to {file_name}')
 
 
 
