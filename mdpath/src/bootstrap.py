@@ -8,11 +8,7 @@ from mdpath.src.mutual_information import NMI_calc
 
 
 def create_bootstrap_sample(df):
-    bootstrap_sample = pd.DataFrame()
-    for col in df.columns:
-        bootstrap_sample[col] = (
-            df[col].sample(n=len(df), replace=True).reset_index(drop=True)
-        )
+    bootstrap_sample = df.apply(lambda col: col.sample(n=len(df), replace=True).reset_index(drop=True))
     return bootstrap_sample
 
 def process_bootstrap_sample(
