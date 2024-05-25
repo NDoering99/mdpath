@@ -38,10 +38,13 @@ def bootstrap_analysis(
     df_all_residues,
     residue_graph_empty,
     df_distant_residues,
-    pathways_set,
+    sorted_paths,
     num_bootstrap_samples,
     num_bins=35,
 ):
+    pathways = [path for path, _ in sorted_paths[:500]]
+    print(pathways)
+    pathways_set = set(tuple(path) for path in pathways)
     results = []
     path_occurrences = {tuple(path): [] for path in pathways_set}
 
