@@ -79,3 +79,45 @@ def visualise_graph(graph, k=0.1, node_size=200):
     plt.savefig('graph.png', dpi=300, bbox_inches='tight')
 
 
+import json
+
+def precompute_path_properties(json_data, colors):
+    cluster_colors = {}
+    color_index = 0
+    path_properties = []
+
+    for clusterid, cluster in json_data.items():
+        cluster_colors[clusterid] = colors[color_index % len(colors)]
+        color_index += 1
+        coord_pair_counts = {}
+        path_number = 1
+
+        for pathway_index, pathway in enumerate(cluster):
+            for i in range(len(pathway) - 1):
+                coord1 = pathway[i][0]
+                coord2 = pathway[i + 1][0]
+                if isinstance(coord1, list) and isinstance(coord2, list) and len(coord1) == 3 and len(coord2) == 3:
+                    coord_pair = (tuple(coord1), tuple(coord2))
+                    if coord_pair not in coord_pair_counts:
+                        coord_pair_counts[coord_pair] = 0
+                    coord_pair_counts[coord_pair] += 1
+                    radius = 0.015 + 0.015 * (coord_pair_counts[coord_pair] - 1)
+                    color = cluster_colors[clusterid]
+
+                    path_properties.append({
+                        "clusterid": clusterid,
+                        "pathway_index": pathway_index,
+                        "path_segment_index": i,
+                        "coord1": coord1,
+                        "coord2": coord2,
+                        "color": color,
+                        "radius": radius,
+                        "path_number": path_number
+                    })
+
+                    path_number += 1
+                else:
+                    print(f"Ignoring pathway {pathway} as it does not fulfill the coordinate format.")
+    return path_properties
+
+
