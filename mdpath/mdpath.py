@@ -31,6 +31,7 @@ from mdpath.src.visualization import (
     cluster_prep_for_visualisaton,
     format_dict,
     visualise_graph,
+    precompute_path_properties,
 )
 from mdpath.src.bootstrap import bootstrap_analysis
 
