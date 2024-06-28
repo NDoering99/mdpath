@@ -5,7 +5,7 @@ from sklearn.metrics import mutual_info_score
 from scipy.stats import entropy
 
 
-def NMI_calc(df_all_residues, num_bins=35):
+def NMI_calc(df_all_residues: pd.DataFrame, num_bins=35) -> pd.DataFrame:
     normalized_mutual_info = {}
     total_iterations = len(df_all_residues.columns) ** 2
     progress_bar = tqdm(

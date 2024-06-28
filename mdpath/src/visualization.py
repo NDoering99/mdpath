@@ -4,8 +4,9 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
+import json
 
-def residue_CA_coordinates(pdb_file, end):
+def residue_CA_coordinates(pdb_file: str, end: int) -> dict:
     residue_coordinates_dict = {}
     parser = PDB.PDBParser(QUIET=True)
     structure = parser.get_structure("pdb_structure", pdb_file)
@@ -23,7 +24,7 @@ def residue_CA_coordinates(pdb_file, end):
     return residue_coordinates_dict
 
 
-def cluster_prep_for_visualisaton(cluster, pdb_file):
+def cluster_prep_for_visualisaton(cluster: list[list[int]], pdb_file: str) -> list[list[tuple[float]]]:
     cluster = []
     for pathway in cluster:
         pathways = []
@@ -42,7 +43,7 @@ def cluster_prep_for_visualisaton(cluster, pdb_file):
     return cluster
 
 
-def apply_backtracking(original_dict, translation_dict):
+def apply_backtracking(original_dict: dict, translation_dict: dict) -> dict:
     updated_dict = original_dict.copy()
 
     for key, lists_of_lists in original_dict.items():
@@ -54,7 +55,7 @@ def apply_backtracking(original_dict, translation_dict):
     return updated_dict
 
 
-def format_dict(updated_dict):
+def format_dict(updated_dict: dict) -> dict:
     def transform_list(nested_list):
         transformed = []
         for item in nested_list:
@@ -71,7 +72,7 @@ def format_dict(updated_dict):
     }
     return transformed_dict
 
-def visualise_graph(graph, k=0.1, node_size=200):
+def visualise_graph(graph: nx.Graph, k=0.1, node_size=200) -> None:
     labels = {i: str(i) for i in graph.nodes()}
     plt.figure(figsize=(20, 20))
     pos = nx.spring_layout(graph, k=k)  
@@ -79,9 +80,7 @@ def visualise_graph(graph, k=0.1, node_size=200):
     plt.savefig('graph.png', dpi=300, bbox_inches='tight')
 
 
-import json
-
-def precompute_path_properties(json_data, colors):
+def precompute_path_properties(json_data: dict, colors: list[str]) -> list[dict]:
     cluster_colors = {}
     color_index = 0
     path_properties = []

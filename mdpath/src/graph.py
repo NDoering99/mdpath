@@ -1,4 +1,5 @@
 import networkx as nx
+import pandas as pd
 from tqdm import tqdm
 from itertools import combinations
 from Bio import PDB
@@ -6,7 +7,7 @@ from Bio import PDB
 from mdpath.src.structure import calculate_distance
 
 
-def graph_building(pdb_file, end, dist=5.0):
+def graph_building(pdb_file: str, end: int, dist=5.0) -> nx.Graph:
     residue_graph = nx.Graph()
     parser = PDB.PDBParser(QUIET=True)
     structure = parser.get_structure("pdb_structure", pdb_file)
@@ -36,7 +37,7 @@ def graph_building(pdb_file, end, dist=5.0):
     return residue_graph
 
 
-def graph_assign_weights(residue_graph, mi_diff_df):
+def graph_assign_weights(residue_graph: nx.Graph, mi_diff_df: pd.DataFrame) -> nx.Graph:
     for edge in residue_graph.edges():
         u, v = edge
         pair = ("Res " + str(u), "Res " + str(v))
@@ -48,7 +49,7 @@ def graph_assign_weights(residue_graph, mi_diff_df):
     return residue_graph
 
 
-def max_weight_shortest_path(graph, source, target):
+def max_weight_shortest_path(graph: nx.Graph, source: int, target: int) -> tuple[list[int], float]:
     shortest_path = nx.dijkstra_path(graph, source, target, weight="weight")
     total_weight = sum(
         graph[shortest_path[i]][shortest_path[i + 1]]["weight"]
@@ -57,7 +58,7 @@ def max_weight_shortest_path(graph, source, target):
     return shortest_path, total_weight
 
 
-def collect_path_total_weights(residue_graph, df_distant_residues):
+def collect_path_total_weights(residue_graph: nx.Graph, df_distant_residues: pd.DataFrame) -> list[tuple[list[int], float]]:
     path_total_weights = []
     for index, row in df_distant_residues.iterrows():
         try:

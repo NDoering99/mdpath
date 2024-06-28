@@ -8,7 +8,7 @@ from Bio import PDB
 from itertools import combinations
 
 
-def res_num_from_pdb(pdb):
+def res_num_from_pdb(pdb: str) -> tuple[int, int]:
     parser = PDB.PDBParser(QUIET=True)
     structure = parser.get_structure("protein", pdb)
     first_res_num = float('inf')
@@ -24,7 +24,7 @@ def res_num_from_pdb(pdb):
 
 
 
-def calc_dihedral_angle_movement(i, traj):
+def calc_dihedral_angle_movement(i: int, traj: mda.Universe) -> tuple[int, np.array]:
     res = traj.residues[i]
     ags = [res.phi_selection()]
     R = Dihedral(ags).run()
@@ -33,19 +33,19 @@ def calc_dihedral_angle_movement(i, traj):
     return i, dihedral_angle_movement
 
 
-def calc_dihedral_angle_movement_wrapper(args):
+def calc_dihedral_angle_movement_wrapper(args: tuple[int, mda.Universe]) -> tuple[int, np.array]:
     residue_id, traj = args
     return calc_dihedral_angle_movement(residue_id, traj)
 
 
-def update_progress(res):
+def update_progress(res: tqdm) -> tqdm:
     res.update()
     return res
 
 
 def calculate_dihedral_movement_parallel(
-    num_parallel_processes, first_res_num, last_res_num, num_residues, traj
-):
+    num_parallel_processes: int, first_res_num: int, last_res_num: int, num_residues: int, traj: mda.Universe
+) -> pd.DataFrame:
     try:
         with Pool(processes=num_parallel_processes) as pool:
             residue_args = [(i, traj) for i in range(first_res_num, last_res_num + 1)]
@@ -71,13 +71,13 @@ def calculate_dihedral_movement_parallel(
     return df_all_residues
 
 
-def calculate_distance(atom1, atom2):
+def calculate_distance(atom1: int, atom2: int) -> float:
     distance_vector = atom1 - atom2
     distance = np.linalg.norm(distance_vector)
     return distance
 
 
-def faraway_residues(pdb_file, end, dist=12.0):
+def faraway_residues(pdb_file: str, end: int, dist=12.0) -> pd.DataFrame:
     parser = PDB.PDBParser(QUIET=True)
     structure = parser.get_structure("pdb_structure", pdb_file)
     heavy_atoms = ["C", "N", "O", "S"]
@@ -111,7 +111,7 @@ def faraway_residues(pdb_file, end, dist=12.0):
     return pd.DataFrame(distant_residues, columns=["Residue1", "Residue2"])
 
 
-def close_residues(pdb_file, end, dist=10.0):
+def close_residues(pdb_file: str, end: int, dist=10.0) -> pd.DataFrame:
     parser = PDB.PDBParser(QUIET=True)
     structure = parser.get_structure("pdb_structure", pdb_file)
     heavy_atoms = ["C", "N", "O", "S"]
