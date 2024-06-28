@@ -7,6 +7,7 @@ import json
 import multiprocessing
 from tqdm import tqdm
 import numpy as np
+import pickle
 
 from mdpath.src.structure import (
     calculate_dihedral_movement_parallel,
@@ -32,6 +33,7 @@ from mdpath.src.visualization import (
     format_dict,
     visualise_graph,
     precompute_path_properties,
+    precompute_cluster_properties_quick,
 )
 from mdpath.src.bootstrap import bootstrap_analysis
 
@@ -46,13 +48,13 @@ def main():
         "-top",
         dest="topology",
         help="Topology file of your MD simulation",
-        required=True,
+        required=False,
     )
     parser.add_argument(
         "-traj",
         dest="trajectory",
         help="Trajectory file of your MD simulation",
-        required=True,
+        required=False,
     )
     parser.add_argument(
         "-cpu",
@@ -72,8 +74,46 @@ def main():
         help="How often bootstrapping should be performed.",
         default=False,
     )
+    # Comp Flags
+    parser.add_argument(
+        "-comp",
+        dest="comp",
+        help="Morphes a cluster onto another pdb.",
+        default=False,
+    )
+    parser.add_argument(
+        "-atop",
+        dest="atop",
+        help="residue_coordinates that are used as a template.",
+        default=False,
+    )
+    parser.add_argument(
+        "-bcluster",
+        dest="bcluster",
+        help="Cluster that is morphed.",
+        default=False,
+    )
+    
     args = parser.parse_args()
     # Initial inputs
+
+    if args.comp:
+        if args.atop and args.bcluster: 
+            with open(args.atop, "rb") as pkl_file:
+                residue_coordinates_dict = pickle.load(pkl_file)
+            with open(args.bcluster, "rb") as pkl_file:
+                cluster_pathways_dict = pickle.load(pkl_file)
+            updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)
+            formatted_dict = format_dict(updated_dict)
+            with open("morphed_clusters_paths.json", "w") as json_file_2:
+                json.dump(formatted_dict, json_file_2)
+            exit()
+        else:
+            print("Topology (residue_coordinates) and bcluster (cluster) are required and ajson needed.")
+            exit()
+    if not args.topology or not args.trajectory:
+        print("Both trajectory and topology files are required!")
+        exit()
     num_parallel_processes = int(args.num_parallel_processes)
     topology = args.topology
     trajectory = args.trajectory
@@ -163,7 +203,16 @@ def main():
     print(cluster_pathways_dict)
 
     residue_coordinates_dict = residue_CA_coordinates("first_frame.pdb", last_res_num)
+    # For comp
+    with open("residue_coordinates.pkl", "wb") as pkl_file:
+        pickle.dump(residue_coordinates_dict, pkl_file)
+    
+    with open("cluster_pathways_dict.pkl", "wb") as pkl_file:
+        pickle.dump(cluster_pathways_dict, pkl_file)
+
     updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)
+    
+        
     formated_dict = format_dict(updated_dict)
     with open("clusters_paths.json", "w") as json_file:
         json.dump(formated_dict, json_file)
@@ -185,7 +234,9 @@ def main():
     path_properties = precompute_path_properties(json_data, colors)
     with open("C:/mdpath/precomputed_clusters_paths.json", 'w') as out_file:
         json.dump(path_properties, out_file, indent=4)
-
+    quick_path_properties = precompute_cluster_properties_quick(json_data, colors)
+    with open("C:/mdpath/quick_precomputed_clusters_paths.json", 'w') as out_file2:
+        json.dump(quick_path_properties, out_file2, indent=4)
 
 
 
