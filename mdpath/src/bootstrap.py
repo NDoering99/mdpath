@@ -7,13 +7,13 @@ from mdpath.src.graph import (
 from mdpath.src.mutual_information import NMI_calc
 
 
-def create_bootstrap_sample(df):
+def create_bootstrap_sample(df: pd.DataFrame) -> tuple[int, set[tuple]]:
     bootstrap_sample = df.apply(lambda col: col.sample(n=len(df), replace=True).reset_index(drop=True))
     return bootstrap_sample
 
 def process_bootstrap_sample(
-    df_all_residues, residue_graph_empty, df_distant_residues, pathways_set, num_bins=35
-):
+    df_all_residues: pd.DataFrame, residue_graph_empty: dict, df_distant_residues: pd.DataFrame, pathways_set: set[tuple], num_bins=35
+) -> tuple[int, list[list[int]]]:
     bootstrap_sample = create_bootstrap_sample(df_all_residues)
     bootstrap_mi_diff = NMI_calc(bootstrap_sample, num_bins=num_bins)
     bootstrap_residue_graph = graph_assign_weights(
@@ -35,13 +35,13 @@ def process_bootstrap_sample(
 import numpy as np
 
 def bootstrap_analysis(
-    df_all_residues,
-    residue_graph_empty,
-    df_distant_residues,
-    sorted_paths,
-    num_bootstrap_samples,
+    df_all_residues: pd.DataFrame,
+    residue_graph_empty: dict,
+    df_distant_residues: pd.DataFrame,
+    sorted_paths: list[tuple],
+    num_bootstrap_samples: int,
     num_bins=35,
-):
+) -> tuple[np.array, dict]:
     pathways = [path for path, _ in sorted_paths[:500]]
     print(pathways)
     pathways_set = set(tuple(path) for path in pathways)

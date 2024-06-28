@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-def calculate_overlap(pathways, df):
+def calculate_overlap(pathways: list[list[int]], df: pd.DataFrame) -> pd.DataFrame:
     overlap_df = pd.DataFrame(columns=["Pathway1", "Pathway2", "Overlap"])
     for i in tqdm(range(len(pathways))):
         path1 = pathways[i]
@@ -33,7 +33,7 @@ def calculate_overlap(pathways, df):
     return overlap_df
 
 
-def calculate_overlap_for_pathway(args):
+def calculate_overlap_for_pathway(args: tuple[int, list[int], list[list[int]], pd.DataFrame]) -> list[dict]:
     i, path1, pathways, df = args
     result = []
     for j in range(i + 1, len(pathways)):
@@ -51,7 +51,7 @@ def calculate_overlap_for_pathway(args):
     return result
 
 
-def calculate_overlap_parallel(pathways, df, num_processes):
+def calculate_overlap_parallel(pathways: list[list[int]], df: pd.DataFrame, num_processes: int) -> pd.DataFrame:
     overlap_df = pd.DataFrame(columns=["Pathway1", "Pathway2", "Overlap"])
     with Pool(processes=num_processes) as pool:
         with tqdm(
@@ -70,7 +70,7 @@ def calculate_overlap_parallel(pathways, df, num_processes):
     return overlap_df
 
 
-def pathways_cluster(overlap_df, n_top_clust=3, save_path="clustered_paths.png"):
+def pathways_cluster(overlap_df: pd.DataFrame, n_top_clust=3, save_path="clustered_paths.png") -> dict[int, list[int]]:
     overlap_matrix = overlap_df.pivot(
         index="Pathway1", columns="Pathway2", values="Overlap"
     ).fillna(0)
