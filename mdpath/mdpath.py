@@ -217,7 +217,7 @@ def main():
     with open("clusters_paths.json", "w") as json_file:
         json.dump(formated_dict, json_file)
 
-    with open("C:/mdpath/clusters_paths.json", 'r') as json_file:
+    with open("clusters_paths.json", 'r') as json_file:
         json_data = json.load(json_file)
     colors = [
         [1, 0, 0],  # Red
@@ -232,10 +232,10 @@ def main():
         [0.5, 1, 0.5],  # Light Green
     ]
     path_properties = precompute_path_properties(json_data, colors)
-    with open("C:/mdpath/precomputed_clusters_paths.json", 'w') as out_file:
+    with open("precomputed_clusters_paths.json", 'w') as out_file:
         json.dump(path_properties, out_file, indent=4)
     quick_path_properties = precompute_cluster_properties_quick(json_data, colors)
-    with open("C:/mdpath/quick_precomputed_clusters_paths.json", 'w') as out_file2:
+    with open("quick_precomputed_clusters_paths.json", 'w') as out_file2:
         json.dump(quick_path_properties, out_file2, indent=4)
 
 
