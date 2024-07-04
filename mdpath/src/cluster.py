@@ -9,6 +9,15 @@ import seaborn as sns
 
 
 def calculate_overlap(pathways: list[list[int]], df: pd.DataFrame) -> pd.DataFrame:
+    """Calculates the overlap between all pathways.
+
+    Args:
+        pathways (list[list[int]]): List of pathways.
+        df (pd.DataFrame): Pandas dataframe with close residue pairs.
+
+    Returns:
+        overlap_df (pd.DataFrame): Pandas dataframe with the overlap between all given pathways.
+    """
     overlap_df = pd.DataFrame(columns=["Pathway1", "Pathway2", "Overlap"])
     for i in tqdm(range(len(pathways))):
         path1 = pathways[i]
@@ -33,7 +42,17 @@ def calculate_overlap(pathways: list[list[int]], df: pd.DataFrame) -> pd.DataFra
     return overlap_df
 
 
-def calculate_overlap_for_pathway(args: tuple[int, list[int], list[list[int]], pd.DataFrame]) -> list[dict]:
+def calculate_overlap_for_pathway(
+    args: tuple[int, list[int], list[list[int]], pd.DataFrame]
+) -> list[dict]:
+    """Calculates the overlap between a pathway and all other pathways.
+
+    Args:
+        args (tuple[int, list[int], list[list[int]], pd.DataFrame]): Argument wrapper conatining the pathway index, the pathway, all pathways and the dataframe with close residue pairs.
+
+    Returns:
+        result (list[dict]): List of dictionaries with the overlap between the given pathway and all other pathways.
+    """
     i, path1, pathways, df = args
     result = []
     for j in range(i + 1, len(pathways)):
@@ -51,7 +70,19 @@ def calculate_overlap_for_pathway(args: tuple[int, list[int], list[list[int]], p
     return result
 
 
-def calculate_overlap_parallel(pathways: list[list[int]], df: pd.DataFrame, num_processes: int) -> pd.DataFrame:
+def calculate_overlap_parallel(
+    pathways: list[list[int]], df: pd.DataFrame, num_processes: int
+) -> pd.DataFrame:
+    """Parallelization wrapper for the calculate_overlap_for_pathway function.
+
+    Args:
+        pathways (list[list[int]]): List of all pathways.
+        df (pd.DataFrame): Pandas dataframe with close residue pairs.
+        num_processes (int): Number of processes to use for parallelization.
+
+    Returns:
+        overlap_df (pd.DataFrame): Pandas dataframe with the overlap between all pathways wih all other pathways.
+    """
     overlap_df = pd.DataFrame(columns=["Pathway1", "Pathway2", "Overlap"])
     with Pool(processes=num_processes) as pool:
         with tqdm(
@@ -70,7 +101,19 @@ def calculate_overlap_parallel(pathways: list[list[int]], df: pd.DataFrame, num_
     return overlap_df
 
 
-def pathways_cluster(overlap_df: pd.DataFrame, n_top_clust=3, save_path="clustered_paths.png") -> dict[int, list[int]]:
+def pathways_cluster(
+    overlap_df: pd.DataFrame, n_top_clust=3, save_path="clustered_paths.png"
+) -> dict[int, list[int]]:
+    """Clustering of pathways based on the overlap between them.
+
+    Args:
+        overlap_df (pd.DataFrame): Pandas dataframe with the overlap between all pathways.
+        n_top_clust (int, optional): Number of clusters to output. Defaults to 3.
+        save_path (str, optional): Save path for cluster dendogram figure. Defaults to "clustered_paths.png".
+
+    Returns:
+        clusters (dict[int, list[int]]): Dictionary with the clusters and their pathways.
+    """
     overlap_matrix = overlap_df.pivot(
         index="Pathway1", columns="Pathway2", values="Overlap"
     ).fillna(0)
@@ -98,9 +141,9 @@ def pathways_cluster(overlap_df: pd.DataFrame, n_top_clust=3, save_path="cluster
     print("Silhouette Score:", silhouette_avg)
     plt.figure(figsize=(10, 7))
     hierarchy.dendrogram(linkage_matrix, labels=overlap_matrix.index, leaf_rotation=90)
-    plt.title('Hierarchical Clustering Dendrogram')
-    plt.xlabel('Pathways')
-    plt.ylabel('Distance')
+    plt.title("Hierarchical Clustering Dendrogram")
+    plt.xlabel("Pathways")
+    plt.ylabel("Distance")
     plt.savefig(save_path)
     plt.close()
 

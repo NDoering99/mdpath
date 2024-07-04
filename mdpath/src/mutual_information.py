@@ -6,6 +6,15 @@ from scipy.stats import entropy
 
 
 def NMI_calc(df_all_residues: pd.DataFrame, num_bins=35) -> pd.DataFrame:
+    """Nornmalized Mutual Information calculation for all residue pairs.
+
+    Args:
+        df_all_residues (pd.DataFrame): Pandas dataframe with all residue dihedral angle movements.
+        num_bins (int, optional): Number of bins to group dihedral angle movements into for mutual information calculation. Defaults to 35.
+
+    Returns:
+        mi_diff_df (pd.DataFrame): Pandas dataframe with residue pair and mutual information difference.
+    """
     normalized_mutual_info = {}
     total_iterations = len(df_all_residues.columns) ** 2
     progress_bar = tqdm(

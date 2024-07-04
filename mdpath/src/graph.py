@@ -8,6 +8,16 @@ from mdpath.src.structure import calculate_distance
 
 
 def graph_building(pdb_file: str, end: int, dist=5.0) -> nx.Graph:
+    """Generates a graph of residues within a certain distance of each other.
+
+    Args:
+        pdb_file (str): Input PDB file.
+        end (int): Last residue to consider.
+        dist (float, optional): Cutoff distance for graph egdes. Distance of residues to eachother in Angström. Defaults to 5.0.
+
+    Returns:
+        residue_graph (nx.Graph): Graph of residues within a certain distance of each other.
+    """
     residue_graph = nx.Graph()
     parser = PDB.PDBParser(QUIET=True)
     structure = parser.get_structure("pdb_structure", pdb_file)
@@ -38,6 +48,15 @@ def graph_building(pdb_file: str, end: int, dist=5.0) -> nx.Graph:
 
 
 def graph_assign_weights(residue_graph: nx.Graph, mi_diff_df: pd.DataFrame) -> nx.Graph:
+    """Assignes edge weights to the graph based on mutual information differences.
+
+    Args:
+        residue_graph (nx.Graph): Base residue graph.
+        mi_diff_df (pd.DataFrame): Pandas dataframe with mutual information differences.
+
+    Returns:
+        residue_graph (nx.Graph): Residue graph with edge weights assigned.
+    """
     for edge in residue_graph.edges():
         u, v = edge
         pair = ("Res " + str(u), "Res " + str(v))
@@ -49,7 +68,20 @@ def graph_assign_weights(residue_graph: nx.Graph, mi_diff_df: pd.DataFrame) -> n
     return residue_graph
 
 
-def max_weight_shortest_path(graph: nx.Graph, source: int, target: int) -> tuple[list[int], float]:
+def max_weight_shortest_path(
+    graph: nx.Graph, source: int, target: int
+) -> tuple[list[int], float]:
+    """Finds the shortest path between 2 far away residues with the highest weight.
+
+    Args:
+        graph (nx.Graph): Residue graph.
+        source (int): Starting residue.
+        target (int): Final residue.
+
+    Returns:
+        shortest_path (list[int]): List of residues in the shortest path with the heighest weight.
+        total_weight (float): Total weight of the shortest path.
+    """
     shortest_path = nx.dijkstra_path(graph, source, target, weight="weight")
     total_weight = sum(
         graph[shortest_path[i]][shortest_path[i + 1]]["weight"]
@@ -58,7 +90,18 @@ def max_weight_shortest_path(graph: nx.Graph, source: int, target: int) -> tuple
     return shortest_path, total_weight
 
 
-def collect_path_total_weights(residue_graph: nx.Graph, df_distant_residues: pd.DataFrame) -> list[tuple[list[int], float]]:
+def collect_path_total_weights(
+    residue_graph: nx.Graph, df_distant_residues: pd.DataFrame
+) -> list[tuple[list[int], float]]:
+    """Wrapper function to collect the shortest path and total weight between distant residues.
+
+    Args:
+        residue_graph (nx.Graph): Residue graph.
+        df_distant_residues (pd.DataFrame): Panda dataframe with distant residues.
+
+    Returns:
+        path_total_weights (list[tuple[list[int], float]]): List of tuples with the shortest path and total weight between distant residues.
+    """
     path_total_weights = []
     for index, row in df_distant_residues.iterrows():
         try:

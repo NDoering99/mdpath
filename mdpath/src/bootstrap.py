@@ -8,12 +8,40 @@ from mdpath.src.mutual_information import NMI_calc
 
 
 def create_bootstrap_sample(df: pd.DataFrame) -> tuple[int, set[tuple]]:
-    bootstrap_sample = df.apply(lambda col: col.sample(n=len(df), replace=True).reset_index(drop=True))
+    """Creates a sample from the dataframe with replacement for bootstrap analysis.
+
+    Args:
+        df (pd.DataFrame):Pandas dataframe with residue dihedral angle movements.
+
+    Returns:
+        bootstrap_sample (pd.DataFrame): Pandas dataframe containing the frames for the bootstrap analysis.
+    """
+    bootstrap_sample = df.apply(
+        lambda col: col.sample(n=len(df), replace=True).reset_index(drop=True)
+    )
     return bootstrap_sample
 
+
 def process_bootstrap_sample(
-    df_all_residues: pd.DataFrame, residue_graph_empty: dict, df_distant_residues: pd.DataFrame, pathways_set: set[tuple], num_bins=35
+    df_all_residues: pd.DataFrame,
+    residue_graph_empty: dict,
+    df_distant_residues: pd.DataFrame,
+    pathways_set: set[tuple],
+    num_bins=35,
 ) -> tuple[int, list[list[int]]]:
+    """Process a bootstrap sample to find common paths with the original sample.
+
+    Args:
+        df_all_residues (pd.DataFrame): Pandas dataframe with residue dihedral angle movements.
+        residue_graph_empty (dict): Empty residue graph.
+        df_distant_residues (pd.DataFrame): Pandas dataframe with distant residues.
+        pathways_set (set[tuple]): Set of tuples with the pathways for bootstrapping.
+        num_bins (int, optional): Number of bins to group dihedral angle movements into for NMI calculation. Defaults to 35.
+
+    Returns:
+        common_count (int): Number of common paths between the bootstrap sample and the original sample.
+        bootstrap_pathways (list[list[int]]): List of paths within the bootstrap sample.
+    """
     bootstrap_sample = create_bootstrap_sample(df_all_residues)
     bootstrap_mi_diff = NMI_calc(bootstrap_sample, num_bins=num_bins)
     bootstrap_residue_graph = graph_assign_weights(
@@ -26,13 +54,11 @@ def process_bootstrap_sample(
         bootstrap_path_total_weights, key=lambda x: x[1], reverse=True
     )
     bootstrap_pathways = [path for path, _ in bootstrap_sorted_paths[:500]]
-    bootstrap_set = set(tuple(path) for path in bootstrap_pathways)  
+    bootstrap_set = set(tuple(path) for path in bootstrap_pathways)
     common_elements = bootstrap_set.intersection(pathways_set)
     common_count = len(common_elements)
     return common_count, bootstrap_pathways
 
-
-import numpy as np
 
 def bootstrap_analysis(
     df_all_residues: pd.DataFrame,
@@ -42,6 +68,20 @@ def bootstrap_analysis(
     num_bootstrap_samples: int,
     num_bins=35,
 ) -> tuple[np.array, dict]:
+    """Analyse the common paths between the original sample and bootstrap samples.
+
+    Args:
+        df_all_residues (pd.DataFrame): Pandas dataframe with residue dihedral angle movements.
+        residue_graph_empty (dict): Empty residue graph.
+        df_distant_residues (pd.DataFrame): Pandas dataframe with distant residues.
+        sorted_paths (list[tuple]): List of tuples with the sorted paths.
+        num_bootstrap_samples (int): Amount of samples to generate for bootstrap analysis.
+        num_bins (int, optional): Number of bins to group dihedral angle movements into for NMI calculation. Defaults to 35.
+
+    Returns:
+        common_counts (np.array): Array with the counts of common paths between the original sample and bootstrap samples.
+        path_confidence_intervals (dict): Dictionary with the confidence intervals for each path.
+    """
     pathways = [path for path, _ in sorted_paths[:500]]
     print(pathways)
     pathways_set = set(tuple(path) for path in pathways)
@@ -77,5 +117,3 @@ def bootstrap_analysis(
         path_confidence_intervals[path] = (mean_occurrence, lower_bound, upper_bound)
 
     return common_counts, path_confidence_intervals
-
-

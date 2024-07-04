@@ -9,10 +9,19 @@ from itertools import combinations
 
 
 def res_num_from_pdb(pdb: str) -> tuple[int, int]:
+    """Gets first and last residue number from a PDB file.
+
+    Args:
+        pdb (str): Path to PDB file.
+
+    Returns:
+        first_res_num (int): First residue number.
+        last_res_num (int): Last residue number.
+    """
     parser = PDB.PDBParser(QUIET=True)
     structure = parser.get_structure("protein", pdb)
-    first_res_num = float('inf')
-    last_res_num = float('-inf')
+    first_res_num = float("inf")
+    last_res_num = float("-inf")
     for res in structure.get_residues():
         if PDB.Polypeptide.is_aa(res):
             res_num = res.id[1]
@@ -23,8 +32,17 @@ def res_num_from_pdb(pdb: str) -> tuple[int, int]:
     return int(first_res_num), int(last_res_num)
 
 
-
 def calc_dihedral_angle_movement(i: int, traj: mda.Universe) -> tuple[int, np.array]:
+    """Calculates dihedral angle movement for a residue over the cours of the MD trajectory.
+
+    Args:
+        i (int): Residue number.
+        traj (mda.Universe): MDAnalysis Universe object containing the trajectory.
+
+    Returns:
+        i (int): Residue number.
+        dihedral_angle_movement (np.array): Dihedral angle movement for the residue over the course of the trajectory.
+    """
     res = traj.residues[i]
     ags = [res.phi_selection()]
     R = Dihedral(ags).run()
@@ -33,19 +51,54 @@ def calc_dihedral_angle_movement(i: int, traj: mda.Universe) -> tuple[int, np.ar
     return i, dihedral_angle_movement
 
 
-def calc_dihedral_angle_movement_wrapper(args: tuple[int, mda.Universe]) -> tuple[int, np.array]:
+def calc_dihedral_angle_movement_wrapper(
+    args: tuple[int, mda.Universe]
+) -> tuple[int, np.array]:
+    """Wrapper function for calculating dihedral angle movement for a residue over the course of the MD trajectory.
+
+    Args:
+        args (tuple[int, mda.Universe]): Tuple containing residue number and MDAnalysis Universe object.
+
+    Returns:
+        i (int): Residue number.
+        dihedral_angle_movement (np.array): Dihedral angle movement for the residue over the course of the trajectory.
+    """
     residue_id, traj = args
     return calc_dihedral_angle_movement(residue_id, traj)
 
 
 def update_progress(res: tqdm) -> tqdm:
+    """Update progress bar.
+
+    Args:
+        res (tqdm): TQDM progress bar object.
+
+    Returns:
+        res: TQDM progress bar object.
+    """
     res.update()
     return res
 
 
 def calculate_dihedral_movement_parallel(
-    num_parallel_processes: int, first_res_num: int, last_res_num: int, num_residues: int, traj: mda.Universe
+    num_parallel_processes: int,
+    first_res_num: int,
+    last_res_num: int,
+    num_residues: int,
+    traj: mda.Universe,
 ) -> pd.DataFrame:
+    """Parallel calculation of dihedral angle movement for all residues in the trajectory.
+
+    Args:
+        num_parallel_processes (int): Amount of parallel processes.
+        first_res_num (int): First residue number.
+        last_res_num (int): Last residue number.
+        num_residues (int): Amount of residues.
+        traj (mda.Universe): MDAnalysis Universe object containing the trajectory.
+
+    Returns:
+        df_all_residues (pd.DataFrame): Pandas dataframe with all residue dihedral angle movements.
+    """
     try:
         with Pool(processes=num_parallel_processes) as pool:
             residue_args = [(i, traj) for i in range(first_res_num, last_res_num + 1)]
@@ -72,12 +125,31 @@ def calculate_dihedral_movement_parallel(
 
 
 def calculate_distance(atom1: int, atom2: int) -> float:
+    """Calculates the distance between two atoms.
+
+    Args:
+        atom1 (tuple[float]): Coordinates of the first atom.
+        atom2 (tuple[float]): Coordinates of the second atom.
+
+    Returns:
+        distance (float): Normalized distance between the two atoms.
+    """
     distance_vector = atom1 - atom2
     distance = np.linalg.norm(distance_vector)
     return distance
 
 
 def faraway_residues(pdb_file: str, end: int, dist=12.0) -> pd.DataFrame:
+    """Calculates residues that are far away from each other in a PDB structure.
+
+    Args:
+        pdb_file (str): Path to PDB file.
+        end (int): Last residue number.
+        dist (float, optional): Distance cutoff for faraway residues. Defaults to 12.0.
+
+    Returns:
+        pd.DataFrame: Pandas dataframe with faraway residue pairs and their distance.
+    """
     parser = PDB.PDBParser(QUIET=True)
     structure = parser.get_structure("pdb_structure", pdb_file)
     heavy_atoms = ["C", "N", "O", "S"]
@@ -112,6 +184,16 @@ def faraway_residues(pdb_file: str, end: int, dist=12.0) -> pd.DataFrame:
 
 
 def close_residues(pdb_file: str, end: int, dist=10.0) -> pd.DataFrame:
+    """Calculates residues that are close to each other in a PDB structure.
+
+    Args:
+        pdb_file (str): Path to PDB file.
+        end (int): Last residue number.
+        dist (float, optional): Distance cutoff for close residues. Defaults to 10.0.
+
+    Returns:
+        pd.DataFrame: Pandas dataframe with close residue pairs and their distance.
+    """
     parser = PDB.PDBParser(QUIET=True)
     structure = parser.get_structure("pdb_structure", pdb_file)
     heavy_atoms = ["C", "N", "O", "S"]

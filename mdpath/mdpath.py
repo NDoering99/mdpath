@@ -93,23 +93,27 @@ def main():
         help="Cluster that is morphed.",
         default=False,
     )
-    
+
     args = parser.parse_args()
     # Initial inputs
 
     if args.comp:
-        if args.atop and args.bcluster: 
+        if args.atop and args.bcluster:
             with open(args.atop, "rb") as pkl_file:
                 residue_coordinates_dict = pickle.load(pkl_file)
             with open(args.bcluster, "rb") as pkl_file:
                 cluster_pathways_dict = pickle.load(pkl_file)
-            updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)
+            updated_dict = apply_backtracking(
+                cluster_pathways_dict, residue_coordinates_dict
+            )
             formatted_dict = format_dict(updated_dict)
             with open("morphed_clusters_paths.json", "w") as json_file_2:
                 json.dump(formatted_dict, json_file_2)
             exit()
         else:
-            print("Topology (residue_coordinates) and bcluster (cluster) are required and ajson needed.")
+            print(
+                "Topology (residue_coordinates) and bcluster (cluster) are required and ajson needed."
+            )
             exit()
     if not args.topology or not args.trajectory:
         print("Both trajectory and topology files are required!")
@@ -117,21 +121,21 @@ def main():
     num_parallel_processes = int(args.num_parallel_processes)
     topology = args.topology
     trajectory = args.trajectory
-    traj = mda.Universe(topology, trajectory) 
+    traj = mda.Universe(topology, trajectory)
     lig_interaction = args.lig_interaction
     bootstrap = args.bootstrap
     first_frame = traj.trajectory[-1]
     with mda.Writer("first_frame.pdb", multiframe=False) as pdb:
         pdb.write(traj.atoms)
     first_res_num, last_res_num = res_num_from_pdb("first_frame.pdb")
-    print(first_res_num, last_res_num) #remove me 
+    print(first_res_num, last_res_num)  # remove me
     num_residues = last_res_num - first_res_num
     df_all_residues = calculate_dihedral_movement_parallel(
         num_parallel_processes, first_res_num, last_res_num, num_residues, traj
     )
 
     mi_diff_df = NMI_calc(df_all_residues, num_bins=35)
-    mi_diff_df.to_csv('mi_diff_df.csv', index=False) 
+    mi_diff_df.to_csv("mi_diff_df.csv", index=False)
     residue_graph_empty = graph_building("first_frame.pdb", last_res_num, dist=5.0)
     residue_graph = graph_assign_weights(residue_graph_empty, mi_diff_df)
     visualise_graph(residue_graph)
@@ -145,13 +149,12 @@ def main():
             with open(str(lig_interaction), "r") as file:
                 content = file.read()
                 lig_interaction = [int(res.strip()) for res in content.split(",")]
-        else: 
-            lig_interaction = [res for res in str(lig_interaction).split(',')]
+        else:
+            lig_interaction = [res for res in str(lig_interaction).split(",")]
             df_distant_residues = df_distant_residues[
                 (df_distant_residues["Residue1"].isin(lig_interaction))
                 | (df_distant_residues["Residue2"].isin(lig_interaction))
             ]
-
 
     print(df_distant_residues)
 
@@ -159,11 +162,10 @@ def main():
     sorted_paths = sorted(path_total_weights, key=lambda x: x[1], reverse=True)
     sorted_paths_bs = sorted_paths
 
-   
-    with open('output.txt', 'w') as file:
+    with open("output.txt", "w") as file:
         for path, total_weight in sorted_paths[:500]:
             file.write(f"Path: {path}, Total Weight: {total_weight}\n")
-             # remove this later
+            # remove this later
             print("Path:", path, "Total Weight:", total_weight)
 
     if bootstrap:
@@ -176,18 +178,19 @@ def main():
             num_bootstrap_samples,
         )
         for path, (mean, lower, upper) in path_confidence_intervals.items():
-            path_str = ' -> '.join(map(str, path))
-            #remove me later
+            path_str = " -> ".join(map(str, path))
+            # remove me later
             print(f"{path_str}: Mean={mean}, 2.5%={lower}, 97.5%={upper}")
-            file_name = 'path_confidence_intervals.txt'
-            with open(file_name, 'w') as file:
+            file_name = "path_confidence_intervals.txt"
+            with open(file_name, "w") as file:
                 for path, (mean, lower, upper) in path_confidence_intervals.items():
-                    path_str = ' -> '.join(map(str, path))
-                    file.write(f"{path_str}: Mean={mean}, 2.5%={lower}, 97.5%={upper}\n")
+                    path_str = " -> ".join(map(str, path))
+                    file.write(
+                        f"{path_str}: Mean={mean}, 2.5%={lower}, 97.5%={upper}\n"
+                    )
 
-        print(f'Path confidence intervals have been saved to {file_name}')
+        print(f"Path confidence intervals have been saved to {file_name}")
 
-        
     close_res = close_residues("first_frame.pdb", last_res_num, dist=12.0)
     pathways = [path for path, _ in sorted_paths[:500]]
     overlap_df = calculate_overlap_parallel(pathways, close_res, num_parallel_processes)
@@ -206,38 +209,25 @@ def main():
     # For comp
     with open("residue_coordinates.pkl", "wb") as pkl_file:
         pickle.dump(residue_coordinates_dict, pkl_file)
-    
+
     with open("cluster_pathways_dict.pkl", "wb") as pkl_file:
         pickle.dump(cluster_pathways_dict, pkl_file)
 
     updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)
-    
-        
+
     formated_dict = format_dict(updated_dict)
     with open("clusters_paths.json", "w") as json_file:
         json.dump(formated_dict, json_file)
 
-    with open("clusters_paths.json", 'r') as json_file:
+    with open("clusters_paths.json", "r") as json_file:
         json_data = json.load(json_file)
-    colors = [
-        [1, 0, 0],  # Red
-        [0, 1, 0],  # Green
-        [0, 0, 1],  # Blue
-        [1, 1, 0],  # Yellow
-        [1, 0, 1],  # Magenta
-        [0, 1, 1],  # Cyan
-        [0.5, 0.5, 0.5],  # Gray
-        [1, 0.5, 0],  # Orange
-        [0.5, 0, 0.5],  # Purple
-        [0.5, 1, 0.5],  # Light Green
-    ]
-    path_properties = precompute_path_properties(json_data, colors)
-    with open("precomputed_clusters_paths.json", 'w') as out_file:
-        json.dump(path_properties, out_file, indent=4)
-    quick_path_properties = precompute_cluster_properties_quick(json_data, colors)
-    with open("quick_precomputed_clusters_paths.json", 'w') as out_file2:
-        json.dump(quick_path_properties, out_file2, indent=4)
 
+    path_properties = precompute_path_properties(json_data)
+    with open("precomputed_clusters_paths.json", "w") as out_file:
+        json.dump(path_properties, out_file, indent=4)
+    quick_path_properties = precompute_cluster_properties_quick(json_data)
+    with open("quick_precomputed_clusters_paths.json", "w") as out_file2:
+        json.dump(quick_path_properties, out_file2, indent=4)
 
 
 if __name__ == "__main__":
