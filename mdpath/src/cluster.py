@@ -97,18 +97,17 @@ def calculate_overlap_parallel(
                 for row in result:
                     overlap_df = overlap_df._append(row, ignore_index=True)
                     pbar.update(1)
-    print(overlap_df.head())
     return overlap_df
 
 
 def pathways_cluster(
-    overlap_df: pd.DataFrame, n_top_clust=3, save_path="clustered_paths.png"
+    overlap_df: pd.DataFrame, n_top_clust=0, save_path="clustered_paths.png"
 ) -> dict[int, list[int]]:
     """Clustering of pathways based on the overlap between them.
 
     Args:
         overlap_df (pd.DataFrame): Pandas dataframe with the overlap between all pathways.
-        n_top_clust (int, optional): Number of clusters to output. Defaults to 3.
+        n_top_clust (int, optional): Number of clusters to output. Defaults to all.
         save_path (str, optional): Save path for cluster dendogram figure. Defaults to "clustered_paths.png".
 
     Returns:
@@ -151,8 +150,12 @@ def pathways_cluster(
         cluster_pathways.items(), key=lambda x: len(x[1]), reverse=True
     )
     clusters = {}
-    for cluster, pathways in sorted_clusters[:n_top_clust]:
-        print(f"Cluster {cluster} (Size: {len(pathways)})")
-        clusters[cluster] = pathways
-
+    if n_top_clust == 0:
+        for cluster, pathways in sorted_clusters:
+            print(f"Cluster {cluster} (Size: {len(pathways)})")
+            clusters[cluster] = pathways
+    else: 
+        for cluster, pathways in sorted_clusters[:n_top_clust]:
+            print(f"Cluster {cluster} (Size: {len(pathways)})")
+            clusters[cluster] = pathways
     return clusters

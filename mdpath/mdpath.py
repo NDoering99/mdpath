@@ -128,7 +128,6 @@ def main():
     with mda.Writer("first_frame.pdb", multiframe=False) as pdb:
         pdb.write(traj.atoms)
     first_res_num, last_res_num = res_num_from_pdb("first_frame.pdb")
-    print(first_res_num, last_res_num)  # remove me
     num_residues = last_res_num - first_res_num
     df_all_residues = calculate_dihedral_movement_parallel(
         num_parallel_processes, first_res_num, last_res_num, num_residues, traj
@@ -139,9 +138,6 @@ def main():
     residue_graph_empty = graph_building("first_frame.pdb", last_res_num, dist=5.0)
     residue_graph = graph_assign_weights(residue_graph_empty, mi_diff_df)
     visualise_graph(residue_graph)
-
-    for edge in residue_graph.edges():
-        print(edge, residue_graph.edges[edge]["weight"])
 
     df_distant_residues = faraway_residues("first_frame.pdb", last_res_num, dist=12.0)
     if lig_interaction:
@@ -156,7 +152,6 @@ def main():
                 | (df_distant_residues["Residue2"].isin(lig_interaction))
             ]
 
-    print(df_distant_residues)
 
     path_total_weights = collect_path_total_weights(residue_graph, df_distant_residues)
     sorted_paths = sorted(path_total_weights, key=lambda x: x[1], reverse=True)
@@ -165,8 +160,7 @@ def main():
     with open("output.txt", "w") as file:
         for path, total_weight in sorted_paths[:500]:
             file.write(f"Path: {path}, Total Weight: {total_weight}\n")
-            # remove this later
-            print("Path:", path, "Total Weight:", total_weight)
+
 
     if bootstrap:
         num_bootstrap_samples = int(bootstrap)
@@ -179,8 +173,6 @@ def main():
         )
         for path, (mean, lower, upper) in path_confidence_intervals.items():
             path_str = " -> ".join(map(str, path))
-            # remove me later
-            print(f"{path_str}: Mean={mean}, 2.5%={lower}, 97.5%={upper}")
             file_name = "path_confidence_intervals.txt"
             with open(file_name, "w") as file:
                 for path, (mean, lower, upper) in path_confidence_intervals.items():
@@ -188,7 +180,6 @@ def main():
                     file.write(
                         f"{path_str}: Mean={mean}, 2.5%={lower}, 97.5%={upper}\n"
                     )
-
         print(f"Path confidence intervals have been saved to {file_name}")
 
     close_res = close_residues("first_frame.pdb", last_res_num, dist=12.0)
@@ -203,7 +194,6 @@ def main():
             pathway = sorted_paths[pathway_id]
             cluster_pathways_list.append(pathway[0])
         cluster_pathways_dict[cluster_num] = cluster_pathways_list
-    print(cluster_pathways_dict)
 
     residue_coordinates_dict = residue_CA_coordinates("first_frame.pdb", last_res_num)
     # For comp

@@ -159,7 +159,7 @@ def faraway_residues(pdb_file: str, end: int, dist=12.0) -> pd.DataFrame:
             residues = [res for res in chain if res.get_id()[0] == " "]
             for res1, res2 in tqdm(
                 combinations(residues, 2),
-                desc="Processing residues",
+                desc="Calculating distant residues",
                 total=len(residues) * (len(residues) - 1) // 2,
             ):
                 res1_id = res1.get_id()[1]
@@ -203,7 +203,7 @@ def close_residues(pdb_file: str, end: int, dist=10.0) -> pd.DataFrame:
             residues = [res for res in chain if res.get_id()[0] == " "]
             for res1, res2 in tqdm(
                 combinations(residues, 2),
-                desc="Processing residues",
+                desc="Calculating close residues",
                 total=len(residues) * (len(residues) - 1) // 2,
             ):
                 res1_id = res1.get_id()[1]
