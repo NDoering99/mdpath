@@ -11,6 +11,15 @@ import networkx as nx
 import mdpath
 import mdpath.src
 import mdpath.src.structure
+import tempfile 
+
+#Helper functions
+def create_mock_pdb(content: str) -> str:
+    """Helper function to create a temporary PDB file."""
+    tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdb")
+    with open(tmp_file.name, 'w') as f:
+        f.write(content)
+    return tmp_file.name
 
 def test_mdpath_imported():
     """Sample test, will always pass so long as import statement worked."""
@@ -105,3 +114,134 @@ def test_collect_path_total_weights():
         assert weight == pytest.approx(expected_weight)
 
 
+def test_res_num_from_pdb():
+    pdb_content = """
+ATOM      1  N   SER R  66     163.079 132.512 139.525  1.00 67.17           N
+ATOM      2  CA  SER R  66     162.030 133.517 139.402  1.00 67.17           C
+ATOM      3  C   SER R  66     161.837 133.927 137.947  1.00 67.17           C
+ATOM      4  O   SER R  66     160.746 133.785 137.394  1.00 67.17           O
+ATOM      5  CB  SER R  66     162.361 134.744 140.256  1.00 67.17           C
+ATOM      6  OG  SER R  66     163.513 135.410 139.767  1.00 67.17           O
+ATOM      7  N   MET R  67     162.906 134.456 137.345  1.00 67.62           N
+ATOM      8  CA  MET R  67     162.863 134.856 135.941  1.00 67.62           C
+ATOM      9  C   MET R  67     162.712 133.650 135.020  1.00 67.62           C
+ATOM     10  O   MET R  67     161.925 133.688 134.064  1.00 67.62           O
+ATOM     11  CB  MET R  67     164.124 135.646 135.590  1.00 67.62           C
+ATOM     12  CG  MET R  67     164.130 136.230 134.189  1.00 67.62           C
+ATOM     13  SD  MET R  67     162.847 137.472 133.944  1.00 67.62           S
+ATOM     14  CE  MET R  67     163.512 138.833 134.901  1.00 67.62           C
+ATOM     15  N   ILE R  68     163.445 132.569 135.314  1.00 62.30           N
+ATOM     16  CA  ILE R  68     163.415 131.357 134.496  1.00 62.30           C
+ATOM     17  C   ILE R  68     162.033 130.714 134.535  1.00 62.30           C
+ATOM     18  O   ILE R  68     161.528 130.240 133.509  1.00 62.30           O
+ATOM     19  CB  ILE R  68     164.513 130.386 134.971  1.00 62.30           C
+ATOM     20  CG1 ILE R  68     165.891 131.038 134.844  1.00 62.30           C
+ATOM     21  CG2 ILE R  68     164.493 129.087 134.176  1.00 62.30           C
+ATOM     22  CD1 ILE R  68     166.997 130.265 135.529  1.00 62.30           C
+ATOM     23  N   THR R  69     161.394 130.716 135.710  1.00 57.94           N
+ATOM     24  CA  THR R  69     160.061 130.137 135.858  1.00 57.94           C
+ATOM     25  C   THR R  69     159.027 130.903 135.036  1.00 57.94           C
+ATOM     26  O   THR R  69     158.209 130.295 134.331  1.00 57.94           O
+ATOM     27  CB  THR R  69     159.673 130.122 137.339  1.00 57.94           C
+TER
+"""
+    pdb_file = create_mock_pdb(pdb_content)
+    assert mdpath.src.strucutre.res_num_from_pdb(pdb_file) == (66, 69)
+
+def test_faraway_residues():
+    pdb_content = """
+ATOM      1  N   SER R  66     163.079 132.512 139.525  1.00 67.17           N
+ATOM      2  CA  SER R  66     162.030 133.517 139.402  1.00 67.17           C
+ATOM      3  C   SER R  66     161.837 133.927 137.947  1.00 67.17           C
+ATOM      4  O   SER R  66     160.746 133.785 137.394  1.00 67.17           O
+ATOM      5  CB  SER R  66     162.361 134.744 140.256  1.00 67.17           C
+ATOM      6  OG  SER R  66     163.513 135.410 139.767  1.00 67.17           O
+ATOM      7  N   MET R  67     162.906 134.456 137.345  1.00 67.62           N
+ATOM      8  CA  MET R  67     162.863 134.856 135.941  1.00 67.62           C
+ATOM      9  C   MET R  67     162.712 133.650 135.020  1.00 67.62           C
+ATOM     10  O   MET R  67     161.925 133.688 134.064  1.00 67.62           O
+ATOM     11  CB  MET R  67     164.124 135.646 135.590  1.00 67.62           C
+ATOM     12  CG  MET R  67     164.130 136.230 134.189  1.00 67.62           C
+ATOM     13  SD  MET R  67     162.847 137.472 133.944  1.00 67.62           S
+ATOM     14  CE  MET R  67     163.512 138.833 134.901  1.00 67.62           C
+ATOM     15  N   ILE R  68     163.445 132.569 135.314  1.00 62.30           N
+ATOM     16  CA  ILE R  68     163.415 131.357 134.496  1.00 62.30           C
+ATOM     17  C   ILE R  68     162.033 130.714 134.535  1.00 62.30           C
+ATOM     18  O   ILE R  68     161.528 130.240 133.509  1.00 62.30           O
+ATOM     19  CB  ILE R  68     164.513 130.386 134.971  1.00 62.30           C
+ATOM     20  CG1 ILE R  68     165.891 131.038 134.844  1.00 62.30           C
+ATOM     21  CG2 ILE R  68     164.493 129.087 134.176  1.00 62.30           C
+ATOM     22  CD1 ILE R  68     166.997 130.265 135.529  1.00 62.30           C
+ATOM     23  N   THR R  69     161.394 130.716 135.710  1.00 57.94           N
+ATOM     24  CA  THR R  69     160.061 130.137 135.858  1.00 57.94           C
+ATOM     25  C   THR R  69     159.027 130.903 135.036  1.00 57.94           C
+ATOM     26  O   THR R  69     158.209 130.295 134.331  1.00 57.94           O
+ATOM     27  CB  THR R  69     159.673 130.122 137.339  1.00 57.94           C
+TER
+"""
+    pdb_file = create_mock_pdb(pdb_content)
+    result_df = mdpath.src.structure.faraway_residues(pdb_file, end=69, dist=12.0)
+    
+    expected_data = [
+        (66, 67),
+        (66, 68),
+        (66, 69),
+        (67, 68),
+        (67, 69),
+        (68, 69)
+    ]
+    expected_df = pd.DataFrame(expected_data, columns=["Residue1", "Residue2"])
+    
+    result_tuples = list(result_df.itertuples(index=False, name=None))
+    expected_tuples = list(expected_df.itertuples(index=False, name=None))
+    
+    assert result_tuples == expected_tuples, f"Expected {expected_tuples} but got {result_tuples}"
+
+def test_close_residues():
+    pdb_content = """
+ATOM      1  N   SER R  66     163.079 132.512 139.525  1.00 67.17           N
+ATOM      2  CA  SER R  66     162.030 133.517 139.402  1.00 67.17           C
+ATOM      3  C   SER R  66     161.837 133.927 137.947  1.00 67.17           C
+ATOM      4  O   SER R  66     160.746 133.785 137.394  1.00 67.17           O
+ATOM      5  CB  SER R  66     162.361 134.744 140.256  1.00 67.17           C
+ATOM      6  OG  SER R  66     163.513 135.410 139.767  1.00 67.17           O
+ATOM      7  N   MET R  67     162.906 134.456 137.345  1.00 67.62           N
+ATOM      8  CA  MET R  67     162.863 134.856 135.941  1.00 67.62           C
+ATOM      9  C   MET R  67     162.712 133.650 135.020  1.00 67.62           C
+ATOM     10  O   MET R  67     161.925 133.688 134.064  1.00 67.62           O
+ATOM     11  CB  MET R  67     164.124 135.646 135.590  1.00 67.62           C
+ATOM     12  CG  MET R  67     164.130 136.230 134.189  1.00 67.62           C
+ATOM     13  SD  MET R  67     162.847 137.472 133.944  1.00 67.62           S
+ATOM     14  CE  MET R  67     163.512 138.833 134.901  1.00 67.62           C
+ATOM     15  N   ILE R  68     163.445 132.569 135.314  1.00 62.30           N
+ATOM     16  CA  ILE R  68     163.415 131.357 134.496  1.00 62.30           C
+ATOM     17  C   ILE R  68     162.033 130.714 134.535  1.00 62.30           C
+ATOM     18  O   ILE R  68     161.528 130.240 133.509  1.00 62.30           O
+ATOM     19  CB  ILE R  68     164.513 130.386 134.971  1.00 62.30           C
+ATOM     20  CG1 ILE R  68     165.891 131.038 134.844  1.00 62.30           C
+ATOM     21  CG2 ILE R  68     164.493 129.087 134.176  1.00 62.30           C
+ATOM     22  CD1 ILE R  68     166.997 130.265 135.529  1.00 62.30           C
+ATOM     23  N   THR R  69     161.394 130.716 135.710  1.00 57.94           N
+ATOM     24  CA  THR R  69     160.061 130.137 135.858  1.00 57.94           C
+ATOM     25  C   THR R  69     159.027 130.903 135.036  1.00 57.94           C
+ATOM     26  O   THR R  69     158.209 130.295 134.331  1.00 57.94           O
+ATOM     27  CB  THR R  69     159.673 130.122 137.339  1.00 57.94           C
+TER
+"""
+    pdb_file = create_mock_pdb(pdb_content)
+    result_df = mdpath.src.structure.close_residues(pdb_file, end=69, dist=10.0)
+    
+    expected_data = [
+        (66, 67),
+        (66, 68),
+        (66, 69),
+        (67, 68),
+        (67, 69),
+        (68, 69)
+    ]
+    expected_df = pd.DataFrame(expected_data, columns=["Residue1", "Residue2"])
+    
+    result_tuples = list(result_df.itertuples(index=False, name=None))
+    expected_tuples = list(expected_df.itertuples(index=False, name=None))
+    
+    assert result_tuples == expected_tuples, f"Expected {expected_tuples} but got {result_tuples}"

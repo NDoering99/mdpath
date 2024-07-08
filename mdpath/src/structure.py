@@ -8,6 +8,8 @@ from Bio import PDB
 from itertools import combinations
 
 
+    
+
 def res_num_from_pdb(pdb: str) -> tuple[int, int]:
     """Gets first and last residue number from a PDB file.
 
