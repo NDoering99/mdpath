@@ -136,7 +136,7 @@ def calculate_distance(atom1: int, atom2: int) -> float:
     Returns:
         distance (float): Normalized distance between the two atoms.
     """
-    distance_vector = atom1 - atom2
+    distance_vector = [atom1[i] - atom2[i] for i in range(min(len(atom1), len(atom2)))]
     distance = np.linalg.norm(distance_vector)
     return distance
 
