@@ -11,6 +11,7 @@ import networkx as nx
 import mdpath
 import mdpath.src
 import mdpath.src.structure
+import mdpath.src.graph
 import tempfile 
 
 #Helper functions
@@ -146,7 +147,7 @@ ATOM     27  CB  THR R  69     159.673 130.122 137.339  1.00 57.94           C
 TER
 """
     pdb_file = create_mock_pdb(pdb_content)
-    assert mdpath.src.strucutre.res_num_from_pdb(pdb_file) == (66, 69)
+    assert mdpath.src.structure.res_num_from_pdb(pdb_file) == (66, 69)
 
 def test_faraway_residues():
     pdb_content = """
