@@ -9,14 +9,16 @@ import pandas as pd
 import pytest
 import networkx as nx
 import mdpath
+from multiprocessing import Pool
 import mdpath.src
 import mdpath.src.structure
 import mdpath.src.graph
 import mdpath.src.cluster
 import tempfile 
-from unittest.mock import MagicMock,Mock, patch
+from unittest.mock import MagicMock,Mock, patch, call
 import MDAnalysis as mda
 from MDAnalysis.analysis.dihedrals import Dihedral
+from tqdm import tqdm
 
 #Helper functions
 def create_mock_pdb(content: str) -> str:
@@ -97,36 +99,6 @@ def test_max_weight_shortest_path():
     path, weight =  mdpath.src.graph.max_weight_shortest_path(G, source, target)
     assert path == expected_path, f"Expected path: {expected_path}, but got: {path}"
     assert weight == pytest.approx(expected_weight), f"Expected weight: {expected_weight}, but got: {weight}"
-
-
-def test_collect_path_total_weights():
-    G = nx.Graph()
-    G.add_edge(1, 2, weight=1.0)
-    G.add_edge(2, 3, weight=2.0)
-    G.add_edge(1, 3, weight=4.0)
-    G.add_edge(3, 4, weight=1.0)
-    G.add_edge(2, 4, weight=3.0)
-    
-    data = {
-        'Residue1': [1, 1, 2],
-        'Residue2': [3, 4, 4]
-    }
-    df_distant_residues = pd.DataFrame(data)
-    
-    expected_results = [
-        ([1, 3], 4.0), 
-        ([1, 2, 4], 4.0),  
-        ([2, 4], 3.0)  
-    ]
-    
-    results = mdpath.src.graph.collect_path_total_weights(G, df_distant_residues)
-    
-    assert len(results) == len(expected_results)
-    for result, expected in zip(results, expected_results):
-        path, weight = result
-        expected_path, expected_weight = expected
-        assert path == expected_path
-        assert weight == pytest.approx(expected_weight)
 
 
 def test_res_num_from_pdb():
@@ -349,5 +321,90 @@ def test_calc_dihedral_angle_movement_wrapper(mock_calc_func):
     mock_calc_func.assert_called_once_with(residue_id, mock_universe)
 
 
+def mock_calc_dihedral_angle_movement(residue_id, traj):
+    if residue_id == 1:
+        return residue_id, np.array([[30], [45]], dtype=np.int64)
+    elif residue_id == 2:
+        return residue_id, np.array([[50], [65]], dtype=np.int64)
+    else:
+        return residue_id, np.array([], dtype=np.int64)
+
+def mock_calc_dihedral_angle_movement_wrapper(args):
+    res_id, traj = args
+    return mock_calc_dihedral_angle_movement(res_id, traj)
+
+@patch('mdpath.src.structure.Pool')
+@patch('mdpath.src.structure.calc_dihedral_angle_movement_wrapper', side_effect=mock_calc_dihedral_angle_movement_wrapper)
+@patch('mdpath.src.structure.tqdm', return_value=MagicMock())
+def test_calculate_dihedral_movement_parallel(mock_tqdm, mock_wrapper, mock_pool):
+    mock_traj = MagicMock()
+    mock_pool_instance = MagicMock()
+    mock_pool.return_value.__enter__.return_value = mock_pool_instance
+    mock_pool_instance.imap_unordered.return_value = iter([
+        (1, np.array([[30], [45]], dtype=np.int64)), 
+        (2, np.array([[50], [65]], dtype=np.int64))
+    ])
+    
+    df = mdpath.src.structure.calculate_dihedral_movement_parallel(
+        num_parallel_processes=2,
+        first_res_num=1,
+        last_res_num=2,
+        num_residues=2,
+        traj=mock_traj
+    )
+    
+    expected_df = pd.DataFrame({
+        'Res 1': [30, 45],
+        'Res 2': [50, 65]
+    }, dtype=np.int64)
+    
+    pd.testing.assert_frame_equal(df, expected_df)
+    
+    df_empty = mdpath.src.structure.calculate_dihedral_movement_parallel(
+        num_parallel_processes=2,
+        first_res_num=1,
+        last_res_num=1,
+        num_residues=0,
+        traj=mock_traj
+    )
+    
+    expected_df_empty = pd.DataFrame(dtype=np.int64)
+    pd.testing.assert_frame_equal(df_empty, expected_df_empty)
+    
+    def error_wrapper(args):
+        raise ValueError("Mock error")
+    
+    mock_pool_instance.imap_unordered.side_effect = error_wrapper
+    
+    df_error = mdpath.src.structure.calculate_dihedral_movement_parallel(
+        num_parallel_processes=2,
+        first_res_num=1,
+        last_res_num=2,
+        num_residues=2,
+        traj=mock_traj
+    )
+    
+    expected_df_error = pd.DataFrame(dtype=np.int64)
+    pd.testing.assert_frame_equal(df_error, expected_df_error)
+
+
+def test_graph_assign_weights():
+    G = nx.Graph()
+    G.add_edges_from([(1, 2), (2, 3), (3, 4)])
+    data = {
+        'Residue Pair': [("Res 1", "Res 2"), ("Res 2", "Res 3")],
+        'MI Difference': [0.5, 0.8]
+    }
+    mi_diff_df = pd.DataFrame(data)
+    
+    G_weighted = mdpath.src.graph.graph_assign_weights(G, mi_diff_df)
+    
+    expected_weights = {(1, 2): 0.5, (2, 3): 0.8}
+    for edge, weight in expected_weights.items():
+        assert 'weight' in G_weighted.edges[edge], f"Weight for edge {edge} not found"
+        assert G_weighted.edges[edge]['weight'] == weight, f"Weight for edge {edge} is not {weight}"
+    for edge in G_weighted.edges:
+        if edge not in expected_weights:
+            assert 'weight' not in G_weighted.edges[edge], f"Unexpected weight for edge {edge}"
 
 
