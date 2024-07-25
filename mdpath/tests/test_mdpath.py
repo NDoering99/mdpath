@@ -476,3 +476,65 @@ def test_nmi_calc(mocker):
     assert result.shape == expected_shape, f"Expected shape {expected_shape}, but got {result.shape}"
 
     assert (result['MI Difference'] >= 0).all(), "MI Difference values should be non-negative"
+
+
+def test_calculate_overlap_for_pathway():
+    df_basic = pd.DataFrame({
+        "Residue1": [1, 2, 3, 4],
+        "Residue2": [2, 3, 4, 5]
+    })
+
+    args_basic = (
+        0,  
+        [1, 2],  
+        [[1, 2], [3, 4], [1, 4]],  
+        df_basic  
+    )
+    expected_basic = [
+        {"Pathway1": 0, "Pathway2": 1, "Overlap": 1},
+        {"Pathway1": 1, "Pathway2": 0, "Overlap": 1},
+        {"Pathway1": 0, "Pathway2": 2, "Overlap": 1},
+        {"Pathway1": 2, "Pathway2": 0, "Overlap": 1}
+    ]
+    result_basic = mdpath.src.cluster.calculate_overlap_for_pathway(args_basic)
+    assert result_basic == expected_basic
+
+    args_no_overlap = (
+        0,  
+        [1, 2],  
+        [[5, 6], [7, 8]],  
+        df_basic  
+    )
+    expected_no_overlap = [
+        {"Pathway1": 0, "Pathway2": 1, "Overlap": 0},
+        {"Pathway1": 1, "Pathway2": 0, "Overlap": 0}
+    ]
+    result_no_overlap = mdpath.src.cluster.calculate_overlap_for_pathway(args_no_overlap)
+    assert result_no_overlap == expected_no_overlap
+
+    args_edge_case = (
+        0,  
+        [10, 11], 
+        [[20, 21], [30, 31]],  
+        df_basic  
+    )
+    expected_edge_case = [
+        {"Pathway1": 0, "Pathway2": 1, "Overlap": 0},
+        {"Pathway1": 1, "Pathway2": 0, "Overlap": 0}
+    ]
+    result_edge_case = mdpath.src.cluster.calculate_overlap_for_pathway(args_edge_case)
+    assert result_edge_case == expected_edge_case
+
+    df_empty = pd.DataFrame(columns=["Residue1", "Residue2"])
+    args_empty_df = (
+        0,  
+        [1, 2],  
+        [[3, 4], [5, 6]], 
+        df_empty 
+    )
+    expected_empty_df = [
+        {"Pathway1": 0, "Pathway2": 1, "Overlap": 0},
+        {"Pathway1": 1, "Pathway2": 0, "Overlap": 0}
+    ]
+    result_empty_df = mdpath.src.cluster.calculate_overlap_for_pathway(args_empty_df)
+    assert result_empty_df == expected_empty_df
