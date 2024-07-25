@@ -4,6 +4,7 @@ from tqdm import tqdm
 from itertools import combinations
 from Bio import PDB
 
+
 from mdpath.src.structure import calculate_distance
 
 
@@ -67,27 +68,33 @@ def graph_assign_weights(residue_graph: nx.Graph, mi_diff_df: pd.DataFrame) -> n
             residue_graph.edges[edge]["weight"] = weight
     return residue_graph
 
-
-def max_weight_shortest_path(
-    graph: nx.Graph, source: int, target: int
-) -> tuple[list[int], float]:
-    """Finds the shortest path between 2 far away residues with the highest weight.
-
+from typing import Tuple, List
+def max_weight_shortest_path(graph: nx.Graph, source: int, target: int) -> Tuple[List[int], float]:
+    """Finds the shortest path between 2 nodes with the highest total weight among all shortest paths.
+    
     Args:
-        graph (nx.Graph): Residue graph.
-        source (int): Starting residue.
-        target (int): Final residue.
-
+        graph (nx.Graph): Input graph.
+        source (int): Starting node.
+        target (int): Target node.
+    
     Returns:
-        shortest_path (list[int]): List of residues in the shortest path with the heighest weight.
+        best_path (List[int]): List of nodes in the shortest path with the highest weight.
         total_weight (float): Total weight of the shortest path.
     """
-    shortest_path = nx.dijkstra_path(graph, source, target, weight="weight")
-    total_weight = sum(
-        graph[shortest_path[i]][shortest_path[i + 1]]["weight"]
-        for i in range(len(shortest_path) - 1)
-    )
-    return shortest_path, total_weight
+    all_shortest_paths = list(nx.all_shortest_paths(graph, source=source, target=target))
+    
+    max_weight = -float('inf')
+    best_path = None
+    
+    for path in all_shortest_paths:
+        path_weight = sum(graph[path[i]][path[i + 1]]['weight'] for i in range(len(path) - 1))
+        if path_weight > max_weight:
+            max_weight = path_weight
+            best_path = path
+    
+    return best_path, max_weight
+
+
 
 
 def collect_path_total_weights(
