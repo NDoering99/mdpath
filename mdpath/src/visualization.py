@@ -148,9 +148,6 @@ def visualise_graph(graph: nx.Graph, k=0.1, node_size=200) -> None:
     plt.savefig("graph.png", dpi=300, bbox_inches="tight")
 
 
-import json
-
-
 def precompute_path_properties(json_data):
     """Precomputes path properties for quicker visualization in Jupyter notebook.
 
