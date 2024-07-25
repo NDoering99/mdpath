@@ -14,6 +14,7 @@ import mdpath.src
 import mdpath.src.structure
 import mdpath.src.graph
 import mdpath.src.cluster
+import mdpath.src.mutual_information
 import tempfile 
 from unittest.mock import MagicMock,Mock, patch, call
 import MDAnalysis as mda
@@ -408,3 +409,70 @@ def test_graph_assign_weights():
             assert 'weight' not in G_weighted.edges[edge], f"Unexpected weight for edge {edge}"
 
 
+def test_collect_path_total_weights():
+    G = nx.Graph()
+    G.add_edge(1, 2, weight=10)
+    G.add_edge(2, 3, weight=20)
+    G.add_edge(1, 3, weight=15)
+    
+    df = pd.DataFrame({
+        'Residue1': [1, 2],
+        'Residue2': [3, 4]  
+    })
+    
+    # Test cases
+    test_cases = [
+        {
+            "mock_side_effect": [
+                ([1, 2, 3], 30),  
+                nx.NetworkXNoPath  
+            ],
+            "expected_result": [([1, 2, 3], 30)]
+        },
+        {
+            "mock_side_effect": [
+                nx.NetworkXNoPath, 
+                nx.NetworkXNoPath  
+            ],
+            "expected_result": []
+        },
+        {
+            "mock_side_effect": [
+                ([1, 2, 3], 30),  
+                nx.NetworkXNoPath  
+            ],
+            "df": pd.DataFrame(columns=['Residue1', 'Residue2']),
+            "expected_result": []
+        }
+    ]
+    
+    for case in test_cases:
+        with patch('mdpath.src.graph.max_weight_shortest_path') as mock_max_weight_shortest_path:
+            mock_max_weight_shortest_path.side_effect = case["mock_side_effect"]
+            
+            df_test = case.get("df", df)
+            result = mdpath.src.graph.collect_path_total_weights(G, df_test)
+            
+            assert result == case["expected_result"]
+
+def test_nmi_calc(mocker):
+    data = {
+        'Residue1': np.random.uniform(-180, 180, size=100),
+        'Residue2': np.random.uniform(-180, 180, size=100),
+        'Residue3': np.random.uniform(-180, 180, size=100)
+    }
+    df_all_residues = pd.DataFrame(data)
+    
+    result = mdpath.src.mutual_information.NMI_calc(df_all_residues)
+    
+    assert isinstance(result, pd.DataFrame), "Result should be a DataFrame"
+    
+    assert 'Residue Pair' in result.columns, "DataFrame should contain 'Residue Pair' column"
+    assert 'MI Difference' in result.columns, "DataFrame should contain 'MI Difference' column"
+    
+    assert not result.empty, "DataFrame should not be empty"
+    
+    expected_shape = (len(df_all_residues.columns) * (len(df_all_residues.columns) - 1), 2)
+    assert result.shape == expected_shape, f"Expected shape {expected_shape}, but got {result.shape}"
+
+    assert (result['MI Difference'] >= 0).all(), "MI Difference values should be non-negative"
