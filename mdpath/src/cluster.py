@@ -38,7 +38,7 @@ def calculate_overlap(pathways: list[list[int]], df: pd.DataFrame) -> pd.DataFra
                 {"Pathway1": j, "Pathway2": i, "Overlap": overlap_counter},
                 ignore_index=True,
             )
-
+    
     return overlap_df
 
 

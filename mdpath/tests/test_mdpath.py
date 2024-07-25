@@ -12,8 +12,9 @@ import mdpath
 import mdpath.src
 import mdpath.src.structure
 import mdpath.src.graph
+import mdpath.src.cluster
 import tempfile 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock,Mock, patch
 import MDAnalysis as mda
 from MDAnalysis.analysis.dihedrals import Dihedral
 
@@ -333,4 +334,20 @@ def test_calc_dihedral_angle_movement(mocker):
     
     assert i == residue_index
     np.testing.assert_array_equal(dihedral_angle_movement, expected_movement)
+
+def mock_calc_dihedral_angle_movement(residue_id, traj):
+    return residue_id, np.array([1.0, 2.0, 3.0])
+
+@patch('mdpath.src.structure.calc_dihedral_angle_movement', side_effect=mock_calc_dihedral_angle_movement)
+def test_calc_dihedral_angle_movement_wrapper(mock_calc_func):
+    mock_universe = Mock(spec=mda.Universe)
+    residue_id = 42
+    args = (residue_id, mock_universe)
+    result = mdpath.src.structure.calc_dihedral_angle_movement_wrapper(args)
+    assert result[0] == residue_id
+    np.testing.assert_array_equal(result[1], np.array([1.0, 2.0, 3.0]))
+    mock_calc_func.assert_called_once_with(residue_id, mock_universe)
+
+
+
 
