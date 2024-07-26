@@ -276,12 +276,6 @@ TER
     assert len(graph.edges) == len(expected_edges)
 
 
-def test_update_progress():
-    mock_tqdm = MagicMock()
-    result = mdpath.src.structure.update_progress(mock_tqdm)
-    mock_tqdm.update.assert_called_once()
-    assert result == mock_tqdm
-
 def test_calc_dihedral_angle_movement(mocker):
     mock_universe = MagicMock(spec=mda.Universe)
     mock_residue = MagicMock()

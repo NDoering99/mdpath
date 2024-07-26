@@ -94,9 +94,9 @@ def main():
         default=False,
     )
 
+    
+    # Gather input arguments
     args = parser.parse_args()
-    # Initial inputs
-
     if args.comp:
         if args.atop and args.bcluster:
             with open(args.atop, "rb") as pkl_file:
@@ -112,7 +112,7 @@ def main():
             exit()
         else:
             print(
-                "Topology (residue_coordinates) and bcluster (cluster) are required and ajson needed."
+                "Topology (residue_coordinates) and bcluster (cluster) are required and a json needed for comparing two simulations."
             )
             exit()
     if not args.topology or not args.trajectory:
@@ -124,22 +124,28 @@ def main():
     traj = mda.Universe(topology, trajectory)
     lig_interaction = args.lig_interaction
     bootstrap = args.bootstrap
-    first_frame = traj.trajectory[-1]
+    
+    
+    # Prepare the trajectory for analysis
     with mda.Writer("first_frame.pdb", multiframe=False) as pdb:
+        traj.trajectory[0]
         pdb.write(traj.atoms)
     first_res_num, last_res_num = res_num_from_pdb("first_frame.pdb")
     num_residues = last_res_num - first_res_num
+    df_distant_residues = faraway_residues("first_frame.pdb", last_res_num, dist=12.0)
+    df_close_res = close_residues("first_frame.pdb", last_res_num, dist=12.0)
     df_all_residues = calculate_dihedral_movement_parallel(
         num_parallel_processes, first_res_num, last_res_num, num_residues, traj
     )
-
+    print("\033[1mTrajectory is processed and ready for analysis.\033[0m")
+    
+    
+    # Calculate the mutual information and build the graph
     mi_diff_df = NMI_calc(df_all_residues, num_bins=35)
     mi_diff_df.to_csv("mi_diff_df.csv", index=False)
     residue_graph_empty = graph_building("first_frame.pdb", last_res_num, dist=5.0)
     residue_graph = graph_assign_weights(residue_graph_empty, mi_diff_df)
     visualise_graph(residue_graph)
-
-    df_distant_residues = faraway_residues("first_frame.pdb", last_res_num, dist=12.0)
     if lig_interaction:
         if os.path.exists(str(lig_interaction)):
             with open(str(lig_interaction), "r") as file:
@@ -151,17 +157,15 @@ def main():
                 (df_distant_residues["Residue1"].isin(lig_interaction))
                 | (df_distant_residues["Residue2"].isin(lig_interaction))
             ]
-
-
     path_total_weights = collect_path_total_weights(residue_graph, df_distant_residues)
     sorted_paths = sorted(path_total_weights, key=lambda x: x[1], reverse=True)
     sorted_paths_bs = sorted_paths
-
     with open("output.txt", "w") as file:
         for path, total_weight in sorted_paths[:500]:
             file.write(f"Path: {path}, Total Weight: {total_weight}\n")
 
 
+    # Bootstrap analysis
     if bootstrap:
         num_bootstrap_samples = int(bootstrap)
         common_counts, path_confidence_intervals = bootstrap_analysis(
@@ -182,9 +186,8 @@ def main():
                     )
         print(f"Path confidence intervals have been saved to {file_name}")
 
-    close_res = close_residues("first_frame.pdb", last_res_num, dist=12.0)
     pathways = [path for path, _ in sorted_paths[:500]]
-    overlap_df = calculate_overlap_parallel(pathways, close_res, num_parallel_processes)
+    overlap_df = calculate_overlap_parallel(pathways, df_close_res, num_parallel_processes)
 
     clusters = pathways_cluster(overlap_df)
     cluster_pathways_dict = {}

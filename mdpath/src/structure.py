@@ -35,23 +35,23 @@ def res_num_from_pdb(pdb: str) -> tuple[int, int]:
     return int(first_res_num), int(last_res_num)
 
 
-def calc_dihedral_angle_movement(i: int, traj: mda.Universe) -> tuple[int, np.array]:
+def calc_dihedral_angle_movement(res_id: int, traj: mda.Universe) -> tuple[int, np.array]:
     """Calculates dihedral angle movement for a residue over the cours of the MD trajectory.
 
     Args:
-        i (int): Residue number.
+        res_id (int): Residue number.
         traj (mda.Universe): MDAnalysis Universe object containing the trajectory.
 
     Returns:
-        i (int): Residue number.
+        res_id (int): Residue number.
         dihedral_angle_movement (np.array): Dihedral angle movement for the residue over the course of the trajectory.
     """
-    res = traj.residues[i]
+    res = traj.residues[res_id]
     ags = [res.phi_selection()]
     R = Dihedral(ags).run()
     dihedrals = R.results.angles
     dihedral_angle_movement = np.diff(dihedrals, axis=0)
-    return i, dihedral_angle_movement
+    return res_id, dihedral_angle_movement
 
 
 def calc_dihedral_angle_movement_wrapper(
@@ -63,24 +63,11 @@ def calc_dihedral_angle_movement_wrapper(
         args (tuple[int, mda.Universe]): Tuple containing residue number and MDAnalysis Universe object.
 
     Returns:
-        i (int): Residue number.
+        res_id (int): Residue number.
         dihedral_angle_movement (np.array): Dihedral angle movement for the residue over the course of the trajectory.
     """
     residue_id, traj = args
     return calc_dihedral_angle_movement(residue_id, traj)
-
-
-def update_progress(res: tqdm) -> tqdm:
-    """Update progress bar.
-
-    Args:
-        res (tqdm): TQDM progress bar object.
-
-    Returns:
-        res: TQDM progress bar object.
-    """
-    res.update()
-    return res
 
 
 def calculate_dihedral_movement_parallel(
@@ -121,9 +108,9 @@ def calculate_dihedral_movement_parallel(
                         )
                         pbar.update(1)
                     except Exception as e:
-                        print(f"Error processing residue {res_id}: {e}")
+                        print(f"\033[1mError processing residue {res_id}: {e}\033[0m")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"\033[1mAn error occurred:\033[0m {e}")
     return df_all_residues
 
 
@@ -157,32 +144,30 @@ def faraway_residues(pdb_file: str, end: int, dist=12.0) -> pd.DataFrame:
     structure = parser.get_structure("pdb_structure", pdb_file)
     heavy_atoms = ["C", "N", "O", "S"]
     distant_residues = []
-    for model in structure:
-        for chain in model:
-            residues = [res for res in chain if res.get_id()[0] == " "]
-            for res1, res2 in tqdm(
-                combinations(residues, 2),
-                desc="Calculating distant residues",
-                total=len(residues) * (len(residues) - 1) // 2,
-            ):
-                res1_id = res1.get_id()[1]
-                res2_id = res2.get_id()[1]
-                if res1_id <= end and res2_id <= end:
-                    are_distant = True
-                    for atom1 in res1:
-                        if atom1.element in heavy_atoms:
-                            for atom2 in res2:
-                                if atom2.element in heavy_atoms:
-                                    distance = calculate_distance(
-                                        atom1.coord, atom2.coord
-                                    )
-                                    if distance <= dist:
-                                        are_distant = False
-                                        break
-                            if not are_distant:
+    residues = [res for res in structure.get_residues() if PDB.Polypeptide.is_aa(res)]
+    for res1, res2 in tqdm(
+        combinations(residues, 2),
+        desc="Calculating distant residues:",
+        total=len(residues) * (len(residues) - 1) // 2,
+    ):
+        res1_id = res1.get_id()[1]
+        res2_id = res2.get_id()[1]
+        if res1_id <= end and res2_id <= end:
+            are_distant = True
+            for atom1 in res1:
+                if atom1.element in heavy_atoms:
+                    for atom2 in res2:
+                        if atom2.element in heavy_atoms:
+                            distance = calculate_distance(
+                                atom1.coord, atom2.coord
+                            )
+                            if distance <= dist:
+                                are_distant = False
                                 break
-                    if are_distant:
-                        distant_residues.append((res1.get_id()[1], res2.get_id()[1]))
+                    if not are_distant:
+                        break
+            if are_distant:
+                distant_residues.append((res1.get_id()[1], res2.get_id()[1]))
     return pd.DataFrame(distant_residues, columns=["Residue1", "Residue2"])
 
 
@@ -201,30 +186,28 @@ def close_residues(pdb_file: str, end: int, dist=10.0) -> pd.DataFrame:
     structure = parser.get_structure("pdb_structure", pdb_file)
     heavy_atoms = ["C", "N", "O", "S"]
     close_residues = []
-    for model in structure:
-        for chain in model:
-            residues = [res for res in chain if res.get_id()[0] == " "]
-            for res1, res2 in tqdm(
-                combinations(residues, 2),
-                desc="Calculating close residues",
-                total=len(residues) * (len(residues) - 1) // 2,
-            ):
-                res1_id = res1.get_id()[1]
-                res2_id = res2.get_id()[1]
-                if res1_id <= end and res2_id <= end:
-                    are_close = False
-                    for atom1 in res1:
-                        if atom1.element in heavy_atoms:
-                            for atom2 in res2:
-                                if atom2.element in heavy_atoms:
-                                    distance = calculate_distance(
-                                        atom1.coord, atom2.coord
-                                    )
-                                    if distance <= dist:
-                                        are_close = True
-                                        break
-                            if are_close:
+    residues = [res for res in structure.get_residues() if PDB.Polypeptide.is_aa(res)]
+    for res1, res2 in tqdm(
+        combinations(residues, 2),
+        desc="Calculating close residues",
+        total=len(residues) * (len(residues) - 1) // 2,
+    ):
+        res1_id = res1.get_id()[1]
+        res2_id = res2.get_id()[1]
+        if res1_id <= end and res2_id <= end:
+            are_close = False
+            for atom1 in res1:
+                if atom1.element in heavy_atoms:
+                    for atom2 in res2:
+                        if atom2.element in heavy_atoms:
+                            distance = calculate_distance(
+                                atom1.coord, atom2.coord
+                            )
+                            if distance <= dist:
+                                are_close = True
                                 break
                     if are_close:
-                        close_residues.append((res1_id, res2_id))
+                        break
+            if are_close:
+                close_residues.append((res1_id, res2_id))
     return pd.DataFrame(close_residues, columns=["Residue1", "Residue2"])
