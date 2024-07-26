@@ -11,6 +11,7 @@ import networkx as nx
 import mdpath
 from multiprocessing import Pool
 import mdpath.src
+import mdpath.src.bootstrap
 import mdpath.src.notebook_vis
 import mdpath.src.structure
 import mdpath.src.graph
@@ -27,6 +28,7 @@ from Bio import PDB
 import os 
 import json
 import nglview as nv 
+import mdpath.src.bootstrap
 
 import mdpath.src.visualization
 
@@ -942,3 +944,25 @@ def test_generate_cluster_ngl_script(mocker):
         f"Expected: {normalized_expected_cluster2}\n"
         f"Actual: {normalized_actual_calls}"
     )
+
+def test_create_bootstrap_sample():
+    """Test the create_bootstrap_sample function."""
+    df = pd.DataFrame({
+        'A': [1, 2, 3],
+        'B': [4, 5, 6]
+    })
+    
+    result = mdpath.src.bootstrap.create_bootstrap_sample(df)
+    
+    assert isinstance(result, pd.DataFrame), "Result should be a Pandas DataFrame"
+    
+    assert result.shape == df.shape, "Bootstrap sample should have the same shape as the input DataFrame"
+    assert len(result) == len(df), "Number of rows in bootstrap sample should be the same as the input DataFrame"
+
+    assert set(result.columns) == set(df.columns), "Columns of bootstrap sample should match input DataFrame columns"
+    
+    for col in df.columns:
+        original_values = set(df[col])
+        sampled_values = set(result[col])
+        assert sampled_values.issubset(original_values), f"Column {col} in bootstrap sample contains values not in the input DataFrame"
+    
