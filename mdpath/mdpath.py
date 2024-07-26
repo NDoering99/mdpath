@@ -145,7 +145,9 @@ def main():
     mi_diff_df.to_csv("mi_diff_df.csv", index=False)
     residue_graph_empty = graph_building("first_frame.pdb", last_res_num, dist=5.0)
     residue_graph = graph_assign_weights(residue_graph_empty, mi_diff_df)
-    visualise_graph(residue_graph)
+    visualise_graph(residue_graph) # Exports image of the Graph to PNG
+    
+    # Calculate the paths starting from ligand interacting residues
     if lig_interaction:
         if os.path.exists(str(lig_interaction)):
             with open(str(lig_interaction), "r") as file:
@@ -157,13 +159,15 @@ def main():
                 (df_distant_residues["Residue1"].isin(lig_interaction))
                 | (df_distant_residues["Residue2"].isin(lig_interaction))
             ]
+            
+    # Calculate paths
     path_total_weights = collect_path_total_weights(residue_graph, df_distant_residues)
     sorted_paths = sorted(path_total_weights, key=lambda x: x[1], reverse=True)
     sorted_paths_bs = sorted_paths
     with open("output.txt", "w") as file:
         for path, total_weight in sorted_paths[:500]:
             file.write(f"Path: {path}, Total Weight: {total_weight}\n")
-
+    top_pathways = [path for path, _ in sorted_paths[:500]] # TODO potentially make this a changeble value if more paths should be evaluated for clustering
 
     # Bootstrap analysis
     if bootstrap:
@@ -186,9 +190,8 @@ def main():
                     )
         print(f"Path confidence intervals have been saved to {file_name}")
 
-    pathways = [path for path, _ in sorted_paths[:500]]
-    overlap_df = calculate_overlap_parallel(pathways, df_close_res, num_parallel_processes)
-
+    # Cluster pathways to get signaltransduction paths
+    overlap_df = calculate_overlap_parallel(top_pathways, df_close_res, num_parallel_processes)
     clusters = pathways_cluster(overlap_df)
     cluster_pathways_dict = {}
     for cluster_num, cluster_pathways in clusters.items():
@@ -197,28 +200,25 @@ def main():
             pathway = sorted_paths[pathway_id]
             cluster_pathways_list.append(pathway[0])
         cluster_pathways_dict[cluster_num] = cluster_pathways_list
-
     residue_coordinates_dict = residue_CA_coordinates("first_frame.pdb", last_res_num)
-    # For comp
+    
+    # Export residue coordinates and pathways dict for comparisson functionality
     with open("residue_coordinates.pkl", "wb") as pkl_file:
         pickle.dump(residue_coordinates_dict, pkl_file)
 
     with open("cluster_pathways_dict.pkl", "wb") as pkl_file:
         pickle.dump(cluster_pathways_dict, pkl_file)
 
-    updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)
 
+    # Export the cluster pathways for visualization
+    updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)
     formated_dict = format_dict(updated_dict)
     with open("clusters_paths.json", "w") as json_file:
         json.dump(formated_dict, json_file)
-
-    with open("clusters_paths.json", "r") as json_file:
-        json_data = json.load(json_file)
-
-    path_properties = precompute_path_properties(json_data)
+    path_properties = precompute_path_properties(formated_dict)
     with open("precomputed_clusters_paths.json", "w") as out_file:
         json.dump(path_properties, out_file, indent=4)
-    quick_path_properties = precompute_cluster_properties_quick(json_data)
+    quick_path_properties = precompute_cluster_properties_quick(formated_dict)
     with open("quick_precomputed_clusters_paths.json", "w") as out_file2:
         json.dump(quick_path_properties, out_file2, indent=4)
 

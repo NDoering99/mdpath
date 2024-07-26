@@ -33,17 +33,15 @@ def residue_CA_coordinates(pdb_file: str, end: int) -> dict:
     residue_coordinates_dict = {}
     parser = PDB.PDBParser(QUIET=True)
     structure = parser.get_structure("pdb_structure", pdb_file)
-    for model in structure:
-        for chain in model:
-            residues = [res for res in chain if res.get_id()[0] == " "]
-            for res in tqdm(residues, desc="Processing residues"):
-                res_id = res.get_id()[1]
-                if res_id <= end:
-                    for atom in res:
-                        if atom.name == "CA":
-                            if res_id not in residue_coordinates_dict:
-                                residue_coordinates_dict[res_id] = []
-                            residue_coordinates_dict[res_id].append(atom.coord)
+    residues = [res for res in structure.get_residues() if PDB.Polypeptide.is_aa(res)]
+    for res in tqdm(residues, desc="\033[1mProcessing residues: \033[0m"):
+        res_id = res.get_id()[1]
+        if res_id <= end:
+            for atom in res:
+                if atom.name == "CA":
+                    if res_id not in residue_coordinates_dict:
+                        residue_coordinates_dict[res_id] = []
+                    residue_coordinates_dict[res_id].append(atom.coord)
     return residue_coordinates_dict
 
 

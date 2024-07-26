@@ -3,8 +3,7 @@ import pandas as pd
 from tqdm import tqdm
 from itertools import combinations
 from Bio import PDB
-
-
+from typing import Tuple, List
 from mdpath.src.structure import calculate_distance
 
 
@@ -23,28 +22,26 @@ def graph_building(pdb_file: str, end: int, dist=5.0) -> nx.Graph:
     parser = PDB.PDBParser(QUIET=True)
     structure = parser.get_structure("pdb_structure", pdb_file)
     heavy_atoms = ["C", "N", "O", "S"]
-    for model in structure:
-        for chain in model:
-            residues = [res for res in chain if res.get_id()[0] == " "]
-            for res1, res2 in tqdm(
-                combinations(residues, 2),
-                desc="Processing residues",
-                total=len(residues) * (len(residues) - 1) // 2,
-            ):
-                res1_id = res1.get_id()[1]
-                res2_id = res2.get_id()[1]
-                if res1_id <= end and res2_id <= end:
-                    for atom1 in res1:
-                        if atom1.element in heavy_atoms:
-                            for atom2 in res2:
-                                if atom2.element in heavy_atoms:
-                                    distance = calculate_distance(
-                                        atom1.coord, atom2.coord
-                                    )
-                                    if distance <= dist:
-                                        residue_graph.add_edge(
-                                            res1.get_id()[1], res2.get_id()[1], weight=0
-                                        )
+    residues = [res for res in structure.get_residues() if PDB.Polypeptide.is_aa(res)]
+    for res1, res2 in tqdm(
+        combinations(residues, 2),
+        desc="\033[1mProcessing residues: \033[0m",
+        total=len(residues) * (len(residues) - 1) // 2,
+    ):
+        res1_id = res1.get_id()[1]
+        res2_id = res2.get_id()[1]
+        if res1_id <= end and res2_id <= end:
+            for atom1 in res1:
+                if atom1.element in heavy_atoms:
+                    for atom2 in res2:
+                        if atom2.element in heavy_atoms:
+                            distance = calculate_distance(
+                                atom1.coord, atom2.coord
+                            )
+                            if distance <= dist:
+                                residue_graph.add_edge(
+                                    res1.get_id()[1], res2.get_id()[1], weight=0
+                                )
     return residue_graph
 
 
@@ -68,7 +65,7 @@ def graph_assign_weights(residue_graph: nx.Graph, mi_diff_df: pd.DataFrame) -> n
             residue_graph.edges[edge]["weight"] = weight
     return residue_graph
 
-from typing import Tuple, List
+
 def max_weight_shortest_path(graph: nx.Graph, source: int, target: int) -> Tuple[List[int], float]:
     """Finds the shortest path between 2 nodes with the highest total weight among all shortest paths.
     
