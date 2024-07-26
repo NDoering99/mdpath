@@ -538,3 +538,32 @@ def test_calculate_overlap_for_pathway():
     ]
     result_empty_df = mdpath.src.cluster.calculate_overlap_for_pathway(args_empty_df)
     assert result_empty_df == expected_empty_df
+
+@patch('mdpath.src.cluster.calculate_overlap_parallel')
+def test_calculate_overlap_parallel(mock_calculate_overlap_parallel):
+    pathways = [[1, 2], [2, 3], [3, 4]]
+    df = pd.DataFrame({
+        "Residue1": [1, 2, 3],
+        "Residue2": [2, 3, 4]
+    })
+    num_processes = 2
+
+    # Expected result
+    expected_data = [
+        {"Pathway1": 0, "Pathway2": 1, "Overlap": 1},
+        {"Pathway1": 1, "Pathway2": 0, "Overlap": 1},
+        {"Pathway1": 0, "Pathway2": 2, "Overlap": 0},
+        {"Pathway1": 2, "Pathway2": 0, "Overlap": 0},
+        {"Pathway1": 1, "Pathway2": 2, "Overlap": 1},
+        {"Pathway1": 2, "Pathway2": 1, "Overlap": 1},
+    ]
+    expected_df = pd.DataFrame(expected_data)
+    
+    # Mock the output
+    mock_calculate_overlap_parallel.return_value = expected_df
+
+    # Call the function to test
+    result_df = mdpath.src.cluster.calculate_overlap_parallel(pathways, df, num_processes)
+    
+    # Check if the result matches the expected dataframe
+    pd.testing.assert_frame_equal(result_df, expected_df)

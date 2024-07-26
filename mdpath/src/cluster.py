@@ -81,22 +81,17 @@ def calculate_overlap_parallel(
         num_processes (int): Number of processes to use for parallelization.
 
     Returns:
-        overlap_df (pd.DataFrame): Pandas dataframe with the overlap between all pathways wih all other pathways.
+        overlap_df (pd.DataFrame): Pandas dataframe with the overlap between all pathways and all other pathways.
     """
-    overlap_df = pd.DataFrame(columns=["Pathway1", "Pathway2", "Overlap"])
+    args = [(i, path, pathways, df) for i, path in enumerate(pathways)]
+    results = []
     with Pool(processes=num_processes) as pool:
-        with tqdm(
-            total=(len(pathways) ** 2 - len(pathways)),
-            ascii=True,
-            desc="Calculating pathway residue overlapp: ",
-        ) as pbar:
-            for result in pool.imap_unordered(
-                calculate_overlap_for_pathway,
-                [(i, path, pathways, df) for i, path in enumerate(pathways)],
-            ):
-                for row in result:
-                    overlap_df = overlap_df._append(row, ignore_index=True)
-                    pbar.update(1)
+        with tqdm(total=len(args), ascii=True, desc="Calculating pathway residue overlap") as pbar:
+            for result in pool.imap_unordered(calculate_overlap_for_pathway, args):
+                results.extend(result)
+                pbar.update(1)
+
+    overlap_df = pd.DataFrame(results, columns=["Pathway1", "Pathway2", "Overlap"])
     return overlap_df
 
 
