@@ -555,14 +555,36 @@ def test_calculate_overlap_parallel(mock_calculate_overlap_parallel):
         {"Pathway1": 2, "Pathway2": 1, "Overlap": 1},
     ]
     expected_df = pd.DataFrame(expected_data)
-
-    # Mock the output
     mock_calculate_overlap_parallel.return_value = expected_df
-
-    # Call the function to test
     result_df = mdpath.src.cluster.calculate_overlap_parallel(
         pathways, df, num_processes
     )
-
-    # Check if the result matches the expected dataframe
     pd.testing.assert_frame_equal(result_df, expected_df)
+
+def test_pathways_cluster(tmp_path):
+    data = {
+        "Pathway1": [
+            "A", "A", "A", "A", "B", "B", "B", "B", "C", "C", "C", "C", "D", "D", "D", "D",
+            "E", "E", "E", "E", "F", "F", "F", "F", "G", "G", "G", "G", "H", "H", "H", "H"
+        ],
+        "Pathway2": [
+            "A", "B", "C", "D", "B", "C", "D", "E", "C", "D", "E", "F", "D", "E", "F", "G",
+            "E", "F", "G", "H", "F", "G", "H", "A", "G", "H", "A", "B", "H", "A", "B", "C"
+        ],
+        "Overlap": [
+            1, 8, 5, 2,  8, 1, 6, 2,  5, 6, 1, 7,  2, 2, 7, 3,  
+            2, 7, 3, 4,  7, 3, 4, 5,  3, 4, 5, 6,  4, 5, 6, 1
+        ],  
+    }
+    overlap_df = pd.DataFrame(data)
+
+    save_path = tmp_path / "clustered_paths.png"
+    clusters = mdpath.src.cluster.pathways_cluster(overlap_df, save_path=str(save_path))
+    assert isinstance(clusters, dict), "Output is not a dictionary"
+    assert save_path.exists(), "Dendrogram image was not saved"
+    assert all(len(pathways) > 0 for pathways in clusters.values()), "One of the clusters is empty"
+    all_pathways = [item for sublist in clusters.values() for item in sublist]
+    expected_pathways = sorted(set(data["Pathway1"] + data["Pathway2"]))
+    assert sorted(all_pathways) == expected_pathways, "Clusters do not contain the expected pathways"
+    num_clusters = len(clusters)
+    assert num_clusters >= 2, "Number of clusters should be at least 2"
