@@ -2,7 +2,7 @@ mdpath
 ==============================
 [//]: # (Badges)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![CI-CD](https://github.com/NDoering99/mdpath/actions/workflows/Linux_CI_CD.yml/badge.svg)](https://github.com/NDoering99/mdpath/actions/workflows/Linux_CI_CD.yml)
+[![CI-CD](https://github.com/NDoering99/mdpath/actions/workflows/CI_CD.yml/badge.svg)](https://github.com/NDoering99/mdpath/actions/workflows/CI_CD.yml)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 MD signal transduction calculation
