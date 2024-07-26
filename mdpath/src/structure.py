@@ -95,7 +95,7 @@ def calculate_dihedral_movement_parallel(
             with tqdm(
                 total=num_residues,
                 ascii=True,
-                desc="Processing residue dihedral movements: ",
+                desc="\033[1mProcessing residue dihedral movements\033[0m",
             ) as pbar:
                 for res_id, result in pool.imap_unordered(
                     calc_dihedral_angle_movement_wrapper, residue_args
@@ -109,7 +109,7 @@ def calculate_dihedral_movement_parallel(
                     except Exception as e:
                         print(f"\033[1mError processing residue {res_id}: {e}\033[0m")
     except Exception as e:
-        print(f"\033[1mAn error occurred:\033[0m {e}")
+        print(f"{e}")
     return df_all_residues
 
 
@@ -146,7 +146,7 @@ def faraway_residues(pdb_file: str, end: int, dist=12.0) -> pd.DataFrame:
     residues = [res for res in structure.get_residues() if PDB.Polypeptide.is_aa(res)]
     for res1, res2 in tqdm(
         combinations(residues, 2),
-        desc="Calculating distant residues:",
+        desc="\033[1mCalculating distant residues\033[0m",
         total=len(residues) * (len(residues) - 1) // 2,
     ):
         res1_id = res1.get_id()[1]
@@ -186,7 +186,7 @@ def close_residues(pdb_file: str, end: int, dist=10.0) -> pd.DataFrame:
     residues = [res for res in structure.get_residues() if PDB.Polypeptide.is_aa(res)]
     for res1, res2 in tqdm(
         combinations(residues, 2),
-        desc="Calculating close residues",
+        desc="\033[1mCalculating close residues\033[0m",
         total=len(residues) * (len(residues) - 1) // 2,
     ):
         res1_id = res1.get_id()[1]
