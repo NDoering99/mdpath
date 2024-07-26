@@ -18,7 +18,8 @@ def NMI_calc(df_all_residues: pd.DataFrame, num_bins=35) -> pd.DataFrame:
     normalized_mutual_info = {}
     total_iterations = len(df_all_residues.columns) ** 2
     with tqdm(
-        total=total_iterations, desc="\033[1mCalculating Normalized Mutual Information: \033[0m"
+        total=total_iterations,
+        desc="\033[1mCalculating Normalized Mutual Information: \033[0m",
     ) as progress_bar:
         for col1 in df_all_residues.columns:
             for col2 in df_all_residues.columns:

@@ -35,9 +35,7 @@ def graph_building(pdb_file: str, end: int, dist=5.0) -> nx.Graph:
                 if atom1.element in heavy_atoms:
                     for atom2 in res2:
                         if atom2.element in heavy_atoms:
-                            distance = calculate_distance(
-                                atom1.coord, atom2.coord
-                            )
+                            distance = calculate_distance(atom1.coord, atom2.coord)
                             if distance <= dist:
                                 residue_graph.add_edge(
                                     res1.get_id()[1], res2.get_id()[1], weight=0
@@ -66,32 +64,36 @@ def graph_assign_weights(residue_graph: nx.Graph, mi_diff_df: pd.DataFrame) -> n
     return residue_graph
 
 
-def max_weight_shortest_path(graph: nx.Graph, source: int, target: int) -> Tuple[List[int], float]:
+def max_weight_shortest_path(
+    graph: nx.Graph, source: int, target: int
+) -> Tuple[List[int], float]:
     """Finds the shortest path between 2 nodes with the highest total weight among all shortest paths.
-    
+
     Args:
         graph (nx.Graph): Input graph.
         source (int): Starting node.
         target (int): Target node.
-    
+
     Returns:
         best_path (List[int]): List of nodes in the shortest path with the highest weight.
         total_weight (float): Total weight of the shortest path.
     """
-    all_shortest_paths = list(nx.all_shortest_paths(graph, source=source, target=target))
-    
-    max_weight = -float('inf')
+    all_shortest_paths = list(
+        nx.all_shortest_paths(graph, source=source, target=target)
+    )
+
+    max_weight = -float("inf")
     best_path = None
-    
+
     for path in all_shortest_paths:
-        path_weight = sum(graph[path[i]][path[i + 1]]['weight'] for i in range(len(path) - 1))
+        path_weight = sum(
+            graph[path[i]][path[i + 1]]["weight"] for i in range(len(path) - 1)
+        )
         if path_weight > max_weight:
             max_weight = path_weight
             best_path = path
-    
+
     return best_path, max_weight
-
-
 
 
 def collect_path_total_weights(

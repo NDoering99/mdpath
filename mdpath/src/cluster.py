@@ -38,7 +38,7 @@ def calculate_overlap(pathways: list[list[int]], df: pd.DataFrame) -> pd.DataFra
                 {"Pathway1": j, "Pathway2": i, "Overlap": overlap_counter},
                 ignore_index=True,
             )
-    
+
     return overlap_df
 
 
@@ -86,7 +86,9 @@ def calculate_overlap_parallel(
     args = [(i, path, pathways, df) for i, path in enumerate(pathways)]
     results = []
     with Pool(processes=num_processes) as pool:
-        with tqdm(total=len(args), ascii=True, desc="Calculating pathway residue overlap") as pbar:
+        with tqdm(
+            total=len(args), ascii=True, desc="Calculating pathway residue overlap"
+        ) as pbar:
             for result in pool.imap_unordered(calculate_overlap_for_pathway, args):
                 results.extend(result)
                 pbar.update(1)
@@ -149,7 +151,7 @@ def pathways_cluster(
         for cluster, pathways in sorted_clusters:
             print(f"Cluster {cluster} (Size: {len(pathways)})")
             clusters[cluster] = pathways
-    else: 
+    else:
         for cluster, pathways in sorted_clusters[:n_top_clust]:
             print(f"Cluster {cluster} (Size: {len(pathways)})")
             clusters[cluster] = pathways

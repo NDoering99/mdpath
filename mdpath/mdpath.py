@@ -94,7 +94,6 @@ def main():
         default=False,
     )
 
-    
     # Gather input arguments
     args = parser.parse_args()
     if args.comp:
@@ -124,8 +123,7 @@ def main():
     traj = mda.Universe(topology, trajectory)
     lig_interaction = args.lig_interaction
     bootstrap = args.bootstrap
-    
-    
+
     # Prepare the trajectory for analysis
     with mda.Writer("first_frame.pdb", multiframe=False) as pdb:
         traj.trajectory[0]
@@ -138,15 +136,14 @@ def main():
         num_parallel_processes, first_res_num, last_res_num, num_residues, traj
     )
     print("\033[1mTrajectory is processed and ready for analysis.\033[0m")
-    
-    
+
     # Calculate the mutual information and build the graph
     mi_diff_df = NMI_calc(df_all_residues, num_bins=35)
     mi_diff_df.to_csv("mi_diff_df.csv", index=False)
     residue_graph_empty = graph_building("first_frame.pdb", last_res_num, dist=5.0)
     residue_graph = graph_assign_weights(residue_graph_empty, mi_diff_df)
-    visualise_graph(residue_graph) # Exports image of the Graph to PNG
-    
+    visualise_graph(residue_graph)  # Exports image of the Graph to PNG
+
     # Calculate the paths starting from ligand interacting residues
     if lig_interaction:
         if os.path.exists(str(lig_interaction)):
@@ -159,7 +156,7 @@ def main():
                 (df_distant_residues["Residue1"].isin(lig_interaction))
                 | (df_distant_residues["Residue2"].isin(lig_interaction))
             ]
-            
+
     # Calculate paths
     path_total_weights = collect_path_total_weights(residue_graph, df_distant_residues)
     sorted_paths = sorted(path_total_weights, key=lambda x: x[1], reverse=True)
@@ -167,7 +164,9 @@ def main():
     with open("output.txt", "w") as file:
         for path, total_weight in sorted_paths[:500]:
             file.write(f"Path: {path}, Total Weight: {total_weight}\n")
-    top_pathways = [path for path, _ in sorted_paths[:500]] # TODO potentially make this a changeble value if more paths should be evaluated for clustering
+    top_pathways = [
+        path for path, _ in sorted_paths[:500]
+    ]  # TODO potentially make this a changeble value if more paths should be evaluated for clustering
 
     # Bootstrap analysis
     if bootstrap:
@@ -191,7 +190,9 @@ def main():
         print(f"Path confidence intervals have been saved to {file_name}")
 
     # Cluster pathways to get signaltransduction paths
-    overlap_df = calculate_overlap_parallel(top_pathways, df_close_res, num_parallel_processes)
+    overlap_df = calculate_overlap_parallel(
+        top_pathways, df_close_res, num_parallel_processes
+    )
     clusters = pathways_cluster(overlap_df)
     cluster_pathways_dict = {}
     for cluster_num, cluster_pathways in clusters.items():
@@ -201,14 +202,13 @@ def main():
             cluster_pathways_list.append(pathway[0])
         cluster_pathways_dict[cluster_num] = cluster_pathways_list
     residue_coordinates_dict = residue_CA_coordinates("first_frame.pdb", last_res_num)
-    
+
     # Export residue coordinates and pathways dict for comparisson functionality
     with open("residue_coordinates.pkl", "wb") as pkl_file:
         pickle.dump(residue_coordinates_dict, pkl_file)
 
     with open("cluster_pathways_dict.pkl", "wb") as pkl_file:
         pickle.dump(cluster_pathways_dict, pkl_file)
-
 
     # Export the cluster pathways for visualization
     updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)

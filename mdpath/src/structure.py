@@ -8,9 +8,6 @@ from Bio import PDB
 from itertools import combinations
 
 
-
-    
-
 def res_num_from_pdb(pdb: str) -> tuple[int, int]:
     """Gets first and last residue number from a PDB file.
 
@@ -35,7 +32,9 @@ def res_num_from_pdb(pdb: str) -> tuple[int, int]:
     return int(first_res_num), int(last_res_num)
 
 
-def calc_dihedral_angle_movement(res_id: int, traj: mda.Universe) -> tuple[int, np.array]:
+def calc_dihedral_angle_movement(
+    res_id: int, traj: mda.Universe
+) -> tuple[int, np.array]:
     """Calculates dihedral angle movement for a residue over the cours of the MD trajectory.
 
     Args:
@@ -158,9 +157,7 @@ def faraway_residues(pdb_file: str, end: int, dist=12.0) -> pd.DataFrame:
                 if atom1.element in heavy_atoms:
                     for atom2 in res2:
                         if atom2.element in heavy_atoms:
-                            distance = calculate_distance(
-                                atom1.coord, atom2.coord
-                            )
+                            distance = calculate_distance(atom1.coord, atom2.coord)
                             if distance <= dist:
                                 are_distant = False
                                 break
@@ -200,9 +197,7 @@ def close_residues(pdb_file: str, end: int, dist=10.0) -> pd.DataFrame:
                 if atom1.element in heavy_atoms:
                     for atom2 in res2:
                         if atom2.element in heavy_atoms:
-                            distance = calculate_distance(
-                                atom1.coord, atom2.coord
-                            )
+                            distance = calculate_distance(atom1.coord, atom2.coord)
                             if distance <= dist:
                                 are_close = True
                                 break
