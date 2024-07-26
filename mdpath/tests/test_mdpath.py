@@ -966,3 +966,89 @@ def test_create_bootstrap_sample():
         sampled_values = set(result[col])
         assert sampled_values.issubset(original_values), f"Column {col} in bootstrap sample contains values not in the input DataFrame"
     
+#Mock functions
+def create_bootstrap_sample(df):
+    return df.sample(frac=1, replace=True).reset_index(drop=True)
+
+def NMI_calc(df_all_residues, num_bins=35):
+    data = {
+        'Residue Pair': [(f'Res {i}', f'Res {j}') for i in range(1, len(df_all_residues.columns)+1) for j in range(1, len(df_all_residues.columns)+1) if i != j],
+        'MI Difference': [1.0 for _ in range(len(df_all_residues.columns) * (len(df_all_residues.columns) - 1))]
+    }
+    return pd.DataFrame(data)
+
+def graph_assign_weights(residue_graph, mi_diff_df):
+    for u, v in residue_graph.edges():
+        residue_graph[u][v]['weight'] = 1.0
+    return residue_graph
+
+def collect_path_total_weights(residue_graph, df_distant_residues):
+    return [([1, 2, 3], 1.0), ([2, 3], 0.5)]
+
+def test_process_bootstrap_sample():
+    df_all_residues = pd.DataFrame({
+        'Res 1': [1, 2, 3, 4, 5],
+        'Res 2': [5, 4, 3, 2, 1],
+        'Res 3': [2, 3, 4, 5, 6]
+    })
+    
+    residue_graph_empty = nx.Graph()
+    residue_graph_empty.add_edges_from([(1, 2), (2, 3)])
+    
+    df_distant_residues = pd.DataFrame({
+        'Residue1': [1, 2],
+        'Residue2': [3, 3]
+    })
+    
+    pathways_set = {(1, 2, 3), (2, 3)}
+
+    common_count, bootstrap_pathways = mdpath.src.bootstrap.process_bootstrap_sample(
+        df_all_residues,
+        residue_graph_empty,
+        df_distant_residues,
+        pathways_set,
+        num_bins=35
+    )
+    
+    assert common_count == 2
+    assert bootstrap_pathways == [[1, 2, 3], [2, 3]]
+
+
+def test_bootstrap_analysis():
+    df_all_residues = pd.DataFrame({
+        'Res 1': [1, 2, 3, 4, 5],
+        'Res 2': [5, 4, 3, 2, 1],
+        'Res 3': [2, 3, 4, 5, 6]
+    })
+    
+    residue_graph_empty = nx.Graph()
+    residue_graph_empty.add_edges_from([(1, 2), (2, 3)])
+    
+    df_distant_residues = pd.DataFrame({
+        'Residue1': [1, 2],
+        'Residue2': [3, 3]
+    })
+   
+    sorted_paths = [([1, 2, 3], 1.0), ([2, 3], 0.5)]
+   
+    num_bootstrap_samples = 10
+    
+    common_counts, path_confidence_intervals = mdpath.src.bootstrap.bootstrap_analysis(
+        df_all_residues,
+        residue_graph_empty,
+        df_distant_residues,
+        sorted_paths,
+        num_bootstrap_samples,
+        num_bins=35
+    )
+    
+    assert len(common_counts) == num_bootstrap_samples
+    assert all(isinstance(x, (int, np.integer)) for x in common_counts)
+    assert len(path_confidence_intervals) == len(sorted_paths)
+    for path, intervals in path_confidence_intervals.items():
+        assert isinstance(intervals, tuple)
+        assert len(intervals) == 3
+        mean_occurrence, lower_bound, upper_bound = intervals
+        assert 0 <= mean_occurrence <= 1
+        assert 0 <= lower_bound <= 1
+        assert 0 <= upper_bound <= 1
