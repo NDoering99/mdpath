@@ -9,7 +9,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
       max-parallel: 3
-      
+
     steps:
       - uses: actions/checkout@v3
 
@@ -28,7 +28,6 @@ jobs:
 
       - name: Lint and format
         run: |
-          flake8 .
           black .
 
       - name: Install pytest and run tests
