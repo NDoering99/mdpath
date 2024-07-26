@@ -104,23 +104,27 @@ def format_dict(updated_dict: dict) -> dict:
     Returns:
         transformed_dict (dict): Reformatted dictionary.
     """
-
     def transform_list(nested_list):
         transformed = []
         for item in nested_list:
             if isinstance(item, np.ndarray):
                 transformed.append(item.tolist())
             elif isinstance(item, list):
-                transformed.append(transform_list(item))  # Append instead of extend
+                transformed.append(transform_list(item))  # Recursively transform lists
             else:
                 transformed.append(item)
         return transformed
 
-    transformed_dict = {
-        key: transform_list(value) for key, value in updated_dict.items()
-    }
-    return transformed_dict
+    transformed_dict = {}
+    for key, value in updated_dict.items():
+        if isinstance(value, np.ndarray):
+            transformed_dict[key] = value.tolist()
+        elif isinstance(value, list):
+            transformed_dict[key] = transform_list(value)
+        else:
+            transformed_dict[key] = value
 
+    return transformed_dict
 
 def visualise_graph(graph: nx.Graph, k=0.1, node_size=200) -> None:
     """Draws residue graph to PNG file.
