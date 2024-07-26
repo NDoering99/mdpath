@@ -54,7 +54,9 @@ def calculate_overlap_parallel(
     results = []
     with Pool(processes=num_processes) as pool:
         with tqdm(
-            total=len(args), ascii=True, desc="Calculating pathway residue overlap"
+            total=len(args),
+            ascii=True,
+            desc="\033[1mCalculating pathway residue overlap\033[0m",
         ) as pbar:
             for result in pool.imap_unordered(calculate_overlap_for_pathway, args):
                 results.extend(result)

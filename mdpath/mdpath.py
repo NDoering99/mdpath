@@ -156,6 +156,7 @@ def main():
                 (df_distant_residues["Residue1"].isin(lig_interaction))
                 | (df_distant_residues["Residue2"].isin(lig_interaction))
             ]
+        print("\033[1mLigand pathways gathered..\033[0m")
 
     # Calculate paths
     path_total_weights = collect_path_total_weights(residue_graph, df_distant_residues)

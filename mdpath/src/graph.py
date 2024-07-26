@@ -25,7 +25,7 @@ def graph_building(pdb_file: str, end: int, dist=5.0) -> nx.Graph:
     residues = [res for res in structure.get_residues() if PDB.Polypeptide.is_aa(res)]
     for res1, res2 in tqdm(
         combinations(residues, 2),
-        desc="\033[1mProcessing residues: \033[0m",
+        desc="\033[1mBuilding residue graph\033[0m",
         total=len(residues) * (len(residues) - 1) // 2,
     ):
         res1_id = res1.get_id()[1]
