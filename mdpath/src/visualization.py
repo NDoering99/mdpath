@@ -45,10 +45,10 @@ def residue_CA_coordinates(pdb_file: str, end: int) -> dict:
     return residue_coordinates_dict
 
 
-def cluster_prep_for_visualisaton(
+def cluster_prep_for_visualisation(
     cluster: list[list[int]], pdb_file: str
 ) -> list[list[tuple[float]]]:
-    """Prepares patway clusters for visualisation.
+    """Prepares pathway clusters for visualisation.
 
     Args:
         cluster (list[list[int]]): Cluster of pathways.
@@ -57,23 +57,24 @@ def cluster_prep_for_visualisaton(
     Returns:
         cluster (list[list[tuple[float]]]): Cluster of pathways with CA atom coordinates.
     """
-    cluster = []
+    new_cluster = []
+    parser = PDB.PDBParser(QUIET=True)
+    structure = parser.get_structure("pdb_structure", pdb_file)
+    
     for pathway in cluster:
         pathways = []
         for residue in pathway:
-            parser = PDB.PDBParser(QUIET=True)
-            structure = parser.get_structure("pdb_structure", pdb_file)
             res_id = ("", residue, "")
             try:
                 res = structure[0][res_id]
                 atom = res["CA"]
-                coord = atom.get_coord()
+                coord = tuple(atom.get_coord())
                 pathways.append(coord)
             except KeyError:
-                print(res + " not found.")
-            cluster.append(pathways)
-    return cluster
-
+                print(f"Residue {res_id} not found.")
+        new_cluster.append(pathways)
+        
+    return new_cluster
 
 def apply_backtracking(original_dict: dict, translation_dict: dict) -> dict:
     """Backtracks the original dictionary with a translation dictionary.
@@ -104,27 +105,23 @@ def format_dict(updated_dict: dict) -> dict:
     Returns:
         transformed_dict (dict): Reformatted dictionary.
     """
+
     def transform_list(nested_list):
         transformed = []
         for item in nested_list:
             if isinstance(item, np.ndarray):
                 transformed.append(item.tolist())
             elif isinstance(item, list):
-                transformed.append(transform_list(item))  # Recursively transform lists
+                transformed.append(transform_list(item))  # Append instead of extend
             else:
                 transformed.append(item)
         return transformed
 
-    transformed_dict = {}
-    for key, value in updated_dict.items():
-        if isinstance(value, np.ndarray):
-            transformed_dict[key] = value.tolist()
-        elif isinstance(value, list):
-            transformed_dict[key] = transform_list(value)
-        else:
-            transformed_dict[key] = value
-
+    transformed_dict = {
+        key: transform_list(value) for key, value in updated_dict.items()
+    }
     return transformed_dict
+
 
 def visualise_graph(graph: nx.Graph, k=0.1, node_size=200) -> None:
     """Draws residue graph to PNG file.

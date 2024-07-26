@@ -29,7 +29,7 @@ from mdpath.src.cluster import (
 from mdpath.src.visualization import (
     residue_CA_coordinates,
     apply_backtracking,
-    cluster_prep_for_visualisaton,
+    cluster_prep_for_visualisation,
     format_dict,
     visualise_graph,
     precompute_path_properties,
