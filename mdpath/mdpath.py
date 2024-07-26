@@ -24,7 +24,7 @@ from mdpath.src.graph import (
 from mdpath.src.cluster import (
     calculate_overlap_parallel,
     pathways_cluster,
-    calculate_overlap,
+
 )
 from mdpath.src.visualization import (
     residue_CA_coordinates,

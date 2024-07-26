@@ -8,39 +8,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-def calculate_overlap(pathways: list[list[int]], df: pd.DataFrame) -> pd.DataFrame:
-    """Calculates the overlap between all pathways.
-
-    Args:
-        pathways (list[list[int]]): List of pathways.
-        df (pd.DataFrame): Pandas dataframe with close residue pairs.
-
-    Returns:
-        overlap_df (pd.DataFrame): Pandas dataframe with the overlap between all given pathways.
-    """
-    overlap_df = pd.DataFrame(columns=["Pathway1", "Pathway2", "Overlap"])
-    for i in tqdm(range(len(pathways))):
-        path1 = pathways[i]
-        for j in range(i + 1, len(pathways)):
-            path2 = pathways[j]
-            overlap_counter = 0
-            for res1 in path1:
-                for res2 in path2:
-                    if ((df["Residue1"] == res1) & (df["Residue2"] == res2)).any() or (
-                        (df["Residue1"] == res2) & (df["Residue2"] == res1)
-                    ).any():
-                        overlap_counter += 1
-            overlap_df._append(
-                {"Pathway1": i, "Pathway2": j, "Overlap": overlap_counter},
-                ignore_index=True,
-            )
-            overlap_df._append(
-                {"Pathway1": j, "Pathway2": i, "Overlap": overlap_counter},
-                ignore_index=True,
-            )
-
-    return overlap_df
-
 
 def calculate_overlap_for_pathway(
     args: tuple[int, list[int], list[list[int]], pd.DataFrame]
