@@ -11,11 +11,13 @@ import networkx as nx
 import mdpath
 from multiprocessing import Pool
 import mdpath.src
+import mdpath.src.notebook_vis
 import mdpath.src.structure
 import mdpath.src.graph
 import mdpath.src.cluster
 import mdpath.src.mutual_information
 import mdpath.src.visualization
+import mdpath.src.notebook_vis
 import tempfile
 from unittest.mock import MagicMock, Mock, patch, call
 import MDAnalysis as mda
@@ -23,7 +25,8 @@ from MDAnalysis.analysis.dihedrals import Dihedral
 from tqdm import tqdm
 from Bio import PDB
 import os 
-
+import json
+import nglview as nv 
 
 import mdpath.src.visualization
 
@@ -817,3 +820,125 @@ def test_precompute_cluster_properties_quick():
     ]
     actual_output = mdpath.src.visualization.precompute_cluster_properties_quick(json_data)
     assert actual_output == expected_output, f"Expected {expected_output}, but got {actual_output}"
+
+def test_load_precomputed_data(tmp_path):
+    sample_data = {"cluster_1": {"property1": "value1"}, "cluster_2": {"property2": "value2"}}
+    json_file = tmp_path / "test_data.json"
+    with open(json_file, "w") as f:
+        json.dump(sample_data, f)
+    
+    result = mdpath.src.notebook_vis.load_precomputed_data(str(json_file))
+    
+    assert result == sample_data
+
+def test_generate_ngl_script(mocker):
+    mock_view = MagicMock(spec=nv.NGLWidget)
+    
+    precomputed_data = [
+        {
+            "clusterid": 1,
+            "pathway_index": 0,
+            "coord1": [1.0, 2.0, 3.0],
+            "coord2": [4.0, 5.0, 6.0],
+            "color": [0.5, 0.5, 0.5],
+            "radius": 0.1
+        }
+    ]
+
+    mdpath.src.notebook_vis.generate_ngl_script(precomputed_data, mock_view)
+    
+    expected_js_code = """
+        var shape = new NGL.Shape('Cluster1_Pathway0');
+        shape.addCylinder([1.0, 2.0, 3.0], 
+                          [4.0, 5.0, 6.0], 
+                          [0.5, 0.5, 0.5], 
+                          0.1);
+        var shapeComp = this.stage.addComponentFromObject(shape);
+        shapeComp.addRepresentation('buffer');
+    """
+    
+    actual_js_code = mock_view._execute_js_code.call_args[0][0].strip()
+    print(f"Actual JavaScript Code:\n{actual_js_code}\n")
+    
+    normalized_expected = ''.join(expected_js_code.split())
+    normalized_actual = ''.join(actual_js_code.split())
+    
+    assert normalized_actual == normalized_expected, f"Expected: {normalized_expected}\nActual: {normalized_actual}"
+
+def test_generate_cluster_ngl_script(mocker):
+    mock_view = MagicMock(spec=nv.NGLWidget)
+    
+    precomputed_data = [
+        {
+            "clusterid": 1,
+            "coord1": [1.0, 2.0, 3.0],
+            "coord2": [4.0, 5.0, 6.0],
+            "color": [0.5, 0.5, 0.5],
+            "radius": 0.1
+        },
+        {
+            "clusterid": 1,
+            "coord1": [7.0, 8.0, 9.0],
+            "coord2": [10.0, 11.0, 12.0],
+            "color": [0.2, 0.3, 0.4],
+            "radius": 0.2
+        },
+        {
+            "clusterid": 2,
+            "coord1": [13.0, 14.0, 15.0],
+            "coord2": [16.0, 17.0, 18.0],
+            "color": [0.1, 0.2, 0.3],
+            "radius": 0.15
+        }
+    ]
+ 
+    mdpath.src.notebook_vis.generate_cluster_ngl_script(precomputed_data, mock_view)
+    
+    expected_js_code_cluster1 = """
+        var shape = new NGL.Shape('Cluster1');
+        shape.addCylinder([1.0, 2.0, 3.0], 
+                          [4.0, 5.0, 6.0], 
+                          [0.5, 0.5, 0.5], 
+                          0.1);
+        shape.addCylinder([7.0, 8.0, 9.0], 
+                          [10.0, 11.0, 12.0], 
+                          [0.2, 0.3, 0.4], 
+                          0.2);
+        var shapeComp = this.stage.addComponentFromObject(shape);
+        shapeComp.addRepresentation('buffer');
+    """
+    
+    expected_js_code_cluster2 = """
+        var shape = new NGL.Shape('Cluster2');
+        shape.addCylinder([13.0, 14.0, 15.0], 
+                          [16.0, 17.0, 18.0], 
+                          [0.1, 0.2, 0.3], 
+                          0.15);
+        var shapeComp = this.stage.addComponentFromObject(shape);
+        shapeComp.addRepresentation('buffer');
+    """
+
+    actual_js_calls = [call[0][0].strip() for call in mock_view._execute_js_code.call_args_list]
+    
+    print("Actual JavaScript Code Calls:")
+    for call in actual_js_calls:
+        print(call)
+    
+    def normalize_js(js_code):
+        return ''.join(js_code.split())
+    
+    normalized_expected_cluster1 = normalize_js(expected_js_code_cluster1)
+    normalized_expected_cluster2 = normalize_js(expected_js_code_cluster2)
+    normalized_actual_calls = [normalize_js(call) for call in actual_js_calls]
+    
+    assert normalized_expected_cluster1 in normalized_actual_calls, (
+        f"Expected JavaScript code for cluster 1 not found in actual calls.\n"
+        f"Expected: {normalized_expected_cluster1}\n"
+        f"Actual: {normalized_actual_calls}"
+    )
+    
+    assert normalized_expected_cluster2 in normalized_actual_calls, (
+        f"Expected JavaScript code for cluster 2 not found in actual calls.\n"
+        f"Expected: {normalized_expected_cluster2}\n"
+        f"Actual: {normalized_actual_calls}"
+    )
