@@ -94,6 +94,37 @@ def main():
         default=False,
     )
 
+    #Dist flags
+
+    parser.add_argument(
+        "-fardist",
+        dest="fardist",
+        help="Default distance for faraway residues.",
+        required=False,
+        default=12.0,
+    )
+    parser.add_argument(
+        "-closedist",
+        dest="closedist",
+        help="Default distance for close residues.",
+        required=False,
+        default=12.0,
+    )
+    parser.add_argument(
+        "-graphdist",
+        dest="graphdist",
+        help="Default distance for residues making up the graph.",
+        required=False,
+        default=5.0,
+    )
+    parser.add_argument(
+        "-numpath",
+        dest="numpath",
+        help="Default number of top paths considered for clustering.",
+        required=False,
+        default=500,
+    )
+
     # Gather input arguments
     args = parser.parse_args()
     if args.comp:
@@ -123,6 +154,12 @@ def main():
     traj = mda.Universe(topology, trajectory)
     lig_interaction = args.lig_interaction
     bootstrap = args.bootstrap
+    fardist = float(args.fardist)
+    closedist = float(args.closedist)
+    graphdist= float(args.graphdist)
+    numpath = int(args.numpath)
+
+
 
     # Prepare the trajectory for analysis
     with mda.Writer("first_frame.pdb", multiframe=False) as pdb:
@@ -130,8 +167,8 @@ def main():
         pdb.write(traj.atoms)
     first_res_num, last_res_num = res_num_from_pdb("first_frame.pdb")
     num_residues = last_res_num - first_res_num
-    df_distant_residues = faraway_residues("first_frame.pdb", last_res_num, dist=12.0)
-    df_close_res = close_residues("first_frame.pdb", last_res_num, dist=12.0)
+    df_distant_residues = faraway_residues("first_frame.pdb", last_res_num, dist=fardist)
+    df_close_res = close_residues("first_frame.pdb", last_res_num, dist=closedist)
     df_all_residues = calculate_dihedral_movement_parallel(
         num_parallel_processes, first_res_num, last_res_num, num_residues, traj
     )
@@ -140,11 +177,11 @@ def main():
     # Calculate the mutual information and build the graph
     mi_diff_df = NMI_calc(df_all_residues, num_bins=35)
     mi_diff_df.to_csv("mi_diff_df.csv", index=False)
-    residue_graph_empty = graph_building("first_frame.pdb", last_res_num, dist=5.0)
+    residue_graph_empty = graph_building("first_frame.pdb", last_res_num, dist=graphdist)
     residue_graph = graph_assign_weights(residue_graph_empty, mi_diff_df)
     visualise_graph(residue_graph)  # Exports image of the Graph to PNG
 
-    # Calculate the paths starting from ligand interacting residues
+    # Calculate the paths starting from ligand interacting residues 
     if lig_interaction:
         if os.path.exists(str(lig_interaction)):
             with open(str(lig_interaction), "r") as file:
@@ -163,10 +200,10 @@ def main():
     sorted_paths = sorted(path_total_weights, key=lambda x: x[1], reverse=True)
     sorted_paths_bs = sorted_paths
     with open("output.txt", "w") as file:
-        for path, total_weight in sorted_paths[:500]:
+        for path, total_weight in sorted_paths[:numpath]:
             file.write(f"Path: {path}, Total Weight: {total_weight}\n")
     top_pathways = [
-        path for path, _ in sorted_paths[:500]
+        path for path, _ in sorted_paths[:numpath]
     ]  # TODO potentially make this a changeble value if more paths should be evaluated for clustering
 
     # Bootstrap analysis
@@ -178,6 +215,7 @@ def main():
             df_distant_residues,
             sorted_paths_bs,
             num_bootstrap_samples,
+            numpath,
         )
         for path, (mean, lower, upper) in path_confidence_intervals.items():
             path_str = " -> ".join(map(str, path))

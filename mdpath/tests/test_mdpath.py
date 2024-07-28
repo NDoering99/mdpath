@@ -1002,11 +1002,14 @@ def test_process_bootstrap_sample():
     
     pathways_set = {(1, 2, 3), (2, 3)}
 
+    numpath = 500
+
     common_count, bootstrap_pathways = mdpath.src.bootstrap.process_bootstrap_sample(
         df_all_residues,
         residue_graph_empty,
         df_distant_residues,
         pathways_set,
+        numpath,
         num_bins=35
     )
     
@@ -1032,13 +1035,15 @@ def test_bootstrap_analysis():
     sorted_paths = [([1, 2, 3], 1.0), ([2, 3], 0.5)]
    
     num_bootstrap_samples = 10
-    
+    numpath = 500
+
     common_counts, path_confidence_intervals = mdpath.src.bootstrap.bootstrap_analysis(
         df_all_residues,
         residue_graph_empty,
         df_distant_residues,
         sorted_paths,
         num_bootstrap_samples,
+        numpath,
         num_bins=35
     )
     
