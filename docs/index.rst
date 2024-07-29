@@ -20,12 +20,18 @@ MDPath documentation
    :maxdepth: 4
    :caption: MDPath
    
-   Running MDPath
-   MDPath Outputs
-   MDPath Visualization
+   running_mdpath
+   mdpath_outputs
+   mdpath_visualization
 
 .. toctree::
    :maxdepth: 1
    :caption: API Docs
 
-   MDPath Functions
+   mdpath_functions
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Contributing to MDPath
+
+   developer_guide

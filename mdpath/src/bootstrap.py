@@ -7,6 +7,7 @@ from mdpath.src.graph import (
 from mdpath.src.mutual_information import NMI_calc
 from typing import Dict, Set, Tuple, List
 
+
 def create_bootstrap_sample(df: pd.DataFrame) -> tuple[int, set[tuple]]:
     """Creates a sample from the dataframe with replacement for bootstrap analysis.
 
@@ -22,14 +23,13 @@ def create_bootstrap_sample(df: pd.DataFrame) -> tuple[int, set[tuple]]:
     return bootstrap_sample
 
 
-
 def process_bootstrap_sample(
     df_all_residues: pd.DataFrame,
     residue_graph_empty: Dict,
     df_distant_residues: pd.DataFrame,
     pathways_set: Set[Tuple],
     numpath: int,
-    num_bins: int = 35
+    num_bins: int = 35,
 ) -> Tuple[int, List[List[int]]]:
     """Process a bootstrap sample to find common paths with the original sample.
 
@@ -70,7 +70,7 @@ def bootstrap_analysis(
     sorted_paths: List[Tuple],
     num_bootstrap_samples: int,
     numpath: int,
-    num_bins: int = 35
+    num_bins: int = 35,
 ) -> Tuple[np.ndarray, Dict]:
     """Analyse the common paths between the original sample and bootstrap samples.
 
@@ -101,7 +101,6 @@ def bootstrap_analysis(
             pathways_set,
             numpath,
             num_bins=num_bins,
-        
         )
         results.append(result)
         current_paths = set(tuple(path) for path in occurrences)

@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-
 def calculate_overlap_for_pathway(
     args: tuple[int, list[int], list[list[int]], pd.DataFrame]
 ) -> list[dict]:

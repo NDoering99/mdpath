@@ -60,7 +60,7 @@ def cluster_prep_for_visualisation(
     new_cluster = []
     parser = PDB.PDBParser(QUIET=True)
     structure = parser.get_structure("pdb_structure", pdb_file)
-    
+
     for pathway in cluster:
         pathways = []
         for residue in pathway:
@@ -73,8 +73,9 @@ def cluster_prep_for_visualisation(
             except KeyError:
                 print(f"Residue {res_id} not found.")
         new_cluster.append(pathways)
-        
+
     return new_cluster
+
 
 def apply_backtracking(original_dict: dict, translation_dict: dict) -> dict:
     """Backtracks the original dictionary with a translation dictionary.
