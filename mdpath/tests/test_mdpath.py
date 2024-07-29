@@ -29,7 +29,7 @@ import os
 import json
 import nglview as nv 
 import mdpath.src.bootstrap
-
+import subprocess
 import mdpath.src.visualization
 
 # Helper functions
@@ -1057,3 +1057,39 @@ def test_bootstrap_analysis():
         assert 0 <= mean_occurrence <= 1
         assert 0 <= lower_bound <= 1
         assert 0 <= upper_bound <= 1
+
+
+def test_mdpath_output_files():
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    topology = os.path.join(script_dir, "test_topology.pdb")
+    trajectory = os.path.join(script_dir, "test_trajectory.dcd")
+    numpath = "50"
+    
+    assert os.path.exists(topology), f"Topology file {topology} does not exist."
+    assert os.path.exists(trajectory), f"Trajectory file {trajectory} does not exist."
+    
+    expected_files = [
+        "first_frame.pdb",
+        "mi_diff_df.csv",
+        "output.txt",
+        "path_confidence_intervals.txt",
+        "residue_coordinates.pkl",
+        "cluster_pathways_dict.pkl",
+        "clusters_paths.json",
+        "precomputed_clusters_paths.json",
+        "quick_precomputed_clusters_paths.json"
+    ]
+    
+    result = subprocess.run([
+        "mdpath", 
+        "-top", topology,
+        "-traj", trajectory,
+        "-numpath", numpath
+    ], capture_output=True, text=True)
+    
+    
+    for file in expected_files:
+        assert os.path.exists(file), f"Expected output file {file} not found."
+    for file in expected_files:
+        os.remove(file)
