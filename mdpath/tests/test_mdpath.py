@@ -1007,7 +1007,7 @@ def test_process_bootstrap_sample():
     pathways_set = {(1, 2, 3), (2, 3)}
 
     numpath = 500
-
+    os.makedirs("bootstrap", exist_ok=True)
     common_count, bootstrap_pathways = mdpath.src.bootstrap.process_bootstrap_sample(
         df_all_residues,
         residue_graph_empty,
