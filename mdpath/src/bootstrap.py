@@ -6,7 +6,7 @@ from mdpath.src.graph import (
 )
 from mdpath.src.mutual_information import NMI_calc
 from typing import Dict, Set, Tuple, List
-
+import os
 
 def create_bootstrap_sample(df: pd.DataFrame) -> tuple[int, set[tuple]]:
     """Creates a sample from the dataframe with replacement for bootstrap analysis.
@@ -29,6 +29,7 @@ def process_bootstrap_sample(
     df_distant_residues: pd.DataFrame,
     pathways_set: Set[Tuple],
     numpath: int,
+    sample_num: int,
     num_bins: int = 35,
 ) -> Tuple[int, List[List[int]]]:
     """Process a bootstrap sample to find common paths with the original sample.
@@ -57,6 +58,12 @@ def process_bootstrap_sample(
         bootstrap_path_total_weights, key=lambda x: x[1], reverse=True
     )
     bootstrap_pathways = [path for path, _ in bootstrap_sorted_paths[:numpath]]
+    file_name = f"bootstrap_sample_{sample_num}.txt"
+    new_file_path = os.path.join("bootstrap", file_name)
+    with open(new_file_path, 'w') as file:
+        for pathway in bootstrap_pathways:
+            file.write(f"{pathway}\n")
+
     bootstrap_set = set(tuple(path) for path in bootstrap_pathways)
     common_elements = bootstrap_set.intersection(pathways_set)
     common_count = len(common_elements)
@@ -87,8 +94,8 @@ def bootstrap_analysis(
         common_counts (np.array): Array with the counts of common paths between the original sample and bootstrap samples.
         path_confidence_intervals (dict): Dictionary with the confidence intervals for each path.
     """
+    os.makedirs("bootstrap", exist_ok=True)
     pathways = [path for path, _ in sorted_paths[:numpath]]
-    print(pathways)
     pathways_set = set(tuple(path) for path in pathways)
     results = []
     path_occurrences = {tuple(path): [] for path in pathways_set}
@@ -100,6 +107,7 @@ def bootstrap_analysis(
             df_distant_residues,
             pathways_set,
             numpath,
+            sample_num = _,
             num_bins=num_bins,
         )
         results.append(result)
