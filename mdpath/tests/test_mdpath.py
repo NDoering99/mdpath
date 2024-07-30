@@ -1201,7 +1201,7 @@ def test_mdpath_output_files():
     sys.path.insert(0, mdpath_dir)
 
     try:
-        import mdpath
+        from mdpath.mdpath import main
     except ImportError as e:
         raise ImportError(f"Error importing mdpath: {e}")
 
@@ -1215,7 +1215,7 @@ def test_mdpath_output_files():
         "-numpath", numpath
     ]
 
-    mdpath.mdpath.main()
+    main()
         
     for file in expected_files:
         assert os.path.exists(file), f"Expected output file {file} not found."
