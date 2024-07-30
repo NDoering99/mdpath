@@ -1215,7 +1215,7 @@ def test_mdpath_output_files():
         "-numpath", numpath
     ]
 
-    mdpath.mdpath.main()
+    mdpath.main()
         
     for file in expected_files:
         assert os.path.exists(file), f"Expected output file {file} not found."
