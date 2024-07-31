@@ -92,6 +92,13 @@ def main():
         help="Cluster that is morphed.",
         default=False,
     )
+    parser.add_argument(
+        "-multitraj",
+        dest="multitraj",
+        help="List of multiple pathways from previous analysis.",
+        default=False,
+        nargs='+',
+    )
 
     # Dist flags
 
@@ -144,6 +151,44 @@ def main():
                 "Topology (residue_coordinates) and bcluster (cluster) are required and a json needed for comparing two simulations."
             )
             exit()
+    if args.multitraj and args.topology:
+        merged_data = []
+        topology = args.topology
+        num_parallel_processes = int(args.num_parallel_processes)
+        closedist = float(args.closedist)
+        first_res_num, last_res_num = res_num_from_pdb(topology)
+        num_residues = last_res_num - first_res_num
+        for filepath in args.multitraj:
+            with open(filepath, 'rb') as file:
+                data = pickle.load(file)
+            merged_data.extend(data)
+        df_close_res = close_residues(topology, last_res_num, dist=closedist)
+        overlap_df = calculate_overlap_parallel(
+        merged_data, df_close_res, num_parallel_processes
+    )
+        clusters = pathways_cluster(overlap_df)
+        cluster_pathways_dict = {}
+        for cluster_num, cluster_pathways in clusters.items():
+            cluster_pathways_list = []
+            for pathway_id in cluster_pathways:
+                pathway = merged_data[pathway_id]
+            cluster_pathways_list.append(pathway)
+        cluster_pathways_dict[cluster_num] = cluster_pathways_list
+        residue_coordinates_dict = residue_CA_coordinates(topology, last_res_num)
+
+        updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)
+        formated_dict = format_dict(updated_dict)
+        with open("multitraj_clusters_paths.json", "w") as json_file:
+            json.dump(formated_dict, json_file)
+        path_properties = precompute_path_properties(formated_dict)
+        with open("multitraj_precomputed_clusters_paths.json", "w") as out_file:
+            json.dump(path_properties, out_file, indent=4)
+        quick_path_properties = precompute_cluster_properties_quick(formated_dict)
+        with open("multitraj_quick_precomputed_clusters_paths.json", "w") as out_file2:
+            json.dump(quick_path_properties, out_file2, indent=4)
+        print("\033[1mAnalyzed multiple trajectories.\033[0m")
+        exit()
+
     if not args.topology or not args.trajectory:
         print("Both trajectory and topology files are required!")
         exit()
@@ -249,6 +294,9 @@ def main():
 
     with open("cluster_pathways_dict.pkl", "wb") as pkl_file:
         pickle.dump(cluster_pathways_dict, pkl_file)
+    
+    with open("top_pathways.pkl", "wb") as pkl_file:
+        pickle.dump(top_pathways, pkl_file)
 
     # Export the cluster pathways for visualization
     updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)

@@ -10,6 +10,8 @@ import pytest
 import networkx as nx
 import mdpath
 from multiprocessing import Pool
+import mdpath.mdpath
+import mdpath.mdpath
 import mdpath.src
 import mdpath.src.bootstrap
 import mdpath.src.notebook_vis
@@ -25,13 +27,14 @@ import MDAnalysis as mda
 from MDAnalysis.analysis.dihedrals import Dihedral
 from tqdm import tqdm
 from Bio import PDB
-import os
+import os 
 import json
-import nglview as nv
+import nglview as nv 
+import importlib.util
+import shutil
 import mdpath.src.bootstrap
 import subprocess
 import mdpath.src.visualization
-
 
 # Helper functions
 def create_mock_pdb(content: str) -> str:
@@ -572,111 +575,20 @@ def test_calculate_overlap_parallel(mock_calculate_overlap_parallel):
     )
     pd.testing.assert_frame_equal(result_df, expected_df)
 
-
 def test_pathways_cluster(tmp_path):
     data = {
         "Pathway1": [
-            "A",
-            "A",
-            "A",
-            "A",
-            "B",
-            "B",
-            "B",
-            "B",
-            "C",
-            "C",
-            "C",
-            "C",
-            "D",
-            "D",
-            "D",
-            "D",
-            "E",
-            "E",
-            "E",
-            "E",
-            "F",
-            "F",
-            "F",
-            "F",
-            "G",
-            "G",
-            "G",
-            "G",
-            "H",
-            "H",
-            "H",
-            "H",
+            "A", "A", "A", "A", "B", "B", "B", "B", "C", "C", "C", "C", "D", "D", "D", "D",
+            "E", "E", "E", "E", "F", "F", "F", "F", "G", "G", "G", "G", "H", "H", "H", "H"
         ],
         "Pathway2": [
-            "A",
-            "B",
-            "C",
-            "D",
-            "B",
-            "C",
-            "D",
-            "E",
-            "C",
-            "D",
-            "E",
-            "F",
-            "D",
-            "E",
-            "F",
-            "G",
-            "E",
-            "F",
-            "G",
-            "H",
-            "F",
-            "G",
-            "H",
-            "A",
-            "G",
-            "H",
-            "A",
-            "B",
-            "H",
-            "A",
-            "B",
-            "C",
+            "A", "B", "C", "D", "B", "C", "D", "E", "C", "D", "E", "F", "D", "E", "F", "G",
+            "E", "F", "G", "H", "F", "G", "H", "A", "G", "H", "A", "B", "H", "A", "B", "C"
         ],
         "Overlap": [
-            1,
-            8,
-            5,
-            2,
-            8,
-            1,
-            6,
-            2,
-            5,
-            6,
-            1,
-            7,
-            2,
-            2,
-            7,
-            3,
-            2,
-            7,
-            3,
-            4,
-            7,
-            3,
-            4,
-            5,
-            3,
-            4,
-            5,
-            6,
-            4,
-            5,
-            6,
-            1,
-        ],
+            1, 8, 5, 2,  8, 1, 6, 2,  5, 6, 1, 7,  2, 2, 7, 3,  
+            2, 7, 3, 4,  7, 3, 4, 5,  3, 4, 5, 6,  4, 5, 6, 1
+        ],  
     }
     overlap_df = pd.DataFrame(data)
 
@@ -684,21 +596,15 @@ def test_pathways_cluster(tmp_path):
     clusters = mdpath.src.cluster.pathways_cluster(overlap_df, save_path=str(save_path))
     assert isinstance(clusters, dict), "Output is not a dictionary"
     assert save_path.exists(), "Dendrogram image was not saved"
-    assert all(
-        len(pathways) > 0 for pathways in clusters.values()
-    ), "One of the clusters is empty"
+    assert all(len(pathways) > 0 for pathways in clusters.values()), "One of the clusters is empty"
     all_pathways = [item for sublist in clusters.values() for item in sublist]
     expected_pathways = sorted(set(data["Pathway1"] + data["Pathway2"]))
-    assert (
-        sorted(all_pathways) == expected_pathways
-    ), "Clusters do not contain the expected pathways"
+    assert sorted(all_pathways) == expected_pathways, "Clusters do not contain the expected pathways"
     num_clusters = len(clusters)
     assert num_clusters >= 2, "Number of clusters should be at least 2"
 
-
 def are_vectors_close(vec1, vec2, tol=1e-6):
     return np.allclose(vec1, vec2, atol=tol)
-
 
 def test_residue_CA_coordinates():
     pdb_content = """
@@ -738,52 +644,61 @@ TER
         66: [[162.030, 133.517, 139.402]],
         67: [[162.863, 134.856, 135.941]],
         68: [[163.415, 131.357, 134.496]],
-        69: [[160.061, 130.137, 135.858]],
+        69: [[160.061, 130.137, 135.858]]
     }
 
     result = mdpath.src.visualization.residue_CA_coordinates(pdb_file, end_residue)
-    result = {k: [list(v) for v in vs] for k, vs in result.items()}
+    result = {
+        k: [list(v) for v in vs]  
+        for k, vs in result.items()
+    }
 
     for res_id, coords_list in expected_result.items():
         assert res_id in result, f"Residue {res_id} not found in result"
         for expected_coords, actual_coords in zip(coords_list, result[res_id]):
-            assert are_vectors_close(
-                expected_coords, actual_coords
-            ), f"Expected {expected_coords} but got {actual_coords} for residue {res_id}"
+            assert are_vectors_close(expected_coords, actual_coords), \
+                f"Expected {expected_coords} but got {actual_coords} for residue {res_id}"
 
 
 def test_apply_backtracking():
     original_dict = {
-        "cluster1": [[1, 2], [3, 4]],
-        "cluster2": [[5, 6], [7, 8]],
-        "cluster3": [[9, 10]],
+        'cluster1': [[1, 2], [3, 4]],
+        'cluster2': [[5, 6], [7, 8]],
+        'cluster3': [[9, 10]]
     }
-    translation_dict = {1: "A", 2: "B", 5: "E", 6: "F", 10: "J"}
+    translation_dict = {
+        1: 'A',
+        2: 'B',
+        5: 'E',
+        6: 'F',
+        10: 'J'
+    }
     expected = {
-        "cluster1": [["A", "B"], [3, 4]],
-        "cluster2": [["E", "F"], [7, 8]],
-        "cluster3": [[9, "J"]],
+        'cluster1': [['A', 'B'], [3, 4]],
+        'cluster2': [['E', 'F'], [7, 8]],
+        'cluster3': [[9, 'J']]
     }
 
-    result = mdpath.src.visualization.apply_backtracking(
-        original_dict, translation_dict
-    )
+    result = mdpath.src.visualization.apply_backtracking(original_dict, translation_dict)
     assert result == expected
-
 
 def test_cluster_prep_for_visualisation():
     pdb_file = "mock_pdb_file.pdb"
     input_cluster = [[1, 2], [3]]
-    mock_coordinates = {1: (1.0, 1.0, 1.0), 2: (2.0, 2.0, 2.0), 3: (3.0, 3.0, 3.0)}
-
-    with patch("Bio.PDB.PDBParser") as mock_parser:
+    mock_coordinates = {
+        1: (1.0, 1.0, 1.0),
+        2: (2.0, 2.0, 2.0),
+        3: (3.0, 3.0, 3.0)
+    }
+    
+    with patch('Bio.PDB.PDBParser') as mock_parser:
         mock_structure = MagicMock()
-
+        
         def get_structure(name, file):
             return mock_structure
-
+        
         mock_parser.return_value.get_structure.side_effect = get_structure
-
+        
         mock_residues = {}
         for residue_id, coord in mock_coordinates.items():
             mock_residue = MagicMock()
@@ -791,34 +706,48 @@ def test_cluster_prep_for_visualisation():
             mock_atom.get_coord.return_value = coord
             mock_residue.__getitem__.return_value = mock_atom
             mock_residues[("", residue_id, "")] = mock_residue
-
+        
         def getitem(res_id):
             if res_id in mock_residues:
                 return mock_residues[res_id]
             else:
                 raise KeyError
-
+        
         mock_structure[0].__getitem__.side_effect = getitem
-
-        result = mdpath.src.visualization.cluster_prep_for_visualisation(
-            input_cluster, pdb_file
-        )
-
-        expected_result = [[(1.0, 1.0, 1.0), (2.0, 2.0, 2.0)], [(3.0, 3.0, 3.0)]]
-
+        
+        result = mdpath.src.visualization.cluster_prep_for_visualisation(input_cluster, pdb_file)
+        
+        expected_result = [
+            [(1.0, 1.0, 1.0), (2.0, 2.0, 2.0)],
+            [(3.0, 3.0, 3.0)]
+        ]
+        
         assert result == expected_result
 
-
 def test_format_dict():
-    input_dict = {"array": np.array([1, 2, 3]), "nested_list": [1, 2, np.array([3, 4])]}
-    expected_output = {"array": [1, 2, 3], "nested_list": [1, 2, [3, 4]]}
+    input_dict = {
+        'array': np.array([1, 2, 3]),
+        'nested_list': [1, 2, np.array([3, 4])]
+    }
+    expected_output = {
+        'array': [1, 2, 3],
+        'nested_list': [1, 2, [3, 4]]
+    }
     assert mdpath.src.visualization.format_dict(input_dict) == expected_output
     assert mdpath.src.visualization.format_dict({}) == {}
-    input_dict = {"nested": [1, [2, 3], np.array([4, 5])]}
-    expected_output = {"nested": [1, [2, 3], [4, 5]]}
+    input_dict = {
+        'nested': [1, [2, 3], np.array([4, 5])]
+    }
+    expected_output = {
+        'nested': [1, [2, 3], [4, 5]]
+    }
     assert mdpath.src.visualization.format_dict(input_dict) == expected_output
-    input_dict = {"mixed": [1, "string", np.array([6, 7])]}
-    expected_output = {"mixed": [1, "string", [6, 7]]}
+    input_dict = {
+        'mixed': [1, 'string', np.array([6, 7])]
+    }
+    expected_output = {
+        'mixed': [1, 'string', [6, 7]]
+    }
     assert mdpath.src.visualization.format_dict(input_dict) == expected_output
 
 
@@ -832,8 +761,6 @@ def test_visualise_graph():
 
     if os.path.exists("graph.png"):
         os.remove("graph.png")
-
-
 def test_precompute_path_properties():
     json_data = {
         "cluster1": [
@@ -842,7 +769,7 @@ def test_precompute_path_properties():
         ],
         "cluster2": [
             [[[13, 14, 15]], [[16, 17, 18]]],
-        ],
+        ]
     }
 
     expected_output = [
@@ -881,61 +808,38 @@ def test_precompute_path_properties():
     result = mdpath.src.visualization.precompute_path_properties(json_data)
     assert result == expected_output
 
-
 def test_precompute_cluster_properties_quick():
     json_data = {
-        "cluster1": [[[[1, 2, 3]], [[4, 5, 6]]], [[[1, 2, 3]], [[4, 5, 6]]]],
-        "cluster2": [[[[7, 8, 9]], [[10, 11, 12]]]],
+        'cluster1': [
+            [[[1, 2, 3]], [[4, 5, 6]]],
+            [[[1, 2, 3]], [[4, 5, 6]]]
+        ],
+        'cluster2': [
+            [[[7, 8, 9]], [[10, 11, 12]]]
+        ]
     }
 
     expected_output = [
-        {
-            "clusterid": "cluster1",
-            "coord1": [1, 2, 3],
-            "coord2": [4, 5, 6],
-            "color": [1, 0, 0],
-            "radius": 0.015,
-        },
-        {
-            "clusterid": "cluster1",
-            "coord1": [1, 2, 3],
-            "coord2": [4, 5, 6],
-            "color": [1, 0, 0],
-            "radius": 0.03,
-        },
-        {
-            "clusterid": "cluster2",
-            "coord1": [7, 8, 9],
-            "coord2": [10, 11, 12],
-            "color": [0, 1, 0],
-            "radius": 0.015,
-        },
+        {'clusterid': 'cluster1', 'coord1': [1, 2, 3], 'coord2': [4, 5, 6], 'color': [1, 0, 0], 'radius': 0.015},
+        {'clusterid': 'cluster1', 'coord1': [1, 2, 3], 'coord2': [4, 5, 6], 'color': [1, 0, 0], 'radius': 0.03},
+        {'clusterid': 'cluster2', 'coord1': [7, 8, 9], 'coord2': [10, 11, 12], 'color': [0, 1, 0], 'radius': 0.015}
     ]
-    actual_output = mdpath.src.visualization.precompute_cluster_properties_quick(
-        json_data
-    )
-    assert (
-        actual_output == expected_output
-    ), f"Expected {expected_output}, but got {actual_output}"
-
+    actual_output = mdpath.src.visualization.precompute_cluster_properties_quick(json_data)
+    assert actual_output == expected_output, f"Expected {expected_output}, but got {actual_output}"
 
 def test_load_precomputed_data(tmp_path):
-    sample_data = {
-        "cluster_1": {"property1": "value1"},
-        "cluster_2": {"property2": "value2"},
-    }
+    sample_data = {"cluster_1": {"property1": "value1"}, "cluster_2": {"property2": "value2"}}
     json_file = tmp_path / "test_data.json"
     with open(json_file, "w") as f:
         json.dump(sample_data, f)
-
+    
     result = mdpath.src.notebook_vis.load_precomputed_data(str(json_file))
-
+    
     assert result == sample_data
-
 
 def test_generate_ngl_script(mocker):
     mock_view = MagicMock(spec=nv.NGLWidget)
-
+    
     precomputed_data = [
         {
             "clusterid": 1,
@@ -943,12 +847,12 @@ def test_generate_ngl_script(mocker):
             "coord1": [1.0, 2.0, 3.0],
             "coord2": [4.0, 5.0, 6.0],
             "color": [0.5, 0.5, 0.5],
-            "radius": 0.1,
+            "radius": 0.1
         }
     ]
 
     mdpath.src.notebook_vis.generate_ngl_script(precomputed_data, mock_view)
-
+    
     expected_js_code = """
         var shape = new NGL.Shape('Cluster1_Pathway0');
         shape.addCylinder([1.0, 2.0, 3.0], 
@@ -958,47 +862,44 @@ def test_generate_ngl_script(mocker):
         var shapeComp = this.stage.addComponentFromObject(shape);
         shapeComp.addRepresentation('buffer');
     """
-
+    
     actual_js_code = mock_view._execute_js_code.call_args[0][0].strip()
     print(f"Actual JavaScript Code:\n{actual_js_code}\n")
-
-    normalized_expected = "".join(expected_js_code.split())
-    normalized_actual = "".join(actual_js_code.split())
-
-    assert (
-        normalized_actual == normalized_expected
-    ), f"Expected: {normalized_expected}\nActual: {normalized_actual}"
-
+    
+    normalized_expected = ''.join(expected_js_code.split())
+    normalized_actual = ''.join(actual_js_code.split())
+    
+    assert normalized_actual == normalized_expected, f"Expected: {normalized_expected}\nActual: {normalized_actual}"
 
 def test_generate_cluster_ngl_script(mocker):
     mock_view = MagicMock(spec=nv.NGLWidget)
-
+    
     precomputed_data = [
         {
             "clusterid": 1,
             "coord1": [1.0, 2.0, 3.0],
             "coord2": [4.0, 5.0, 6.0],
             "color": [0.5, 0.5, 0.5],
-            "radius": 0.1,
+            "radius": 0.1
         },
         {
             "clusterid": 1,
             "coord1": [7.0, 8.0, 9.0],
             "coord2": [10.0, 11.0, 12.0],
             "color": [0.2, 0.3, 0.4],
-            "radius": 0.2,
+            "radius": 0.2
         },
         {
             "clusterid": 2,
             "coord1": [13.0, 14.0, 15.0],
             "coord2": [16.0, 17.0, 18.0],
             "color": [0.1, 0.2, 0.3],
-            "radius": 0.15,
-        },
+            "radius": 0.15
+        }
     ]
-
+ 
     mdpath.src.notebook_vis.generate_cluster_ngl_script(precomputed_data, mock_view)
-
+    
     expected_js_code_cluster1 = """
         var shape = new NGL.Shape('Cluster1');
         shape.addCylinder([1.0, 2.0, 3.0], 
@@ -1012,7 +913,7 @@ def test_generate_cluster_ngl_script(mocker):
         var shapeComp = this.stage.addComponentFromObject(shape);
         shapeComp.addRepresentation('buffer');
     """
-
+    
     expected_js_code_cluster2 = """
         var shape = new NGL.Shape('Cluster2');
         shape.addCylinder([13.0, 14.0, 15.0], 
@@ -1023,133 +924,122 @@ def test_generate_cluster_ngl_script(mocker):
         shapeComp.addRepresentation('buffer');
     """
 
-    actual_js_calls = [
-        call[0][0].strip() for call in mock_view._execute_js_code.call_args_list
-    ]
-
+    actual_js_calls = [call[0][0].strip() for call in mock_view._execute_js_code.call_args_list]
+    
     print("Actual JavaScript Code Calls:")
     for call in actual_js_calls:
         print(call)
-
+    
     def normalize_js(js_code):
-        return "".join(js_code.split())
-
+        return ''.join(js_code.split())
+    
     normalized_expected_cluster1 = normalize_js(expected_js_code_cluster1)
     normalized_expected_cluster2 = normalize_js(expected_js_code_cluster2)
     normalized_actual_calls = [normalize_js(call) for call in actual_js_calls]
-
+    
     assert normalized_expected_cluster1 in normalized_actual_calls, (
         f"Expected JavaScript code for cluster 1 not found in actual calls.\n"
         f"Expected: {normalized_expected_cluster1}\n"
         f"Actual: {normalized_actual_calls}"
     )
-
+    
     assert normalized_expected_cluster2 in normalized_actual_calls, (
         f"Expected JavaScript code for cluster 2 not found in actual calls.\n"
         f"Expected: {normalized_expected_cluster2}\n"
         f"Actual: {normalized_actual_calls}"
     )
 
-
 def test_create_bootstrap_sample():
     """Test the create_bootstrap_sample function."""
-    df = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-
+    df = pd.DataFrame({
+        'A': [1, 2, 3],
+        'B': [4, 5, 6]
+    })
+    
     result = mdpath.src.bootstrap.create_bootstrap_sample(df)
-
+    
     assert isinstance(result, pd.DataFrame), "Result should be a Pandas DataFrame"
+    
+    assert result.shape == df.shape, "Bootstrap sample should have the same shape as the input DataFrame"
+    assert len(result) == len(df), "Number of rows in bootstrap sample should be the same as the input DataFrame"
 
-    assert (
-        result.shape == df.shape
-    ), "Bootstrap sample should have the same shape as the input DataFrame"
-    assert len(result) == len(
-        df
-    ), "Number of rows in bootstrap sample should be the same as the input DataFrame"
-
-    assert set(result.columns) == set(
-        df.columns
-    ), "Columns of bootstrap sample should match input DataFrame columns"
-
+    assert set(result.columns) == set(df.columns), "Columns of bootstrap sample should match input DataFrame columns"
+    
     for col in df.columns:
         original_values = set(df[col])
         sampled_values = set(result[col])
-        assert sampled_values.issubset(
-            original_values
-        ), f"Column {col} in bootstrap sample contains values not in the input DataFrame"
-
-
-# Mock functions
+        assert sampled_values.issubset(original_values), f"Column {col} in bootstrap sample contains values not in the input DataFrame"
+    
+#Mock functions
 def create_bootstrap_sample(df):
     return df.sample(frac=1, replace=True).reset_index(drop=True)
 
-
 def NMI_calc(df_all_residues, num_bins=35):
     data = {
-        "Residue Pair": [
-            (f"Res {i}", f"Res {j}")
-            for i in range(1, len(df_all_residues.columns) + 1)
-            for j in range(1, len(df_all_residues.columns) + 1)
-            if i != j
-        ],
-        "MI Difference": [
-            1.0
-            for _ in range(
-                len(df_all_residues.columns) * (len(df_all_residues.columns) - 1)
-            )
-        ],
+        'Residue Pair': [(f'Res {i}', f'Res {j}') for i in range(1, len(df_all_residues.columns)+1) for j in range(1, len(df_all_residues.columns)+1) if i != j],
+        'MI Difference': [1.0 for _ in range(len(df_all_residues.columns) * (len(df_all_residues.columns) - 1))]
     }
     return pd.DataFrame(data)
 
-
 def graph_assign_weights(residue_graph, mi_diff_df):
     for u, v in residue_graph.edges():
-        residue_graph[u][v]["weight"] = 1.0
+        residue_graph[u][v]['weight'] = 1.0
     return residue_graph
-
 
 def collect_path_total_weights(residue_graph, df_distant_residues):
     return [([1, 2, 3], 1.0), ([2, 3], 0.5)]
 
-
 def test_process_bootstrap_sample():
-    df_all_residues = pd.DataFrame(
-        {"Res 1": [1, 2, 3, 4, 5], "Res 2": [5, 4, 3, 2, 1], "Res 3": [2, 3, 4, 5, 6]}
-    )
-
+    df_all_residues = pd.DataFrame({
+        'Res 1': [1, 2, 3, 4, 5],
+        'Res 2': [5, 4, 3, 2, 1],
+        'Res 3': [2, 3, 4, 5, 6]
+    })
+    
     residue_graph_empty = nx.Graph()
     residue_graph_empty.add_edges_from([(1, 2), (2, 3)])
-
-    df_distant_residues = pd.DataFrame({"Residue1": [1, 2], "Residue2": [3, 3]})
-
+    
+    df_distant_residues = pd.DataFrame({
+        'Residue1': [1, 2],
+        'Residue2': [3, 3]
+    })
+    
     pathways_set = {(1, 2, 3), (2, 3)}
 
     numpath = 500
-
+    os.makedirs("bootstrap", exist_ok=True)
     common_count, bootstrap_pathways = mdpath.src.bootstrap.process_bootstrap_sample(
         df_all_residues,
         residue_graph_empty,
         df_distant_residues,
         pathways_set,
         numpath,
-        num_bins=35,
+        sample_num=5,
+        num_bins=35
     )
-
+    
     assert common_count == 2
     assert bootstrap_pathways == [[1, 2, 3], [2, 3]]
+    print("test_process_bootstrap_sample passed.")
 
 
 def test_bootstrap_analysis():
-    df_all_residues = pd.DataFrame(
-        {"Res 1": [1, 2, 3, 4, 5], "Res 2": [5, 4, 3, 2, 1], "Res 3": [2, 3, 4, 5, 6]}
-    )
-
+    df_all_residues = pd.DataFrame({
+        'Res 1': [1, 2, 3, 4, 5],
+        'Res 2': [5, 4, 3, 2, 1],
+        'Res 3': [2, 3, 4, 5, 6]
+    })
+    
     residue_graph_empty = nx.Graph()
     residue_graph_empty.add_edges_from([(1, 2), (2, 3)])
-
-    df_distant_residues = pd.DataFrame({"Residue1": [1, 2], "Residue2": [3, 3]})
-
+    
+    df_distant_residues = pd.DataFrame({
+        'Residue1': [1, 2],
+        'Residue2': [3, 3]
+    })
+   
     sorted_paths = [([1, 2, 3], 1.0), ([2, 3], 0.5)]
-
+   
     num_bootstrap_samples = 10
     numpath = 500
 
@@ -1160,9 +1050,9 @@ def test_bootstrap_analysis():
         sorted_paths,
         num_bootstrap_samples,
         numpath,
-        num_bins=35,
+        num_bins=35
     )
-
+    
     assert len(common_counts) == num_bootstrap_samples
     assert all(isinstance(x, (int, np.integer)) for x in common_counts)
     assert len(path_confidence_intervals) == len(sorted_paths)
@@ -1201,7 +1091,7 @@ def test_mdpath_output_files():
     sys.path.insert(0, mdpath_dir)
 
     try:
-        from mdpath.mdpath import main
+        import mdpath
     except ImportError as e:
         raise ImportError(f"Error importing mdpath: {e}")
 
@@ -1215,7 +1105,7 @@ def test_mdpath_output_files():
         "-numpath", numpath
     ]
 
-    main()
+    mdpath.mdpath.main()
         
     for file in expected_files:
         assert os.path.exists(file), f"Expected output file {file} not found."
