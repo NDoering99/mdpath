@@ -36,9 +36,9 @@ jobs:
           pytest mdpath/tests/
       
       - name: Upload coverage reports to Codecov
-          uses: codecov/codecov-action@v4.0.1
-          with:
-            token: ${{ secrets.CODECOV_TOKEN }}
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   build_macos:
     runs-on: macos-latest
