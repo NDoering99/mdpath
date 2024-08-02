@@ -7,6 +7,7 @@ import json
 import multiprocessing
 from tqdm import tqdm
 import numpy as np
+from collections import defaultdict
 import pickle
 
 from mdpath.src.structure import (
@@ -130,9 +131,91 @@ def main():
         required=False,
         default=500,
     )
+    parser.add_argument(
+        "-scale",
+        dest="scale",
+        help="Scales the radius of the json.",
+        required=False,
+        default=False,
+    )
+    parser.add_argument(
+        "-json",
+        dest="json",
+        help="Json to scale.",
+        required=False,
+        default=False,
+    )
+    parser.add_argument(
+        "-flat",
+        dest="flat",
+        help="Sets every radius to the input value.",
+        required=False,
+        default=False,
+    )
+
+    parser.add_argument(
+        "-clusterscale",
+        dest="clusterscale",
+        help="Input the maximum radius for the cluster based scaling.",
+        required=False,
+        default=False,
+    )
 
     # Gather input arguments
     args = parser.parse_args()
+    if args.scale and args.json and not args.flat and not args.clusterscale:
+        json_file = args.json
+        factor = float(args.scale)
+        with open(json_file, 'r') as file:
+            data = json.load(file)
+        for entry in data:
+            if 'radius' in entry:
+                entry['radius'] *= factor
+        base, ext = os.path.splitext(json_file)
+        new_file = f"{base}_scaled_{factor}{ext}"
+        with open(new_file, 'w') as file:
+            json.dump(data, file, indent=4)
+        print("\033[1mSaved the modified data.\033[0m")
+        exit()
+    
+    if not args.scale and args.json and args.flat and not args.clusterscale:
+        json_file = args.json
+        flat = float(args.flat)
+        with open(json_file, 'r') as file:
+            data = json.load(file)
+        for entry in data:
+            if 'radius' in entry:
+                entry['radius'] = flat
+        base, ext = os.path.splitext(json_file)
+        new_file = f"{base}_flat_{flat}{ext}"
+        with open(new_file, 'w') as file:
+            json.dump(data, file, indent=4)
+        print("\033[1mSaved the modified data.\033[0m")
+        exit()
+
+    if not args.scale and not args.flat and args.json and args.clusterscale:
+        json_file = args.json
+        max_radius = float(args.clusterscale)
+        with open(json_file, 'r') as file:
+            data = json.load(file)
+        cluster_counts = defaultdict(int)
+        for entry in data:
+            cluster_counts[entry['clusterid']] += 1
+        max_clusterid = max(cluster_counts.keys())
+        scaling_factors = {cid: (max_clusterid / cid) * max_radius for cid in cluster_counts}
+        for entry in data:
+            if 'radius' in entry:
+                clusterid = entry['clusterid']
+                if clusterid in scaling_factors:
+                    entry['radius'] = scaling_factors[clusterid]
+
+        base, ext = os.path.splitext(json_file)
+        new_file = f"{base}_cluster_scaled_{max_radius}{ext}"
+        with open(new_file, 'w') as file:
+            json.dump(data, file, indent=4)
+        print("\033[1mSaved the modified data.\033[0m")
+        exit()
+
     if args.comp:
         if args.atop and args.bcluster:
             with open(args.atop, "rb") as pkl_file:
@@ -166,16 +249,17 @@ def main():
         overlap_df = calculate_overlap_parallel(
         merged_data, df_close_res, num_parallel_processes
     )
+        overlap_df.to_csv('overlap_df.csv', index=False)
         clusters = pathways_cluster(overlap_df)
         cluster_pathways_dict = {}
         for cluster_num, cluster_pathways in clusters.items():
             cluster_pathways_list = []
             for pathway_id in cluster_pathways:
                 pathway = merged_data[pathway_id]
-            cluster_pathways_list.append(pathway)
-        cluster_pathways_dict[cluster_num] = cluster_pathways_list
-        residue_coordinates_dict = residue_CA_coordinates(topology, last_res_num)
+                cluster_pathways_list.append(pathway)
+            cluster_pathways_dict[cluster_num] = cluster_pathways_list
 
+        residue_coordinates_dict = residue_CA_coordinates(topology, last_res_num)
         updated_dict = apply_backtracking(cluster_pathways_dict, residue_coordinates_dict)
         formated_dict = format_dict(updated_dict)
         with open("multitraj_clusters_paths.json", "w") as json_file:
