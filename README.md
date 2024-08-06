@@ -3,6 +3,7 @@ mdpath
 [//]: # (Badges)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![CI-CD](https://github.com/NDoering99/mdpath/actions/workflows/CI_CD.yml/badge.svg)](https://github.com/NDoering99/mdpath/actions/workflows/CI_CD.yml)
+[![codecov](https://codecov.io/gh/NDoering99/mdpath/graph/badge.svg?token=32D80PZOZV)](https://codecov.io/gh/NDoering99/mdpath)
 [![Documentation Status](https://readthedocs.org/projects/mdpath/badge/?version=latest)](https://mdpath.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
