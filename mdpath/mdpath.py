@@ -67,6 +67,7 @@ def main():
         dest="lig_interaction",
         help="Protein ligand interacting residues",
         default=False,
+        nargs='+'
     )
     parser.add_argument(
         "-bs",
@@ -234,6 +235,7 @@ def main():
                 "Topology (residue_coordinates) and bcluster (cluster) are required and a json needed for comparing two simulations."
             )
             exit()
+
     if args.multitraj and args.topology:
         merged_data = []
         topology = args.topology
@@ -311,20 +313,6 @@ def main():
     residue_graph = graph_assign_weights(residue_graph_empty, mi_diff_df)
     visualise_graph(residue_graph)  # Exports image of the Graph to PNG
 
-    # Calculate the paths starting from ligand interacting residues
-    if lig_interaction:
-        if os.path.exists(str(lig_interaction)):
-            with open(str(lig_interaction), "r") as file:
-                content = file.read()
-                lig_interaction = [int(res.strip()) for res in content.split(",")]
-        else:
-            lig_interaction = [res for res in str(lig_interaction).split(",")]
-            df_distant_residues = df_distant_residues[
-                (df_distant_residues["Residue1"].isin(lig_interaction))
-                | (df_distant_residues["Residue2"].isin(lig_interaction))
-            ]
-        print("\033[1mLigand pathways gathered..\033[0m")
-
     # Calculate paths
     path_total_weights = collect_path_total_weights(residue_graph, df_distant_residues)
     sorted_paths = sorted(path_total_weights, key=lambda x: x[1], reverse=True)
@@ -334,7 +322,22 @@ def main():
             file.write(f"Path: {path}, Total Weight: {total_weight}\n")
     top_pathways = [
         path for path, _ in sorted_paths[:numpath]
-    ]  # TODO potentially make this a changeble value if more paths should be evaluated for clustering
+    ]  
+
+    # Calculate the paths including ligand interacting residues
+    if lig_interaction:
+        try:
+            lig_interaction = [int(res) for res in lig_interaction]
+        except ValueError:
+            print("Error: All -lig inputs must be integers.") 
+        sorted_paths = [
+        path for path in sorted_paths
+        if any(residue in lig_interaction for residue in path[0])  
+    ]
+        top_pathways = [
+            path for path, _ in sorted_paths[:numpath]
+    ]
+        print("\033[1mLigand pathways gathered..\033[0m")
 
     # Bootstrap analysis
     if bootstrap:
