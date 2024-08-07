@@ -162,8 +162,43 @@ def main():
         default=False,
     )
 
+    parser.add_argument(
+        "-recolor",
+        dest="color",
+        help="Changes the coloring of paths.",
+        required=False,
+        default=False,
+    )
+
     # Gather input arguments
     args = parser.parse_args()
+
+    if args.color and not args.json:
+        print("\033[1mRecoloring requires a valid -json to recolor.\033[0m")
+    if args.color and args.json:
+        json_file = args.json
+        color_file_path = args.color
+        with open(color_file_path, 'r') as color_file:
+            colors = json.load(color_file)
+        with open(json_file, 'r') as file:
+            data = json.load(file)
+        cluster_colors = {}
+        num_colors = len(colors)
+        cluster_ids = {entry['clusterid'] for entry in data if 'clusterid' in entry}
+        for i, cluster_id in enumerate(cluster_ids):
+            cluster_colors[cluster_id] = colors[i % num_colors]
+        for entry in data:
+            if 'clusterid' in entry:
+                clusterid = entry['clusterid']
+                if clusterid in cluster_colors:
+                    entry['color'] = cluster_colors[clusterid]
+        base, ext = os.path.splitext(json_file)
+        new_file = f"{base}_recolored{ext}"
+        with open(new_file, 'w') as file:
+            json.dump(data, file, indent=4)
+        print(f"Saved the modified data with colors to {new_file}.")
+        exit()
+
     if args.scale and args.json and not args.flat and not args.clusterscale:
         json_file = args.json
         factor = float(args.scale)
