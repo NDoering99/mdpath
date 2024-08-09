@@ -19,10 +19,11 @@ Colors = [
     [0.5, 1, 0.5],  # Light Green
 ]
 
+
 class MDPathVisualize:
     def __init__(self) -> None:
-        pass    
-    
+        pass
+
     def residue_CA_coordinates(pdb_file: str, end: int) -> dict:
         """Collects CA atom coordinates for residues.
 
@@ -36,7 +37,9 @@ class MDPathVisualize:
         residue_coordinates_dict = {}
         parser = PDB.PDBParser(QUIET=True)
         structure = parser.get_structure("pdb_structure", pdb_file)
-        residues = [res for res in structure.get_residues() if PDB.Polypeptide.is_aa(res)]
+        residues = [
+            res for res in structure.get_residues() if PDB.Polypeptide.is_aa(res)
+        ]
         for res in tqdm(residues, desc="\033[1mProcessing residues: \033[0m"):
             res_id = res.get_id()[1]
             if res_id <= end:
@@ -46,7 +49,6 @@ class MDPathVisualize:
                             residue_coordinates_dict[res_id] = []
                         residue_coordinates_dict[res_id].append(atom.coord)
         return residue_coordinates_dict
-
 
     def cluster_prep_for_visualisation(
         cluster: list[list[int]], pdb_file: str
@@ -79,7 +81,6 @@ class MDPathVisualize:
 
         return new_cluster
 
-
     def apply_backtracking(original_dict: dict, translation_dict: dict) -> dict:
         """Backtracks the original dictionary with a translation dictionary.
 
@@ -98,7 +99,6 @@ class MDPathVisualize:
                         updated_dict[key][i][j] = translation_dict[item]
 
         return updated_dict
-
 
     def format_dict(updated_dict: dict) -> dict:
         """Reformats the dictionary to be JSON serializable.
@@ -126,7 +126,6 @@ class MDPathVisualize:
         }
         return transformed_dict
 
-
     def visualise_graph(graph: nx.Graph, k=0.1, node_size=200) -> None:
         """Draws residue graph to PNG file.
 
@@ -149,7 +148,6 @@ class MDPathVisualize:
             node_color="blue",
         )
         plt.savefig("graph.png", dpi=300, bbox_inches="tight")
-
 
     def precompute_path_properties(json_data):
         """Precomputes path properties for quicker visualization in Jupyter notebook.
@@ -206,7 +204,6 @@ class MDPathVisualize:
                             f"Ignoring pathway {pathway} as it does not fulfill the coordinate format."
                         )
         return path_properties
-
 
     def precompute_cluster_properties_quick(json_data):
         cluster_colors = {}

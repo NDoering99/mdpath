@@ -11,11 +11,10 @@ def visualize_pdb(pdb_path):
     cmd.show("cartoon", "polymer.protein")
     cmd.show("sticks", "organic")
     cmd.hide("everything", "resn POP or hydrogens or inorganic")
-    cmd.set_color('mdp_gray', [0.498, 0.498, 0.498])
-    cmd.bg_color('white')
-    cmd.select('polymer_protein', 'polymer and protein')
-    cmd.color('mdp_gray', 'polymer_protein')
-    
+    cmd.set_color("mdp_gray", [0.498, 0.498, 0.498])
+    cmd.bg_color("white")
+    cmd.select("polymer_protein", "polymer and protein")
+    cmd.color("mdp_gray", "polymer_protein")
 
 
 def visualize_clusters(json_path):
@@ -38,8 +37,7 @@ def main(pdb_path, json_path):
     print(f"json_path: {json_path}")
     visualize_pdb(pdb_path)
     visualize_clusters(json_path)
-    cmd.center('polymer_protein')
-    
+    cmd.center("polymer_protein")
 
 
 cmd.extend("mdpath", main)

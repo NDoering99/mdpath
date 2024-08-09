@@ -10,7 +10,7 @@ class NMICalculator:
         self.df_all_residues = df_all_residues
         self.num_bins = num_bins
         self.mi_diff_df = self.NMI_calc()
-    
+
     def NMI_calcs(self) -> pd.DataFrame:
         """Nornmalized Mutual Information calculation for all residue pairs.
 
@@ -28,12 +28,20 @@ class NMICalculator:
             for col1 in self.df_all_residues.columns:
                 for col2 in self.df_all_residues.columns:
                     if col1 != col2:
-                        hist_col1, _ = np.histogram(self.df_all_residues[col1], bins=self.num_bins)
-                        hist_col2, _ = np.histogram(self.df_all_residues[col2], bins=self.num_bins)
-                        hist_joint, _, _ = np.histogram2d(
-                            self.df_all_residues[col1], self.df_all_residues[col2], bins=self.num_bins
+                        hist_col1, _ = np.histogram(
+                            self.df_all_residues[col1], bins=self.num_bins
                         )
-                        mi = mutual_info_score(hist_col1, hist_col2, contingency=hist_joint)
+                        hist_col2, _ = np.histogram(
+                            self.df_all_residues[col2], bins=self.num_bins
+                        )
+                        hist_joint, _, _ = np.histogram2d(
+                            self.df_all_residues[col1],
+                            self.df_all_residues[col2],
+                            bins=self.num_bins,
+                        )
+                        mi = mutual_info_score(
+                            hist_col1, hist_col2, contingency=hist_joint
+                        )
                         entropy_col1 = entropy(hist_col1)
                         entropy_col2 = entropy(hist_col2)
                         nmi = mi / np.sqrt(entropy_col1 * entropy_col2)

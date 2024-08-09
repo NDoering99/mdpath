@@ -13,7 +13,7 @@ class GraphBuilder:
         self.end = last_residue
         self.mi_diff_df = mi_diff_df
         self.graph = self.graph_builder()
-        
+
     def graph_skeleton(self, dist=5.0) -> nx.Graph:
         """Generates a graph of residues within a certain distance of each other.
 
@@ -27,7 +27,9 @@ class GraphBuilder:
         parser = PDB.PDBParser(QUIET=True)
         structure = parser.get_structure("pdb_structure", self.pdb)
         heavy_atoms = ["C", "N", "O", "S"]
-        residues = [res for res in structure.get_residues() if PDB.Polypeptide.is_aa(res)]
+        residues = [
+            res for res in structure.get_residues() if PDB.Polypeptide.is_aa(res)
+        ]
         for res1, res2 in tqdm(
             combinations(residues, 2),
             desc="\033[1mBuilding residue graph\033[0m",
@@ -47,7 +49,6 @@ class GraphBuilder:
                                     )
         return residue_graph
 
-
     def graph_assign_weights(self, residue_graph: nx.Graph) -> nx.Graph:
         """Assignes edge weights to the graph based on mutual information differences.
 
@@ -63,16 +64,16 @@ class GraphBuilder:
             pair = ("Res " + str(u), "Res " + str(v))
             if pair in self.mi_diff_df["Residue Pair"].apply(tuple).tolist():
                 weight = self.mi_diff_df.loc[
-                    self.mi_diff_df["Residue Pair"].apply(tuple) == pair, "MI Difference"
+                    self.mi_diff_df["Residue Pair"].apply(tuple) == pair,
+                    "MI Difference",
                 ].values[0]
                 residue_graph.edges[edge]["weight"] = weight
         return residue_graph
-    
+
     def graph_builder(self):
         graph = self.graph_skeleton()
         graph = self.graph_assign_weights(graph)
         return graph
-
 
     def max_weight_shortest_path(
         self, source: int, target: int
@@ -104,7 +105,6 @@ class GraphBuilder:
                 best_path = path
 
         return best_path, max_weight
-
 
     def collect_path_total_weights(
         self, df_distant_residues: pd.DataFrame

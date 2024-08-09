@@ -7,7 +7,7 @@ class NotebookVisualization:
         self.view = view
         self.json_path = json_path
         self.precomputed_data = self.load_precomputed_data()
-        
+
     def load_precomputed_data(self) -> dict:
         """Loads precomputed cluster properties from a JSON file.
 
@@ -20,7 +20,6 @@ class NotebookVisualization:
         with open(self.json_path, "r") as json_file:
             precomputed_data = json.load(json_file)
         return precomputed_data
-
 
     def generate_ngl_script(self) -> None:
         """Generates NGL script and edits view for visualizing precomputed cluster pathways as cones between residues.
@@ -61,7 +60,6 @@ class NotebookVisualization:
                 self.view._execute_js_code(shape_script)
             else:
                 print("View is not defined.")
-
 
     def generate_cluster_ngl_script(self) -> None:
         """Generates NGL script and edits view for visualizing precomputed cluster pathways as cones between residues.

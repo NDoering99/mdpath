@@ -6,22 +6,31 @@ from typing import Dict, Set, Tuple, List
 import os
 
 
-class BootstrapAnalysis():
-    def __init__(self, df_all_residues, df_distant_residues, sorted_paths, num_bootstrap_samples, numpath, pdb, last_residue, num_bins: int = 35) -> None:
+class BootstrapAnalysis:
+    def __init__(
+        self,
+        df_all_residues,
+        df_distant_residues,
+        sorted_paths,
+        num_bootstrap_samples,
+        numpath,
+        pdb,
+        last_residue,
+        num_bins: int = 35,
+    ) -> None:
         self.df_all_residues = df_all_residues
         self.df_distant_residues = df_distant_residues
         self.sorted_paths = sorted_paths
         self.num_bootstrap_samples = num_bootstrap_samples
         self.numpath = numpath
         self.pdb = pdb
-        self.last_residue =last_residue
+        self.last_residue = last_residue
         self.num_bins = num_bins
         self.common_counts, self.path_confidence_intervals = self.bootstrap_analysis
-        
 
-    
-        
-    def create_bootstrap_sample(self, df_dihedral: pd.DataFrame) -> tuple[int, set[tuple]]:
+    def create_bootstrap_sample(
+        self, df_dihedral: pd.DataFrame
+    ) -> tuple[int, set[tuple]]:
         """Creates a sample from the dataframe with replacement for bootstrap analysis.
 
         Args:
@@ -31,10 +40,11 @@ class BootstrapAnalysis():
             bootstrap_sample (pd.DataFrame): Pandas dataframe containing the frames for the bootstrap analysis.
         """
         bootstrap_sample = df_dihedral.apply(
-            lambda col: col.sample(n=len(df_dihedral), replace=True).reset_index(drop=True)
+            lambda col: col.sample(n=len(df_dihedral), replace=True).reset_index(
+                drop=True
+            )
         )
         return bootstrap_sample
-
 
     def process_bootstrap_sample(
         self,
@@ -58,14 +68,18 @@ class BootstrapAnalysis():
         nmi_calculator = NMICalculator(bootstrap_sample, num_bins=self.num_bins)
         bootstrap_mi_diff = nmi_calculator.mi_diff_df
         graph = GraphBuilder(self.pdb, self.last_residue, bootstrap_mi_diff)
-        bootstrap_path_total_weights = graph.collect_path_total_weights(self.df_distant_residues)
+        bootstrap_path_total_weights = graph.collect_path_total_weights(
+            self.df_distant_residues
+        )
         bootstrap_sorted_paths = sorted(
             bootstrap_path_total_weights, key=lambda x: x[1], reverse=True
         )
-        bootstrap_pathways = [path for path, _ in bootstrap_sorted_paths[:self.numpath]]
+        bootstrap_pathways = [
+            path for path, _ in bootstrap_sorted_paths[: self.numpath]
+        ]
         file_name = f"bootstrap_sample_{sample_num}.txt"
         new_file_path = os.path.join("bootstrap", file_name)
-        with open(new_file_path, 'w') as file:
+        with open(new_file_path, "w") as file:
             for pathway in bootstrap_pathways:
                 file.write(f"{pathway}\n")
 
@@ -73,7 +87,6 @@ class BootstrapAnalysis():
         common_elements = bootstrap_set.intersection(pathways_set)
         common_count = len(common_elements)
         return common_count, bootstrap_pathways
-
 
     def bootstrap_analysis(self) -> Tuple[np.ndarray, Dict]:
         """Analyse the common paths between the original sample and bootstrap samples.
@@ -91,7 +104,7 @@ class BootstrapAnalysis():
             path_confidence_intervals (dict): Dictionary with the confidence intervals for each path.
         """
         os.makedirs("bootstrap", exist_ok=True)
-        pathways = [path for path, _ in self.sorted_paths[:self.numpath]]
+        pathways = [path for path, _ in self.sorted_paths[: self.numpath]]
         pathways_set = set(tuple(path) for path in pathways)
         results = []
         path_occurrences = {tuple(path): [] for path in pathways_set}
@@ -99,7 +112,7 @@ class BootstrapAnalysis():
         for _ in range(self.num_bootstrap_samples):
             result, occurrences = self.process_bootstrap_sample(
                 pathways_set,
-                sample_num = _,
+                sample_num=_,
             )
             results.append(result)
             current_paths = set(tuple(path) for path in occurrences)
@@ -119,6 +132,10 @@ class BootstrapAnalysis():
             mean_occurrence = np.mean(occurrences)
             lower_bound = np.percentile(occurrences, 2.5)
             upper_bound = np.percentile(occurrences, 97.5)
-            path_confidence_intervals[path] = (mean_occurrence, lower_bound, upper_bound)
+            path_confidence_intervals[path] = (
+                mean_occurrence,
+                lower_bound,
+                upper_bound,
+            )
 
         return common_counts, path_confidence_intervals

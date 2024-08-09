@@ -7,17 +7,15 @@ from sklearn.metrics import silhouette_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
 class PatwayClustering:
     def __init__(self, df_close_res, pathways, num_processes) -> None:
         self.df = df_close_res
         self.patways = pathways
         self.num_processes = num_processes
         self.overlapp_df = self.calculate_overlap_parallel()
-        
-    
-    def calculate_overlap_for_pathway(
-        self, args: tuple[int, list[int]]
-    ) -> list[dict]:
+
+    def calculate_overlap_for_pathway(self, args: tuple[int, list[int]]) -> list[dict]:
         """Calculates the overlap between a pathway and all other pathways.
 
         Args:
@@ -26,7 +24,7 @@ class PatwayClustering:
         Returns:
             result (list[dict]): List of dictionaries with the overlap between the given pathway and all other pathways.
         """
-        i, path1= args
+        i, path1 = args
         result = []
         for j in range(i + 1, len(self.pathways)):
             if i != j:
@@ -34,14 +32,21 @@ class PatwayClustering:
                 overlap_counter = 0
                 for res1 in path1:
                     for res2 in path2:
-                        if ((self.df["Residue1"] == res1) & (self.df["Residue2"] == res2)).any() or (
-                            (self.df["Residue1"] == res2) & (self.df["Residue2"] == res1)
+                        if (
+                            (self.df["Residue1"] == res1)
+                            & (self.df["Residue2"] == res2)
+                        ).any() or (
+                            (self.df["Residue1"] == res2)
+                            & (self.df["Residue2"] == res1)
                         ).any():
                             overlap_counter += 1
-                result.append({"Pathway1": i, "Pathway2": j, "Overlap": overlap_counter})
-                result.append({"Pathway1": j, "Pathway2": i, "Overlap": overlap_counter})
+                result.append(
+                    {"Pathway1": i, "Pathway2": j, "Overlap": overlap_counter}
+                )
+                result.append(
+                    {"Pathway1": j, "Pathway2": i, "Overlap": overlap_counter}
+                )
         return result
-
 
     def calculate_overlap_parallel(self) -> pd.DataFrame:
         """Parallelization wrapper for the calculate_overlap_for_pathway function.
@@ -62,13 +67,14 @@ class PatwayClustering:
                 ascii=True,
                 desc="\033[1mCalculating pathway residue overlap\033[0m",
             ) as pbar:
-                for result in pool.imap_unordered(self.calculate_overlap_for_pathway, args):
+                for result in pool.imap_unordered(
+                    self.calculate_overlap_for_pathway, args
+                ):
                     results.extend(result)
                     pbar.update(1)
 
         overlap_df = pd.DataFrame(results, columns=["Pathway1", "Pathway2", "Overlap"])
         return overlap_df
-
 
     def pathways_cluster(
         self, n_top_clust=0, save_path="clustered_paths.png"
@@ -102,14 +108,18 @@ class PatwayClustering:
         cluster_labels = hierarchy.fcluster(
             linkage_matrix, optimal_num_clusters, criterion="maxclust"
         )
-        cluster_pathways = {cluster: [] for cluster in range(1, optimal_num_clusters + 1)}
+        cluster_pathways = {
+            cluster: [] for cluster in range(1, optimal_num_clusters + 1)
+        }
         for i, label in enumerate(cluster_labels):
             cluster_pathways[label].append(overlap_matrix.index[i])
 
         silhouette_avg = silhouette_score(distance_matrix, cluster_labels)
         print("Silhouette Score:", silhouette_avg)
         plt.figure(figsize=(10, 7))
-        hierarchy.dendrogram(linkage_matrix, labels=overlap_matrix.index, leaf_rotation=90)
+        hierarchy.dendrogram(
+            linkage_matrix, labels=overlap_matrix.index, leaf_rotation=90
+        )
         plt.title("Hierarchical Clustering Dendrogram")
         plt.xlabel("Pathways")
         plt.ylabel("Distance")
