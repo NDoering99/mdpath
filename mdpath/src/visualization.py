@@ -1,3 +1,15 @@
+"""Visualization --- :mod:`mdpath.scr.visualization`
+==============================================================================
+
+This module contains the class `MDPathVisualize` which contains all visualization functions for the MDPath package.
+
+Classes
+--------
+
+:class:`MDPathVisualize`
+"""
+
+
 from Bio import PDB
 from tqdm import tqdm
 import pandas as pd
@@ -24,7 +36,7 @@ class MDPathVisualize:
     def __init__(self) -> None:
         pass
 
-    def residue_CA_coordinates(pdb_file: str, end: int) -> dict:
+    def residue_CA_coordinates(self, pdb_file: str, end: int) -> dict:
         """Collects CA atom coordinates for residues.
 
         Args:
@@ -51,7 +63,7 @@ class MDPathVisualize:
         return residue_coordinates_dict
 
     def cluster_prep_for_visualisation(
-        cluster: list[list[int]], pdb_file: str
+        self, cluster: list[list[int]], pdb_file: str
     ) -> list[list[tuple[float]]]:
         """Prepares pathway clusters for visualisation.
 
@@ -81,7 +93,7 @@ class MDPathVisualize:
 
         return new_cluster
 
-    def apply_backtracking(original_dict: dict, translation_dict: dict) -> dict:
+    def apply_backtracking(self, original_dict: dict, translation_dict: dict) -> dict:
         """Backtracks the original dictionary with a translation dictionary.
 
         Args:
@@ -100,7 +112,7 @@ class MDPathVisualize:
 
         return updated_dict
 
-    def format_dict(updated_dict: dict) -> dict:
+    def format_dict(self, updated_dict: dict) -> dict:
         """Reformats the dictionary to be JSON serializable.
 
         Args:
@@ -126,7 +138,7 @@ class MDPathVisualize:
         }
         return transformed_dict
 
-    def visualise_graph(graph: nx.Graph, k=0.1, node_size=200) -> None:
+    def visualise_graph(self, graph: nx.Graph, k=0.1, node_size=200) -> None:
         """Draws residue graph to PNG file.
 
         Args:
@@ -145,11 +157,11 @@ class MDPathVisualize:
             labels=labels,
             font_size=8,
             edge_color="gray",
-            node_color="blue",
+            node_color="skyblue",
         )
         plt.savefig("graph.png", dpi=300, bbox_inches="tight")
 
-    def precompute_path_properties(json_data):
+    def precompute_path_properties(self, json_data):
         """Precomputes path properties for quicker visualization in Jupyter notebook.
 
         Args:
@@ -205,7 +217,7 @@ class MDPathVisualize:
                         )
         return path_properties
 
-    def precompute_cluster_properties_quick(json_data):
+    def precompute_cluster_properties_quick(self, json_data):
         cluster_colors = {}
         color_index = 0
         cluster_properties = []

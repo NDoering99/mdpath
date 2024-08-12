@@ -1,3 +1,17 @@
+"""Mutual Information Calculation --- :mod:`mdpath.src.mutual_information`
+===============================================================================
+
+This module contains the class `NMICalculator` which calculates the Normalized Mutual Information (NMI)
+for all residue pairs in a given dataset based on the dihedral angle movements over the course of the analysed MD trajectory.
+
+
+Classes
+--------
+
+:class:`NMICalculator`
+"""
+
+
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -6,10 +20,10 @@ from scipy.stats import entropy
 
 
 class NMICalculator:
-    def __init__(self, df_all_residues, num_bins=35) -> None:
+    def __init__(self, df_all_residues: pd.DataFrame, num_bins: int=35) -> None:
         self.df_all_residues = df_all_residues
         self.num_bins = num_bins
-        self.mi_diff_df = self.NMI_calc()
+        self.mi_diff_df = self.NMI_calcs()
 
     def NMI_calcs(self) -> pd.DataFrame:
         """Nornmalized Mutual Information calculation for all residue pairs.

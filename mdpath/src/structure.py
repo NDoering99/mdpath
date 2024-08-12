@@ -67,7 +67,7 @@ class StructureCalculations:
             raise ValueError("Mode must be either 'close' or 'far'.")
 
         parser = PDB.PDBParser(QUIET=True)
-        structure = parser.get_structure("pdb_structure", self.pdb_file)
+        structure = parser.get_structure("pdb_structure", self.pdb)
         heavy_atoms = ["C", "N", "O", "S"]
         residue_pairs = []
         residues = [

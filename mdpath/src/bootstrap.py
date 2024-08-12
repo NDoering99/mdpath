@@ -1,3 +1,16 @@
+"""Bootstrap Analysis --- :mod:`mdpath.src.bootstrap`
+==============================================================================
+
+This module contains the class `BootstrapAnalysis` which performs bootstrap analysis to determine the confidence
+in paths generated from the given MD trajectory.
+
+Classes
+--------
+
+:class:`BootstrapAnalysis`
+"""
+
+
 import pandas as pd
 import numpy as np
 from mdpath.src.graph import GraphBuilder

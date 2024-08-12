@@ -1,3 +1,15 @@
+"""Clustering --- :mod:`mdpath.src.cluster`
+==============================================================================
+
+This module contains the class `PatwayClustering` which calculates the overlap between pathways and clusters them based on the overlap.
+Clusters are generated through hirarcical clustering using scipy. Optimal cluster size is evaluated using the silhouette score.
+
+Classes
+--------
+
+:class:`PatwayClustering`
+"""
+
 import pandas as pd
 import numpy as np
 from multiprocessing import Pool, Manager
@@ -11,7 +23,7 @@ import seaborn as sns
 class PatwayClustering:
     def __init__(self, df_close_res, pathways, num_processes) -> None:
         self.df = df_close_res
-        self.patways = pathways
+        self.pathways = pathways
         self.num_processes = num_processes
         self.overlapp_df = self.calculate_overlap_parallel()
 
@@ -89,7 +101,7 @@ class PatwayClustering:
         Returns:
             clusters (dict[int, list[int]]): Dictionary with the clusters and their pathways.
         """
-        overlap_matrix = self.overlap_df.pivot(
+        overlap_matrix = self.overlapp_df.pivot(
             index="Pathway1", columns="Pathway2", values="Overlap"
         ).fillna(0)
         distance_matrix = 1 - overlap_matrix

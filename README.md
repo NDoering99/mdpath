@@ -31,7 +31,7 @@ All dependencies will be automatically istalled alongside the package.
 
 ### Copyright
 
-Copyright (c) 2024, Marvin Taterra and Niklas Piet Doering
+Copyright (c) 2024, Niklas Piet Doering and Marvin Taterra
 
 
 #### Acknowledgements

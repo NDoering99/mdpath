@@ -1,20 +1,34 @@
+"""Graph --- :mod:`mdpath.src.graph`
+==============================================================================
+
+This module contains the class `GraphBuilder` which generates a graph of residues within a certain distance of each other.
+Graph edges are assigned weights based on mutual information differences.
+Paths between distant residues are calculated based on the shortest path with the highest total weight.
+
+Classes
+--------
+
+:class:`GraphBuilder`
+"""
+
+
 import networkx as nx
 import pandas as pd
 from tqdm import tqdm
 from itertools import combinations
 from Bio import PDB
 from typing import Tuple, List
-from mdpath.src.structure import calculate_distance
+from mdpath.src.structure import StructureCalculations
 
 
 class GraphBuilder:
-    def __init__(self, pdb, last_residue, mi_diff_df) -> None:
+    def __init__(self, pdb: str, last_residue: int, mi_diff_df: pd.DataFrame) -> None:
         self.pdb = pdb
         self.end = last_residue
         self.mi_diff_df = mi_diff_df
         self.graph = self.graph_builder()
 
-    def graph_skeleton(self, dist=5.0) -> nx.Graph:
+    def graph_skeleton(self, dist: int=5.0) -> nx.Graph:
         """Generates a graph of residues within a certain distance of each other.
 
         Args:
@@ -24,6 +38,7 @@ class GraphBuilder:
             residue_graph (nx.Graph): Graph of residues within a certain distance of each other.
         """
         residue_graph = nx.Graph()
+        structure_calc = StructureCalculations(self.pdb)
         parser = PDB.PDBParser(QUIET=True)
         structure = parser.get_structure("pdb_structure", self.pdb)
         heavy_atoms = ["C", "N", "O", "S"]
@@ -42,7 +57,7 @@ class GraphBuilder:
                     if atom1.element in heavy_atoms:
                         for atom2 in res2:
                             if atom2.element in heavy_atoms:
-                                distance = calculate_distance(atom1.coord, atom2.coord)
+                                distance = structure_calc.calculate_distance(atom1.coord, atom2.coord)
                                 if distance <= dist:
                                     residue_graph.add_edge(
                                         res1.get_id()[1], res2.get_id()[1], weight=0
