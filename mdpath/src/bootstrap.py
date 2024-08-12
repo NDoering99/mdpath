@@ -10,7 +10,6 @@ Classes
 :class:`BootstrapAnalysis`
 """
 
-
 import pandas as pd
 import numpy as np
 from mdpath.src.graph import GraphBuilder

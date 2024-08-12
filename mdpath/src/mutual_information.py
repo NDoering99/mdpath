@@ -11,7 +11,6 @@ Classes
 :class:`NMICalculator`
 """
 
-
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -20,7 +19,7 @@ from scipy.stats import entropy
 
 
 class NMICalculator:
-    def __init__(self, df_all_residues: pd.DataFrame, num_bins: int=35) -> None:
+    def __init__(self, df_all_residues: pd.DataFrame, num_bins: int = 35) -> None:
         self.df_all_residues = df_all_residues
         self.num_bins = num_bins
         self.mi_diff_df = self.NMI_calcs()

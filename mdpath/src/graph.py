@@ -11,7 +11,6 @@ Classes
 :class:`GraphBuilder`
 """
 
-
 import networkx as nx
 import pandas as pd
 from tqdm import tqdm
@@ -28,7 +27,7 @@ class GraphBuilder:
         self.mi_diff_df = mi_diff_df
         self.graph = self.graph_builder()
 
-    def graph_skeleton(self, dist: int=5.0) -> nx.Graph:
+    def graph_skeleton(self, dist: int = 5.0) -> nx.Graph:
         """Generates a graph of residues within a certain distance of each other.
 
         Args:
@@ -57,7 +56,9 @@ class GraphBuilder:
                     if atom1.element in heavy_atoms:
                         for atom2 in res2:
                             if atom2.element in heavy_atoms:
-                                distance = structure_calc.calculate_distance(atom1.coord, atom2.coord)
+                                distance = structure_calc.calculate_distance(
+                                    atom1.coord, atom2.coord
+                                )
                                 if distance <= dist:
                                     residue_graph.add_edge(
                                         res1.get_id()[1], res2.get_id()[1], weight=0

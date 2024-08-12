@@ -9,7 +9,6 @@ Classes
 :class:`MDPathVisualize`
 """
 
-
 from Bio import PDB
 from tqdm import tqdm
 import pandas as pd
