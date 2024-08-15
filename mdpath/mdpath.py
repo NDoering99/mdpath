@@ -98,6 +98,7 @@ def main():
         nargs="+",
     )
 
+    # TODO maybe move settingsflags to a conffile that can be changed
     # Dist flags
 
     parser.add_argument(
@@ -128,6 +129,8 @@ def main():
         required=False,
         default=500,
     )
+
+    # TODO maybe move the scaling and flatting to a different script callable from the commandline
     parser.add_argument(
         "-scale",
         dest="scale",
@@ -167,8 +170,8 @@ def main():
     )
 
     # Gather input arguments
+    # TODO maybe move the scaling and flatting to a different script callable from the commandline
     args = parser.parse_args()
-    visualization = MDPathVisualize()
     if args.color and not args.json:
         print("\033[1mRecoloring requires a valid -json to recolor.\033[0m")
     if args.color and args.json:
@@ -256,10 +259,10 @@ def main():
                 residue_coordinates_dict = pickle.load(pkl_file)
             with open(args.bcluster, "rb") as pkl_file:
                 cluster_pathways_dict = pickle.load(pkl_file)
-            updated_dict = visualization.apply_backtracking(
+            updated_dict = MDPathVisualize.apply_backtracking(
                 cluster_pathways_dict, residue_coordinates_dict
             )
-            formatted_dict = visualization.format_dict(updated_dict)
+            formatted_dict = MDPathVisualize.format_dict(updated_dict)
             with open("morphed_clusters_paths.json", "w") as json_file_2:
                 json.dump(formatted_dict, json_file_2)
             exit()
@@ -291,19 +294,19 @@ def main():
                 cluster_pathways_list.append(pathway)
             cluster_pathways_dict[cluster_num] = cluster_pathways_list
 
-        residue_coordinates_dict = visualization.residue_CA_coordinates(
+        residue_coordinates_dict = MDPathVisualize.residue_CA_coordinates(
             topology, structure_calc.last_res_num
         )
-        updated_dict = visualization.apply_backtracking(
+        updated_dict = MDPathVisualize.apply_backtracking(
             cluster_pathways_dict, residue_coordinates_dict
         )
-        formated_dict = visualization.format_dict(updated_dict)
+        formated_dict = MDPathVisualize.format_dict(updated_dict)
         with open("multitraj_clusters_paths.json", "w") as json_file:
             json.dump(formated_dict, json_file)
-        path_properties = visualization.precompute_path_properties(formated_dict)
+        path_properties = MDPathVisualize.precompute_path_properties(formated_dict)
         with open("multitraj_precomputed_clusters_paths.json", "w") as out_file:
             json.dump(path_properties, out_file, indent=4)
-        quick_path_properties = visualization.precompute_cluster_properties_quick(
+        quick_path_properties = MDPathVisualize.precompute_cluster_properties_quick(
             formated_dict
         )
         with open("multitraj_quick_precomputed_clusters_paths.json", "w") as out_file2:
@@ -348,16 +351,15 @@ def main():
     nmi_calc = NMICalculator(df_all_residues)
     nmi_calc.mi_diff_df.to_csv("mi_diff_df.csv", index=False)
     graph_builder = GraphBuilder(
-        topology, structure_calc.last_res_num, nmi_calc.mi_diff_df
+        topology, structure_calc.last_res_num, nmi_calc.mi_diff_df, graphdist
     )
-    visualization.visualise_graph(
+    MDPathVisualize.visualise_graph(
         graph_builder.graph
     )  # Exports image of the Graph to PNG
 
     # Calculate paths
     path_total_weights = graph_builder.collect_path_total_weights(df_distant_residues)
     sorted_paths = sorted(path_total_weights, key=lambda x: x[1], reverse=True)
-    sorted_paths_bs = sorted_paths
     with open("output.txt", "w") as file:
         for path, total_weight in sorted_paths[:numpath]:
             file.write(f"Path: {path}, Total Weight: {total_weight}\n")
@@ -380,7 +382,7 @@ def main():
     # Bootstrap analysis
     if bootstrap:
         num_bootstrap_samples = int(bootstrap)
-        bootstrap = BootstrapAnalysis(
+        bootstrap_analysis = BootstrapAnalysis(
             df_all_residues,
             df_distant_residues,
             sorted_paths,
@@ -388,33 +390,19 @@ def main():
             numpath,
             topology,
             structure_calc.last_res_num,
+            graphdist,
         )
-        for path, (mean, lower, upper) in bootstrap.path_confidence_intervals.items():
-            path_str = " -> ".join(map(str, path))
-            file_name = "path_confidence_intervals.txt"
-            with open(file_name, "w") as file:
-                for path, (
-                    mean,
-                    lower,
-                    upper,
-                ) in bootstrap.path_confidence_intervals.items():
-                    path_str = " -> ".join(map(str, path))
-                    file.write(
-                        f"{path_str}: Mean={mean}, 2.5%={lower}, 97.5%={upper}\n"
-                    )
+        file_name = "path_confidence_intervals.txt"
+        bootstrap_analysis.bootstrap_write(file_name)
         print(f"Path confidence intervals have been saved to {file_name}")
 
     # Cluster pathways to get signaltransduction paths
     clustering = PatwayClustering(df_close_res, top_pathways, num_parallel_processes)
     clusters = clustering.pathways_cluster()
-    cluster_pathways_dict = {}
-    for cluster_num, cluster_pathways in clusters.items():
-        cluster_pathways_list = []
-        for pathway_id in cluster_pathways:
-            pathway = sorted_paths[pathway_id]
-            cluster_pathways_list.append(pathway[0])
-        cluster_pathways_dict[cluster_num] = cluster_pathways_list
-    residue_coordinates_dict = visualization.residue_CA_coordinates(
+    cluster_pathways_dict = clustering.pathway_clusters_dictionary(
+        clusters, sorted_paths
+    )
+    residue_coordinates_dict = MDPathVisualize.residue_CA_coordinates(
         "first_frame.pdb", structure_calc.last_res_num
     )
 
@@ -429,16 +417,16 @@ def main():
         pickle.dump(top_pathways, pkl_file)
 
     # Export the cluster pathways for visualization
-    updated_dict = visualization.apply_backtracking(
+    updated_dict = MDPathVisualize.apply_backtracking(
         cluster_pathways_dict, residue_coordinates_dict
     )
-    formated_dict = visualization.format_dict(updated_dict)
+    formated_dict = MDPathVisualize.format_dict(updated_dict)
     with open("clusters_paths.json", "w") as json_file:
         json.dump(formated_dict, json_file)
-    path_properties = visualization.precompute_path_properties(formated_dict)
+    path_properties = MDPathVisualize.precompute_path_properties(formated_dict)
     with open("precomputed_clusters_paths.json", "w") as out_file:
         json.dump(path_properties, out_file, indent=4)
-    quick_path_properties = visualization.precompute_cluster_properties_quick(
+    quick_path_properties = MDPathVisualize.precompute_cluster_properties_quick(
         formated_dict
     )
     with open("quick_precomputed_clusters_paths.json", "w") as out_file2:

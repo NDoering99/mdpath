@@ -21,13 +21,16 @@ from mdpath.src.structure import StructureCalculations
 
 
 class GraphBuilder:
-    def __init__(self, pdb: str, last_residue: int, mi_diff_df: pd.DataFrame) -> None:
+    def __init__(
+        self, pdb: str, last_residue: int, mi_diff_df: pd.DataFrame, graphdist: int
+    ) -> None:
         self.pdb = pdb
         self.end = last_residue
         self.mi_diff_df = mi_diff_df
+        self.dist = graphdist
         self.graph = self.graph_builder()
 
-    def graph_skeleton(self, dist: int = 5.0) -> nx.Graph:
+    def graph_skeleton(self) -> nx.Graph:
         """Generates a graph of residues within a certain distance of each other.
 
         Args:
@@ -59,7 +62,7 @@ class GraphBuilder:
                                 distance = structure_calc.calculate_distance(
                                     atom1.coord, atom2.coord
                                 )
-                                if distance <= dist:
+                                if distance <= self.dist:
                                     residue_graph.add_edge(
                                         res1.get_id()[1], res2.get_id()[1], weight=0
                                     )

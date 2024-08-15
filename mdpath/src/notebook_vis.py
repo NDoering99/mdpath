@@ -3,10 +3,16 @@ import nglview as nv
 
 
 class NotebookVisualization:
-    def __init__(self, view, json_path) -> None:
-        self.view = view
+    def __init__(self, pdb_path, json_path) -> None:
+        self.pdb_path = pdb_path
+        self.view = self.load_ngl_view()
         self.json_path = json_path
         self.precomputed_data = self.load_precomputed_data()
+
+    def load_ngl_view(self):
+        view = nv.show_file(self.pdb_path)
+        view.display(gui=True, style="ngl")
+        return view
 
     def load_precomputed_data(self) -> dict:
         """Loads precomputed cluster properties from a JSON file.

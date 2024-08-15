@@ -28,6 +28,7 @@ class BootstrapAnalysis:
         numpath,
         pdb,
         last_residue,
+        graphdist: int,
         num_bins: int = 35,
     ) -> None:
         self.df_all_residues = df_all_residues
@@ -37,8 +38,9 @@ class BootstrapAnalysis:
         self.numpath = numpath
         self.pdb = pdb
         self.last_residue = last_residue
+        self.graphdist = graphdist
         self.num_bins = num_bins
-        self.common_counts, self.path_confidence_intervals = self.bootstrap_analysis
+        self.common_counts, self.path_confidence_intervals = self.bootstrap_analysis()
 
     def create_bootstrap_sample(
         self, df_dihedral: pd.DataFrame
@@ -79,7 +81,9 @@ class BootstrapAnalysis:
         bootstrap_sample = self.create_bootstrap_sample(self.df_all_residues)
         nmi_calculator = NMICalculator(bootstrap_sample, num_bins=self.num_bins)
         bootstrap_mi_diff = nmi_calculator.mi_diff_df
-        graph = GraphBuilder(self.pdb, self.last_residue, bootstrap_mi_diff)
+        graph = GraphBuilder(
+            self.pdb, self.last_residue, bootstrap_mi_diff, self.graphdist
+        )
         bootstrap_path_total_weights = graph.collect_path_total_weights(
             self.df_distant_residues
         )
@@ -150,4 +154,18 @@ class BootstrapAnalysis:
                 upper_bound,
             )
 
-        return common_counts, path_confidence_intervals
+        return (common_counts, path_confidence_intervals)
+
+    def bootstrap_write(self, file_name: str) -> None:
+        for path, (mean, lower, upper) in self.path_confidence_intervals.items():
+            path_str = " -> ".join(map(str, path))
+            with open(file_name, "w") as file:
+                for path, (
+                    mean,
+                    lower,
+                    upper,
+                ) in self.path_confidence_intervals.items():
+                    path_str = " -> ".join(map(str, path))
+                    file.write(
+                        f"{path_str}: Mean={mean}, 2.5%={lower}, 97.5%={upper}\n"
+                    )

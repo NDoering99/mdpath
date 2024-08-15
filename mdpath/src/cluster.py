@@ -151,3 +151,13 @@ class PatwayClustering:
                 print(f"Cluster {cluster} (Size: {len(pathways)})")
                 clusters[cluster] = pathways
         return clusters
+
+    def pathway_clusters_dictionary(self, clusters, sorted_paths) -> dict:
+        cluster_pathways_dict = {}
+        for cluster_num, cluster_pathways in clusters.items():
+            cluster_pathways_list = []
+            for pathway_id in cluster_pathways:
+                pathway = sorted_paths[pathway_id]
+                cluster_pathways_list.append(pathway[0])
+            cluster_pathways_dict[cluster_num] = cluster_pathways_list
+        return cluster_pathways_dict
