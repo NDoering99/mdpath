@@ -12,7 +12,7 @@ class StructureCalculations:
     def __init__(self, pdb):
         self.pdb = pdb
         self.first_res_num, self.last_res_num = self.res_num_from_pdb()
-        self.num_residues = self.last_res_num - self.first_res_num
+        self.num_residues = self.last_res_num - self.first_res_num + 1
 
     def res_num_from_pdb(self) -> tuple[int, int]:
         """Gets first and last residue number from a PDB file.
