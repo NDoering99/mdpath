@@ -18,16 +18,14 @@ import matplotlib.pyplot as plt
 import json
 
 Colors = [
-    [1, 0, 0],  # Red
-    [0, 1, 0],  # Green
-    [0, 0, 1],  # Blue
-    [1, 1, 0],  # Yellow
-    [1, 0, 1],  # Magenta
-    [0, 1, 1],  # Cyan
-    [0.5, 0.5, 0.5],  # Gray
-    [1, 0.5, 0],  # Orange
-    [0.5, 0, 0.5],  # Purple
-    [0.5, 1, 0.5],  # Light Green
+    [0.1216, 0.4667, 0.7059],
+    [0.1725, 0.6647, 0.1725],
+    [0.8392, 0.1529, 0.1569],
+    [0.5804, 0.4039, 0.7412],
+    [0.5490, 0.3373, 0.2941],
+    [0.8902, 0.4667, 0.7608],
+	[1.0000, 0.4980, 0.0549]
+
 ]
 
 
@@ -264,3 +262,63 @@ class MDPathVisualize:
                             f"Ignoring pathway {pathway} as it does not fulfill the coordinate format."
                         )
         return cluster_properties
+
+    @staticmethod
+    def remove_non_protein(input_pdb, output_pdb):
+        """
+        Function to remove non-protein atoms (e.g., water, ligands, ions) from a PDB file
+        and write only the protein atoms to a new PDB file.
+
+        Parameters:
+        input_pdb (str): Path to the input PDB file.
+        output_pdb (str): Path to the output PDB file to save the protein-only structure.
+        """
+        parser = PDB.PDBParser(QUIET=True)
+        structure = parser.get_structure('structure', input_pdb)
+        io = PDB.PDBIO()
+        class ProteinSelect(PDB.Select):
+            def accept_residue(self, residue):
+                return PDB.is_aa(residue, standard=True)
+        io.set_structure(structure)
+        io.save(output_pdb, select=ProteinSelect())
+    #call like this: remove_non_protein('first_frame.pdb', "protein_first_frame.pdb")
+
+    @staticmethod
+    def assign_generic_numbers(pdb_file_path, output_file_path='numbered_structure.pdb'):
+        url = 'https://gpcrdb.org/services/structure/assign_generic_numbers'
+        with open(pdb_file_path, 'rb') as pdb_file:
+            files = {'pdb_file': pdb_file}
+            response = requests.post(url, files=files)
+        if response.status_code == 200:
+            with open(output_file_path, 'w') as output_file:
+                output_file.write(response.text)
+            print(f"New PDB file saved as {output_file_path}")
+        else:
+            print(f"Failed to process the file: {response.status_code}")
+    
+    #call like this: assign_generic_numbers('protein_first_frame.pdb')
+
+    @staticmethod
+    def parse_pdb_and_create_dictionary(pdb_file_path):
+        residue_dict = {}
+        with open(pdb_file_path, 'r') as pdb_file:
+            for line in pdb_file:
+                if line.startswith("ATOM"):
+                    residue_number = int(line[22:26].strip())
+                    b_factor = float(line[60:66].strip())
+                    if b_factor == 0.00:
+                        continue
+                    if b_factor > -8.1 and b_factor < 8.1:
+                        genetic_number = str(f"{b_factor:.2f}").replace(".", "x")
+                    elif b_factor > 0:
+                        genetic_number = str(f"{b_factor:.2f}")
+                    else:
+                        genetic_number = None
+                    if genetic_number:
+                        residue_dict[residue_number] = genetic_number
+
+        return residue_dict
+    #use like this: pdb_file_path = 'numbered_structure.pdb'
+    #residue_dict = parse_pdb_and_create_dictionary(pdb_file_path)
+    #iterate for residue, genetic_number in residue_dict.items():
+    #print(f"Residue {residue}: Genetic Number -> {genetic_number}")
