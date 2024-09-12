@@ -3,8 +3,8 @@ import networkx as nx
 import pandas as pd
 from unittest.mock import patch, MagicMock
 from mdpath.src.graph import GraphBuilder 
+import os 
 
-#TODO wrtie a working test for graph_skeleton
 
 def test_graph_builder_initialization():
     pdb = "test_topology.pdb"
@@ -143,3 +143,26 @@ def test_collect_path_total_weights():
                 result = graph_builder.collect_path_total_weights(df_test)
 
                 assert result == case["expected_result"]
+
+
+
+
+def test_graph_skeleton():
+    """Test the graph_skeleton method using actual data from mi_diff_df.csv and first_frame.pdb."""
+    
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_dir, 'mi_diff_df.csv')
+    mi_diff_df = pd.read_csv(file_path)
+    pdb_file =  file_path = os.path.join(current_dir, "first_frame.pdb")
+    last_residue = 100  
+    graphdist = 5       
+
+    gb = GraphBuilder(pdb=pdb_file, last_residue=last_residue, mi_diff_df=mi_diff_df, graphdist=graphdist)
+    
+    graph = gb.graph_skeleton()
+    
+    assert isinstance(graph, nx.Graph), "The result should be a NetworkX Graph object."
+    
+    assert len(graph.edges) > 0, "The graph should contain edges."
+    
+
