@@ -162,7 +162,7 @@ def test_precompute_path_properties():
         ],
     }
 
-     expected_output = [
+    expected_output = [
         {
             "clusterid": "cluster1",
             "pathway_index": 0,
