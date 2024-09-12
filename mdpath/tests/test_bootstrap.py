@@ -8,7 +8,9 @@ from mdpath.src.bootstrap import BootstrapAnalysis
 
 @pytest.fixture
 def load_pickle_data():
-    with open('bs_init.pkl', 'rb') as file:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    bs = os.path.join(current_dir, 'bs_init.pkl')
+    with open(bs, 'rb') as file:
         df_all_residues = pickle.load(file)
         df_distant_residues = pickle.load(file)
         sorted_paths = pickle.load(file)
