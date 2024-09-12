@@ -161,6 +161,7 @@ def test_precompute_path_properties():
             [[[13, 14, 15]], [[16, 17, 18]]],
         ],
     }
+
     expected_output = [
         {
             "clusterid": "cluster1",
@@ -203,6 +204,7 @@ def test_precompute_cluster_properties_quick():
         "cluster1": [[[[1, 2, 3]], [[4, 5, 6]]], [[[1, 2, 3]], [[4, 5, 6]]]],
         "cluster2": [[[[7, 8, 9]], [[10, 11, 12]]]],
     }
+
     expected_output = [
         {
             "clusterid": "cluster1",
