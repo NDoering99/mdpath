@@ -11,11 +11,11 @@ Classes
 
 from Bio import PDB
 from tqdm import tqdm
-import pandas as pd
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
-import json
+import MDAnalysis as mda
+import requests
 
 Colors = [
     [0.1216, 0.4667, 0.7059],
@@ -24,9 +24,31 @@ Colors = [
     [0.5804, 0.4039, 0.7412],
     [0.5490, 0.3373, 0.2941],
     [0.8902, 0.4667, 0.7608],
-	[1.0000, 0.4980, 0.0549]
-
+    [1.0000, 0.4980, 0.0549],
 ]
+
+AAMAPPING = {
+    "ALA": "A",
+    "ARG": "R",
+    "ASN": "N",
+    "ASP": "D",
+    "CYS": "C",
+    "GLU": "E",
+    "GLN": "Q",
+    "GLY": "G",
+    "HIS": "H",
+    "ILE": "I",
+    "LEU": "L",
+    "LYS": "K",
+    "MET": "M",
+    "PHE": "F",
+    "PRO": "P",
+    "SER": "S",
+    "THR": "T",
+    "TRP": "W",
+    "TYR": "Y",
+    "VAL": "V",
+}
 
 
 class MDPathVisualize:
@@ -273,39 +295,36 @@ class MDPathVisualize:
         input_pdb (str): Path to the input PDB file.
         output_pdb (str): Path to the output PDB file to save the protein-only structure.
         """
-        parser = PDB.PDBParser(QUIET=True)
-        structure = parser.get_structure('structure', input_pdb)
-        io = PDB.PDBIO()
-        class ProteinSelect(PDB.Select):
-            def accept_residue(self, residue):
-                return PDB.is_aa(residue, standard=True)
-        io.set_structure(structure)
-        io.save(output_pdb, select=ProteinSelect())
-    #call like this: remove_non_protein('first_frame.pdb', "protein_first_frame.pdb")
+        sys = mda.Universe(input_pdb)
+        protein = sys.select_atoms("protein")
+        protein.write(output_pdb)
 
     @staticmethod
-    def assign_generic_numbers(pdb_file_path, output_file_path='numbered_structure.pdb'):
-        url = 'https://gpcrdb.org/services/structure/assign_generic_numbers'
-        with open(pdb_file_path, 'rb') as pdb_file:
-            files = {'pdb_file': pdb_file}
+    def assign_generic_numbers(
+        pdb_file_path, output_file_path="numbered_structure.pdb"
+    ):
+        url = "https://gpcrdb.org/services/structure/assign_generic_numbers"
+        with open(pdb_file_path, "rb") as pdb_file:
+            files = {"pdb_file": pdb_file}
             response = requests.post(url, files=files)
         if response.status_code == 200:
-            with open(output_file_path, 'w') as output_file:
+            with open(output_file_path, "w") as output_file:
                 output_file.write(response.text)
             print(f"New PDB file saved as {output_file_path}")
         else:
             print(f"Failed to process the file: {response.status_code}")
-    
-    #call like this: assign_generic_numbers('protein_first_frame.pdb')
+
+    # call like this: assign_generic_numbers('protein_first_frame.pdb')
 
     @staticmethod
     def parse_pdb_and_create_dictionary(pdb_file_path):
         residue_dict = {}
-        with open(pdb_file_path, 'r') as pdb_file:
+        with open(pdb_file_path, "r") as pdb_file:
             for line in pdb_file:
                 if line.startswith("ATOM"):
                     residue_number = int(line[22:26].strip())
                     b_factor = float(line[60:66].strip())
+                    amino_acid = line[17:20].strip()
                     if b_factor == 0.00:
                         continue
                     if b_factor > -8.1 and b_factor < 8.1:
@@ -314,11 +333,9 @@ class MDPathVisualize:
                         genetic_number = str(f"{b_factor:.2f}")
                     else:
                         genetic_number = None
-                    if genetic_number:
-                        residue_dict[residue_number] = genetic_number
-
+                    if genetic_number and amino_acid in AAMAPPING:
+                        residue_dict[residue_number] = {
+                            "genetic_number": genetic_number,
+                            "amino_acid": AAMAPPING[amino_acid],
+                        }
         return residue_dict
-    #use like this: pdb_file_path = 'numbered_structure.pdb'
-    #residue_dict = parse_pdb_and_create_dictionary(pdb_file_path)
-    #iterate for residue, genetic_number in residue_dict.items():
-    #print(f"Residue {residue}: Genetic Number -> {genetic_number}")

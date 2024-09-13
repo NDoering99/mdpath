@@ -27,7 +27,6 @@ class NotebookVisualization:
             precomputed_data = json.load(json_file)
         return precomputed_data
 
-
     def generate_cluster_ngl_script(self) -> None:
         """Generates NGL script and edits view for visualizing precomputed cluster pathways as cones between residues.
 
