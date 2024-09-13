@@ -28,6 +28,13 @@ def edit_3D_visualization_json():
         default=False,
     )
     parser.add_argument(
+        "-scale",
+        dest="scale",
+        help="Factor to mutiply radius with",
+        required=False,
+        default=False,
+    )
+    parser.add_argument(
         "-recolor",
         dest="color",
         help="Color file for 3D visualization colors.",
