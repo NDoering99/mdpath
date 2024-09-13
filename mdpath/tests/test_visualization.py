@@ -6,6 +6,7 @@ import networkx as nx
 from unittest.mock import MagicMock, patch
 from mdpath.src.visualization import MDPathVisualize
 
+
 def create_mock_pdb(content: str) -> str:
     """Helper function to create a temporary PDB file."""
     tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdb")
@@ -16,6 +17,7 @@ def create_mock_pdb(content: str) -> str:
 
 def are_vectors_close(vec1, vec2, tol=1e-6):
     return np.allclose(vec1, vec2, atol=tol)
+
 
 def test_residue_CA_coordinates():
     pdb_content = """
@@ -82,9 +84,7 @@ def test_apply_backtracking():
         "cluster3": [[9, "J"]],
     }
 
-    result = MDPathVisualize.apply_backtracking(
-        original_dict, translation_dict
-    )
+    result = MDPathVisualize.apply_backtracking(original_dict, translation_dict)
     assert result == expected
 
 
@@ -117,9 +117,7 @@ def test_cluster_prep_for_visualisation():
 
         mock_structure[0].__getitem__.side_effect = getitem
 
-        result = MDPathVisualize.cluster_prep_for_visualisation(
-            input_cluster, pdb_file
-        )
+        result = MDPathVisualize.cluster_prep_for_visualisation(input_cluster, pdb_file)
 
         expected_result = [[(1.0, 1.0, 1.0), (2.0, 2.0, 2.0)], [(3.0, 3.0, 3.0)]]
 
@@ -228,10 +226,7 @@ def test_precompute_cluster_properties_quick():
             "radius": 0.015,
         },
     ]
-    actual_output = MDPathVisualize.precompute_cluster_properties_quick(
-        json_data
-    )
+    actual_output = MDPathVisualize.precompute_cluster_properties_quick(json_data)
     assert (
         actual_output == expected_output
     ), f"Expected {expected_output}, but got {actual_output}"
-

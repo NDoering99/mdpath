@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, Mock, patch, call
 
 from mdpath.src.mutual_information import NMICalculator
 
+
 def test_nmi_calculator(mocker):
     np.random.seed(0)  # Set a fixed seed for reproducibility
     data = {

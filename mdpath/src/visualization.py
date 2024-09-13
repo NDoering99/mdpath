@@ -11,6 +11,10 @@ Classes
 
 from Bio import PDB
 from tqdm import tqdm
+from PIL import Image, ImageDraw, ImageFont
+from collections import Counter
+import os
+import re
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -314,8 +318,6 @@ class MDPathVisualize:
         else:
             print(f"Failed to process the file: {response.status_code}")
 
-    # call like this: assign_generic_numbers('protein_first_frame.pdb')
-
     @staticmethod
     def parse_pdb_and_create_dictionary(pdb_file_path):
         residue_dict = {}
@@ -339,3 +341,156 @@ class MDPathVisualize:
                             "amino_acid": AAMAPPING[amino_acid],
                         }
         return residue_dict
+
+    @staticmethod
+    def assign_generic_numbers_paths(cluster_pathways, generic_number_dict):
+        updated_cluster_residues = {}
+        no_generic_number_list = []
+        for cluster_id, residue_lists in cluster_pathways.items():
+            updated_residue_lists = []
+            for residue_list in residue_lists:
+                updated_residue_list = []
+                for residue_number in residue_list:
+                    try:
+                        updated_residue_list.append(
+                            generic_number_dict[residue_number]["genetic_number"]
+                        )
+                    except KeyError:
+                        print(
+                            f"Residue number {residue_number} not found in genetic_number"
+                        )
+                        no_genetic_number_list.append(residue_number)
+                updated_residue_lists.append(updated_residue_list)
+            updated_cluster_residues[cluster_id] = updated_residue_lists
+        no_genetic_number_list = set(no_genetic_number_list)
+        return updated_cluster_residues, no_generic_number_list
+
+    @staticmethod
+    def create_gpcr_2d_path_vis(
+        updated_cluster_residues,
+        cutoff_percentage=0,
+        image_name="GPCR_2D_pathways",
+        fontsize_tm=20,
+        fontsize_numbers=18,
+        fontfile=None,
+    ):
+        for cluster in updated_cluster_residues.keys():
+            # Process data
+            tm_data = {i: [] for i in range(1, 8)}
+            for path in updated_cluster_residues[cluster]:
+                for res in path:
+                    match = re.match(r"(\d)x(\d+)", res)
+                    if match:
+                        tm_number = int(match.group(1))
+                        position = int(match.group(2))
+                        if 1 <= tm_number <= 7:
+                            tm_data[tm_number].append((position, res))
+
+            # Remove duplicate values
+            for tm_number, values in tm_data.items():
+                tm_data[tm_number] = list(set(values))
+
+            for tm in tm_data.values():
+                tm.sort(key=lambda x: x[0])
+
+            # Calculate the maximum number of circles
+            max_circles = max(len(res) for res in tm_data.values())
+
+            # Define dimensions
+            circle_diameter = 50
+            padding = 40
+            column_width = 100
+            width = len(tm_data) * (column_width + padding) + padding
+            height = max_circles * (circle_diameter + padding) + padding * 2
+
+            # Set up the image
+            image = Image.new("RGB", (width, height), color="white")
+            draw = ImageDraw.Draw(image)
+
+            # Try to load a font
+            if fontfile:
+                try:
+                    font = ImageFont.truetype(fontfile, fontsize_numbers)
+                    title_font = ImageFont.truetype(fontfile, fontsize_tm)
+                except IOError:
+                    print(
+                        f"Could not load font file {fontfile}. Using pillow default font."
+                    )
+                    font = ImageFont.load_default(size=fontsize_numbers)
+                    title_font = ImageFont.load_default(size=fontsize_tm)
+            else:
+                print(f"No font file provided. Using pillow default font.")
+                font = ImageFont.load_default(size=fontsize_numbers)
+                title_font = ImageFont.load_default(size=fontsize_tm)
+
+            circle_positions = {}
+            for col, (tm_number, res) in enumerate(tm_data.items(), start=1):
+                x = (col - 1) * (column_width + padding) + padding
+                # Draw TM label
+                draw.text(
+                    ((x + column_width // 2) - 12, 10),
+                    f"TM{tm_number}",
+                    fill="black",
+                    font=title_font,
+                )
+
+                # Draw column
+                draw.rectangle(
+                    [x, 40, x + column_width, height - padding], outline="black"
+                )
+
+                # Draw circles and labels
+                for i, (_, genetic_number) in enumerate(res):
+                    circle_y = (
+                        padding + i * (circle_diameter + padding) + circle_diameter
+                    )
+                    circle_x = x + column_width // 2
+                    draw.ellipse(
+                        [
+                            circle_x - circle_diameter // 2,
+                            circle_y - circle_diameter // 2,
+                            circle_x + circle_diameter // 2,
+                            circle_y + circle_diameter // 2,
+                        ],
+                        outline="black",
+                    )
+
+                    # Draw genetic number
+                    draw.text(
+                        (circle_x - 18, circle_y - 8),
+                        f"{genetic_number}",
+                        fill="black",
+                        font=font,
+                    )
+                    circle_positions[genetic_number] = (circle_x, circle_y)
+
+            # Count the frequency of each path and calculate cutoff
+            connection_counts = Counter()
+            for path in updated_cluster_residues[cluster]:
+                for i in range(len(path) - 1):
+                    connection = tuple(sorted([path[i], path[i + 1]]))
+                    connection_counts[connection] += 1
+            max_count = max(connection_counts.values()) if connection_counts else 1
+            cutoff_count = (cutoff_percentage / 100) * max_count
+
+            # Draw lines between connected residues with varying thickness
+            for path in updated_cluster_residues[cluster]:
+                for i in range(len(path) - 1):
+                    current_res = path[i]
+                    next_res = path[i + 1]
+
+                    if current_res in circle_positions and next_res in circle_positions:
+                        start = circle_positions[current_res]
+                        end = circle_positions[next_res]
+
+                        # Get the count for this connection
+                        connection = tuple(sorted([current_res, next_res]))
+                        count = connection_counts[connection]
+
+                        # Only draw the line if the count is above the cutoff
+                        if count >= cutoff_count:
+                            thickness = max(1, min(5, int((count / max_count) * 10)))
+                            draw.line([start, end], fill="blue", width=thickness)
+            # Save the image
+            image.save(f"{image_name}_cluster_{cluster}.png")
+            print(f"Image saved as {image_name}_cluster_{cluster}.png")
