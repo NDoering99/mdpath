@@ -29,7 +29,8 @@ dependencies = [
     "biopython",
     "tqdm",
     "seaborn",
-    "nglview"
+    "nglview",
+    "pillow"
 ]
 
 # Update the urls once the hosting is set up.
