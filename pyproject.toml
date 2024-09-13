@@ -96,3 +96,7 @@ file = "mdpath/_version.py"
 
 [project.scripts]
 mdpath = "mdpath.mdpath:main"
+mdpath_json_editor = "mdpath.mdpath_tools:edit_3D_visualization_json"
+mdpath_compare = "mdpath.mdpath_tools:path_comparison"
+mdpath_multitraj = "mdpath.mdpath_tools:multitraj_analysis"
+mdpath_gpcr_image = "mdpath.mdpath_tools:gpcr_2D_vis"

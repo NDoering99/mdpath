@@ -345,7 +345,7 @@ class MDPathVisualize:
     @staticmethod
     def assign_generic_numbers_paths(cluster_pathways, generic_number_dict):
         updated_cluster_residues = {}
-        no_generic_number_list = []
+        no_genetic_number_list = []
         for cluster_id, residue_lists in cluster_pathways.items():
             updated_residue_lists = []
             for residue_list in residue_lists:
@@ -356,14 +356,11 @@ class MDPathVisualize:
                             generic_number_dict[residue_number]["genetic_number"]
                         )
                     except KeyError:
-                        print(
-                            f"Residue number {residue_number} not found in genetic_number"
-                        )
                         no_genetic_number_list.append(residue_number)
                 updated_residue_lists.append(updated_residue_list)
             updated_cluster_residues[cluster_id] = updated_residue_lists
         no_genetic_number_list = set(no_genetic_number_list)
-        return updated_cluster_residues, no_generic_number_list
+        return updated_cluster_residues, no_genetic_number_list
 
     @staticmethod
     def create_gpcr_2d_path_vis(
