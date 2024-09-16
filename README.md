@@ -7,7 +7,7 @@ mdpath
 [![Documentation Status](https://readthedocs.org/projects/mdpath/badge/?version=latest)](https://mdpath.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-MD signal transduction calculation
+MDPath - A tool for calculating allosteric communication pathways in proteins by analyzing the mutual information of residue dihedral angle movements throughout an MD simulation.  
 
 https://mdpath.readthedocs.io
 
@@ -29,9 +29,16 @@ Now you can easily install the package using pip from the cloned repository
 
 All dependencies will be automatically istalled alongside the package.
 
+## Usage
+
+MDPath can easily be accesed from the comandline.
+Acces this comand to get an overview of all availible flags:
+    
+    mdpath -h
+
 ### Copyright
 
-Copyright (c) 2024, Marvin Taterra and Niklas Piet Doering
+Copyright (c) 2024, Niklas Piet Doering and Marvin Taterra
 
 
 #### Acknowledgements
