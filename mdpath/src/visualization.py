@@ -320,26 +320,29 @@ class MDPathVisualize:
 
     @staticmethod
     def parse_pdb_and_create_dictionary(pdb_file_path):
+        processed_residues = []
         residue_dict = {}
+        last_generic_number = 1
         with open(pdb_file_path, "r") as pdb_file:
             for line in pdb_file:
                 if line.startswith("ATOM"):
                     residue_number = int(line[22:26].strip())
                     b_factor = float(line[60:66].strip())
                     amino_acid = line[17:20].strip()
-                    if b_factor == 0.00:
-                        continue
-                    if b_factor > -8.1 and b_factor < 8.1:
-                        genetic_number = str(f"{b_factor:.2f}").replace(".", "x")
-                    elif b_factor > 0:
-                        genetic_number = str(f"{b_factor:.2f}")
-                    else:
-                        genetic_number = None
-                    if genetic_number and amino_acid in AAMAPPING:
-                        residue_dict[residue_number] = {
-                            "genetic_number": genetic_number,
-                            "amino_acid": AAMAPPING[amino_acid],
-                        }
+                    if residue_number not in processed_residues:
+                        if b_factor > 0.1 and b_factor < 8.99:
+                            generic_number = str(f"{b_factor:.2f}").replace(".", "x")
+                            match = re.match(r"(\d)[x\.](\d+)", generic_number)
+                            if int(match.group(1)) in range(1, 8):
+                                last_generic_number = int(match.group(1))
+                            processed_residues.append(residue_number)
+                        else:
+                            generic_number = f"{last_generic_number}{last_generic_number+1}x{residue_number}"
+                        if amino_acid in AAMAPPING:
+                            residue_dict[residue_number] = {
+                                "generic_number": generic_number,
+                                "amino_acid": AAMAPPING[amino_acid],
+                            }
         return residue_dict
 
     @staticmethod
@@ -353,7 +356,7 @@ class MDPathVisualize:
                 for residue_number in residue_list:
                     try:
                         updated_residue_list.append(
-                            generic_number_dict[residue_number]["genetic_number"]
+                            generic_number_dict[residue_number]["generic_number"]
                         )
                     except KeyError:
                         no_genetic_number_list.append(residue_number)
@@ -361,6 +364,53 @@ class MDPathVisualize:
             updated_cluster_residues[cluster_id] = updated_residue_lists
         no_genetic_number_list = set(no_genetic_number_list)
         return updated_cluster_residues, no_genetic_number_list
+
+    @staticmethod
+    def draw_column(draw, col, res, label, circle_positions, circle_diameter, padding, column_width, height, font, title_font, align='top'):
+        
+        x = (col - 1) * (column_width + padding) + padding
+        
+        draw.text(
+            ((x + column_width // 2) - 12, 10),
+            f"{label}",
+            fill="black",
+            font=title_font,
+        )
+        
+        draw.rectangle(
+            [x, 40, x + column_width, height - padding], outline="black"
+        )
+
+        # Draw circles and labels
+        for i, (_, genetic_number) in enumerate(res):
+            if align == 'top':
+                circle_y = 80 + i * (circle_diameter + padding)
+            elif align == 'bottom':
+                circle_y = (
+                    height - padding - i * (circle_diameter + padding) - circle_diameter
+                )
+            else:
+                raise ValueError("Invalid value for align. It should be 'top' or 'bottom'.")
+            circle_x = x + column_width // 2
+            draw.ellipse(
+                [
+                    circle_x - circle_diameter // 2,
+                    circle_y - circle_diameter // 2,
+                    circle_x + circle_diameter // 2,
+                    circle_y + circle_diameter // 2,
+                ],
+                outline="black",
+            )
+
+            # Draw genetic number
+            draw.text(
+                (circle_x - 28, circle_y - 8),
+                f"{genetic_number}",
+                fill="black",
+                font=font,
+            )
+            circle_positions[genetic_number] = (circle_x, circle_y)
+
 
     @staticmethod
     def create_gpcr_2d_path_vis(
@@ -371,40 +421,51 @@ class MDPathVisualize:
         fontsize_numbers=18,
         fontfile=None,
     ):
+        
         for cluster in updated_cluster_residues.keys():
-            # Process data
+            
+            # Data preparation
             tm_data = {i: [] for i in range(1, 8)}
+            icl_data = []
+            ecl_data = []
             for path in updated_cluster_residues[cluster]:
                 for res in path:
-                    match = re.match(r"(\d)x(\d+)", res)
+                    match = re.match(r"(\d+)x(\d+)", res)
                     if match:
                         tm_number = int(match.group(1))
                         position = int(match.group(2))
                         if 1 <= tm_number <= 7:
                             tm_data[tm_number].append((position, res))
+                        elif tm_number in [12, 34, 56, 8]:
+                            icl_data.append((position, res))
+                        elif tm_number in [23, 45, 67]:
+                            ecl_data.append((position, res))
 
-            # Remove duplicate values
+            # Remove duplicate values and sort
             for tm_number, values in tm_data.items():
                 tm_data[tm_number] = list(set(values))
-
+            icl_data = list(set(icl_data))
+            ecl_data = list(set(ecl_data))
             for tm in tm_data.values():
                 tm.sort(key=lambda x: x[0])
+            icl_data.sort(key=lambda x: x[0])
+            ecl_data.sort(key=lambda x: x[0])
 
-            # Calculate the maximum number of circles
+
             max_circles = max(len(res) for res in tm_data.values())
 
-            # Define dimensions
-            circle_diameter = 50
+            # Image size
+            circle_diameter = 75
             padding = 40
             column_width = 100
-            width = len(tm_data) * (column_width + padding) + padding
+            width = (len(tm_data) + 2) * (column_width + padding) + padding
             height = max_circles * (circle_diameter + padding) + padding * 2
 
-            # Set up the image
+
             image = Image.new("RGB", (width, height), color="white")
             draw = ImageDraw.Draw(image)
 
-            # Try to load a font
+            # Load a font
             if fontfile:
                 try:
                     font = ImageFont.truetype(fontfile, fontsize_numbers)
@@ -422,44 +483,9 @@ class MDPathVisualize:
 
             circle_positions = {}
             for col, (tm_number, res) in enumerate(tm_data.items(), start=1):
-                x = (col - 1) * (column_width + padding) + padding
-                # Draw TM label
-                draw.text(
-                    ((x + column_width // 2) - 12, 10),
-                    f"TM{tm_number}",
-                    fill="black",
-                    font=title_font,
-                )
-
-                # Draw column
-                draw.rectangle(
-                    [x, 40, x + column_width, height - padding], outline="black"
-                )
-
-                # Draw circles and labels
-                for i, (_, genetic_number) in enumerate(res):
-                    circle_y = (
-                        padding + i * (circle_diameter + padding) + circle_diameter
-                    )
-                    circle_x = x + column_width // 2
-                    draw.ellipse(
-                        [
-                            circle_x - circle_diameter // 2,
-                            circle_y - circle_diameter // 2,
-                            circle_x + circle_diameter // 2,
-                            circle_y + circle_diameter // 2,
-                        ],
-                        outline="black",
-                    )
-
-                    # Draw genetic number
-                    draw.text(
-                        (circle_x - 18, circle_y - 8),
-                        f"{genetic_number}",
-                        fill="black",
-                        font=font,
-                    )
-                    circle_positions[genetic_number] = (circle_x, circle_y)
+                MDPathVisualize.draw_column(draw, col, res, f"TM{tm_number}", circle_positions, circle_diameter, padding, column_width, height, font, title_font)
+            MDPathVisualize.draw_column(draw, len(tm_data) + 1, icl_data, "IC", circle_positions, circle_diameter, padding, column_width, height, font, title_font, align='bottom')
+            MDPathVisualize.draw_column(draw, len(tm_data) + 2, ecl_data, "EC", circle_positions, circle_diameter, padding, column_width, height, font, title_font)
 
             # Count the frequency of each path and calculate cutoff
             connection_counts = Counter()
