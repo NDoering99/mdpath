@@ -297,8 +297,10 @@ def gpcr_2D_vis():
         generic_number_dict = MDPathVisualize.parse_pdb_and_create_dictionary(
             numberd_structure
         )
-        updated_cluster_residues, no_genetic_numbers_found = MDPathVisualize.assign_generic_numbers_paths(
-            cluster_pathways, generic_number_dict
+        updated_cluster_residues, no_genetic_numbers_found = (
+            MDPathVisualize.assign_generic_numbers_paths(
+                cluster_pathways, generic_number_dict
+            )
         )
         MDPathVisualize.create_gpcr_2d_path_vis(
             updated_cluster_residues, cutoff_percentage=cutoff_percentage

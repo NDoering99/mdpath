@@ -41,19 +41,18 @@ def test_mdpath_imported():
     """Sample test, will always pass so long as import statement worked."""
     assert "mdpath" in sys.modules
 
+
 def test_mdpath_output_files():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
     mdpath_dir = os.path.join(project_root, "mdpath")
 
-   
     topology = os.path.join(script_dir, "test_topology.pdb")
     trajectory = os.path.join(script_dir, "test_trajectory.dcd")
     numpath = "25"
 
     assert os.path.exists(topology), f"Topology file {topology} does not exist."
     assert os.path.exists(trajectory), f"Trajectory file {trajectory} does not exist."
-
 
     expected_files = [
         os.path.join(script_dir, "first_frame.pdb"),
@@ -67,7 +66,7 @@ def test_mdpath_output_files():
     ]
 
     sys.path.insert(0, mdpath_dir)
-    
+
     try:
         from mdpath.mdpath import main as mdpath_main
     except ImportError as e:
@@ -77,17 +76,23 @@ def test_mdpath_output_files():
     os.chdir(script_dir)
 
     try:
-        sys.argv = ["mdpath", "-top", topology, "-traj", trajectory, "-numpath", numpath]
+        sys.argv = [
+            "mdpath",
+            "-top",
+            topology,
+            "-traj",
+            trajectory,
+            "-numpath",
+            numpath,
+        ]
 
         mdpath_main()
 
-
         for file in expected_files:
             assert os.path.exists(file), f"Expected output file {file} not found."
-            
+
     finally:
         for file in expected_files:
             if os.path.exists(file):
                 os.remove(file)
         os.chdir(original_cwd)
-

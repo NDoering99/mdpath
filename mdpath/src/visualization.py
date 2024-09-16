@@ -338,7 +338,9 @@ class MDPathVisualize:
                             processed_residues.append(residue_number)
                         else:
                             if last_generic_number == 7:
-                                generic_number = f"{last_generic_number+1}x{residue_number}"
+                                generic_number = (
+                                    f"{last_generic_number+1}x{residue_number}"
+                                )
                             else:
                                 generic_number = f"{last_generic_number}{last_generic_number+1}x{residue_number}"
                         if amino_acid in AAMAPPING:
@@ -369,31 +371,44 @@ class MDPathVisualize:
         return updated_cluster_residues, no_genetic_number_list
 
     @staticmethod
-    def draw_column(draw, col, res, label, circle_positions, circle_diameter, padding, column_width, height, font, title_font, align='top'):
-        
+    def draw_column(
+        draw,
+        col,
+        res,
+        label,
+        circle_positions,
+        circle_diameter,
+        padding,
+        column_width,
+        height,
+        font,
+        title_font,
+        align="top",
+    ):
+
         x = (col - 1) * (column_width + padding) + padding
-        
+
         draw.text(
             ((x + column_width // 2) - 12, 10),
             f"{label}",
             fill="black",
             font=title_font,
         )
-        
-        draw.rectangle(
-            [x, 40, x + column_width, height - padding], outline="black"
-        )
+
+        draw.rectangle([x, 40, x + column_width, height - padding], outline="black")
 
         # Draw circles and labels
         for i, (_, genetic_number) in enumerate(res):
-            if align == 'top':
+            if align == "top":
                 circle_y = 80 + i * (circle_diameter + padding)
-            elif align == 'bottom':
+            elif align == "bottom":
                 circle_y = (
                     height - padding - i * (circle_diameter + padding) - circle_diameter
                 )
             else:
-                raise ValueError("Invalid value for align. It should be 'top' or 'bottom'.")
+                raise ValueError(
+                    "Invalid value for align. It should be 'top' or 'bottom'."
+                )
             circle_x = x + column_width // 2
             draw.ellipse(
                 [
@@ -414,7 +429,6 @@ class MDPathVisualize:
             )
             circle_positions[genetic_number] = (circle_x, circle_y)
 
-
     @staticmethod
     def create_gpcr_2d_path_vis(
         updated_cluster_residues,
@@ -424,9 +438,9 @@ class MDPathVisualize:
         fontsize_numbers=18,
         fontfile=None,
     ):
-        
+
         for cluster in updated_cluster_residues.keys():
-            
+
             # Data preparation
             tm_data = {i: [] for i in range(1, 8)}
             icl_data = []
@@ -454,11 +468,8 @@ class MDPathVisualize:
             icl_data.sort(key=lambda x: x[0])
             ecl_data.sort(key=lambda x: x[0])
 
-
             max_circles = max(
-                max(len(res) for res in tm_data.values()),
-                len(icl_data),
-                len(ecl_data)
+                max(len(res) for res in tm_data.values()), len(icl_data), len(ecl_data)
             )
 
             # Image size
@@ -467,7 +478,6 @@ class MDPathVisualize:
             column_width = 100
             width = (len(tm_data) + 2) * (column_width + padding) + padding
             height = max_circles * (circle_diameter + padding) + padding * 2
-
 
             image = Image.new("RGB", (width, height), color="white")
             draw = ImageDraw.Draw(image)
@@ -490,9 +500,46 @@ class MDPathVisualize:
 
             circle_positions = {}
             for col, (tm_number, res) in enumerate(tm_data.items(), start=1):
-                MDPathVisualize.draw_column(draw, col, res, f"TM{tm_number}", circle_positions, circle_diameter, padding, column_width, height, font, title_font)
-            MDPathVisualize.draw_column(draw, len(tm_data) + 1, icl_data, "IC", circle_positions, circle_diameter, padding, column_width, height, font, title_font, align='bottom')
-            MDPathVisualize.draw_column(draw, len(tm_data) + 2, ecl_data, "EC", circle_positions, circle_diameter, padding, column_width, height, font, title_font)
+                MDPathVisualize.draw_column(
+                    draw,
+                    col,
+                    res,
+                    f"TM{tm_number}",
+                    circle_positions,
+                    circle_diameter,
+                    padding,
+                    column_width,
+                    height,
+                    font,
+                    title_font,
+                )
+            MDPathVisualize.draw_column(
+                draw,
+                len(tm_data) + 1,
+                icl_data,
+                "IC",
+                circle_positions,
+                circle_diameter,
+                padding,
+                column_width,
+                height,
+                font,
+                title_font,
+                align="bottom",
+            )
+            MDPathVisualize.draw_column(
+                draw,
+                len(tm_data) + 2,
+                ecl_data,
+                "EC",
+                circle_positions,
+                circle_diameter,
+                padding,
+                column_width,
+                height,
+                font,
+                title_font,
+            )
 
             # Count the frequency of each path and calculate cutoff
             connection_counts = Counter()

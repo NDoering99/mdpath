@@ -101,7 +101,7 @@ def main():
         required=False,
         default=500,
     )
-    
+
     args = parser.parse_args()
     if not args.topology or not args.trajectory:
         print("Both trajectory and topology files are required!")
