@@ -3,9 +3,9 @@ import tempfile
 import os
 import numpy as np
 import networkx as nx
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, mock_open
 from mdpath.src.visualization import MDPathVisualize
-
+import MDAnalysis as mda
 
 def create_mock_pdb(content: str) -> str:
     """Helper function to create a temporary PDB file."""
@@ -230,3 +230,36 @@ def test_precompute_cluster_properties_quick():
     assert (
         actual_output == expected_output
     ), f"Expected {expected_output}, but got {actual_output}"
+
+@patch('mdpath.src.visualization.mda.Universe')
+def test_remove_non_protein(mock_universe):
+    mock_sys = MagicMock()
+    mock_universe.return_value = mock_sys
+    mock_protein_atoms = MagicMock()
+    mock_sys.select_atoms.return_value = mock_protein_atoms
+    input_pdb = 'mock_input.pdb'
+    output_pdb = 'mock_output.pdb'
+    MDPathVisualize.remove_non_protein(input_pdb, output_pdb)
+    mock_universe.assert_called_once_with(input_pdb)
+    mock_sys.select_atoms.assert_called_once_with("protein")
+    mock_protein_atoms.write.assert_called_once_with(output_pdb)
+
+@patch('mdpath.src.visualization.requests.post')
+@patch('builtins.open', new_callable=mock_open)
+def test_assign_generic_numbers(mock_open_file, mock_post):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = "mock_pdb_content"
+    mock_post.return_value = mock_response
+    
+    pdb_file_path = "mock_input.pdb"
+    output_file_path = "mock_output.pdb"
+    MDPathVisualize.assign_generic_numbers(pdb_file_path, output_file_path)
+    
+    mock_post.assert_called_once_with(
+        "https://gpcrdb.org/services/structure/assign_generic_numbers",
+        files={"pdb_file": mock_open_file.return_value}
+    )
+    mock_open_file.assert_any_call(pdb_file_path, "rb")
+    mock_open_file.assert_any_call(output_file_path, "w")
+    mock_open_file().write.assert_called_once_with("mock_pdb_content")
