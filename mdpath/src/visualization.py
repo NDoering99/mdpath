@@ -455,7 +455,11 @@ class MDPathVisualize:
             ecl_data.sort(key=lambda x: x[0])
 
 
-            max_circles = max(len(res) for res in tm_data.values())
+            max_circles = max(
+                max(len(res) for res in tm_data.values()),
+                len(icl_data),
+                len(ecl_data)
+            )
 
             # Image size
             circle_diameter = 75
