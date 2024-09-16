@@ -337,7 +337,10 @@ class MDPathVisualize:
                                 last_generic_number = int(match.group(1))
                             processed_residues.append(residue_number)
                         else:
-                            generic_number = f"{last_generic_number}{last_generic_number+1}x{residue_number}"
+                            if last_generic_number == 7:
+                                generic_number = f"{last_generic_number+1}x{residue_number}"
+                            else:
+                                generic_number = f"{last_generic_number}{last_generic_number+1}x{residue_number}"
                         if amino_acid in AAMAPPING:
                             residue_dict[residue_number] = {
                                 "generic_number": generic_number,
