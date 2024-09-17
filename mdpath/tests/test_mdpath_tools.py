@@ -280,3 +280,29 @@ def test_path_comparison(tmp_path):
     generated_files = glob.glob(os.path.join(tmp_path, "morphed_clusters_paths.json"))
     
     assert len(generated_files) > 0, "No rescaled json file was generated."
+
+def test_multitraj_analysis(tmp_path):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    topology = os.path.join(script_dir, "multitraj.pdb")
+    multitraj_1 = os.path.join(script_dir, "top_pathways.pkl")
+    
+
+    result = subprocess.run(
+        [
+            "mdpath_multitraj", 
+            "-top", topology, 
+            "-multitraj", multitraj_1, multitraj_1
+        ],
+        cwd=tmp_path,  
+        capture_output=True,
+        text=True
+    )
+
+    assert result.returncode == 0, f"Command failed with error: {result.stderr}"
+
+    generated_files = glob.glob(os.path.join(tmp_path, "multitraj_clusters_paths.json"))
+
+    assert len(generated_files) > 0, "No rescaled json file was generated."
+
+
