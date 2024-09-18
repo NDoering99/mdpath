@@ -1,0 +1,2 @@
+.. automodule:: mdpath.mdpath
+    :members:
