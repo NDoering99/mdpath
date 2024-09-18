@@ -19,3 +19,12 @@ The following images can be useful for debugging purposes or for visualizing sma
 
     clustered_paths.png  A picture of the hierarchical clustering dendrogram, which illustrates how pathways are grouped based on similarity.
     graph.png            A picture of the complete graph, which can be useful for fine-tuning the `graphdist` parameter in certain systems.
+
+When using the bootstrapping flag, an additional set of outputs is generated. These outputs are valuable for assessing the variability and reliability of the analysis.
+
+.. code-block:: text
+
+    bootstrap   A folder containing the results of each bootstrapping sample.
+    output.txt  This file includes the confidence intervals for each path in the analysis.
+  
+Keep in mind that the standard error is also directly printed in the output log of the **MDPath** command when the bootstrapping flag is used.
