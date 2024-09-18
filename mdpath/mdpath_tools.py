@@ -198,6 +198,19 @@ def multitraj_analysis():
         default=False,
         nargs="+",
     )
+    parser.add_argument(
+        "-cpu",
+        dest="num_parallel_processes",
+        help="Amount of cores used in multiprocessing",
+        default=(os.cpu_count() // 2),
+    )
+    parser.add_argument(
+        "-closedist",
+        dest="closedist",
+        help="Default distance for close residues.",
+        required=False,
+        default=12.0,
+    )
     args = parser.parse_args()
     if args.multitraj and args.topology:
         merged_data = []
@@ -211,7 +224,6 @@ def multitraj_analysis():
             merged_data.extend(data)
         df_close_res = structure_calc.calculate_residue_suroundings(closedist, "close")
         clustering = PatwayClustering(df_close_res, merged_data, num_parallel_processes)
-        clustering.overlap_df.to_csv("overlap_df.csv", index=False)
         clusters = clustering.pathways_cluster()
         cluster_pathways_dict = {}
         for cluster_num, cluster_pathways in clusters.items():
