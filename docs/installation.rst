@@ -3,6 +3,7 @@
 
 To install **MDPath** on your local machine or cluster, start by cloning the repository to your desired directory. 
 You can clone it to your home directory by running the following commands:
+
 .. code-block:: text
 
     cd ~
@@ -10,6 +11,7 @@ You can clone it to your home directory by running the following commands:
 
 Next, install all required dependencies. We recommend using Python version 3.10 or later to ensure compatibility with the package.
 You can easily install the dependencies using pip:
+
 .. code-block:: text
 
     cd mdpath
