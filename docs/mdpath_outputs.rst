@@ -11,6 +11,7 @@ The main data for 3D visualization is stored in the following `.json` files. The
 
     precomputed_clusters_paths.json        All paths are plotted individually, allowing for detailed inspection of each signaling pathway.
     quick_precomputed_clusters_paths.json  Every path within a cluster is precomputed, allowing for less rendering and faster inspections.
+    first_frame.pdb                        The first frame of the trajectory essential for plotting.
 
 The following images can be useful for debugging purposes or for visualizing smaller protein systems. However, when dealing with larger protein systems, this representation may become too complex to fully comprehend.
 
