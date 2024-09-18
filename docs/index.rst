@@ -28,7 +28,7 @@ MDPath documentation
    :maxdepth: 1
    :caption: API Docs
 
-   mdpath_classes
+   mdpath_api
 
 .. toctree::
    :maxdepth: 1
