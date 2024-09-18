@@ -212,10 +212,11 @@ def multitraj_analysis():
         default=12.0,
     )
     args = parser.parse_args()
+    num_parallel_processes = args.num_parallel_processes
     if args.multitraj and args.topology:
         merged_data = []
         topology = args.topology
-        num_parallel_processes = int(args.num_parallel_processes)
+        num_parallel_processes = int(num_parallel_processes)
         closedist = float(args.closedist)
         structure_calc = StructureCalculations(topology)
         for filepath in args.multitraj:
