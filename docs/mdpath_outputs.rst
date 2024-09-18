@@ -12,3 +12,9 @@ The main data for 3D visualization is stored in the following `.json` files. The
     precomputed_clusters_paths.json        All paths are plotted individually, allowing for detailed inspection of each signaling pathway.
     quick_precomputed_clusters_paths.json  Every path within a cluster is precomputed, allowing for less rendering and faster inspections.
 
+The following images can be useful for debugging purposes or for visualizing smaller protein systems. However, when dealing with larger protein systems, this representation may become too complex to fully comprehend.
+
+.. code-block:: text
+
+    clustered_paths.png  A picture of the hierarchical clustering dendrogram, which illustrates how pathways are grouped based on similarity.
+    graph.png            A picture of the complete graph, which can be useful for fine-tuning the `graphdist` parameter in certain systems.
