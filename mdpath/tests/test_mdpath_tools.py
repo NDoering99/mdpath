@@ -7,7 +7,7 @@ def test_gpcr_2D_vis(tmp_path):
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
     topology = os.path.join(script_dir, "test_topology.pdb")
-    cluster_file = os.path.join(script_dir, "cluster_pathways_dict.pkl")
+    cluster_file = os.path.join(script_dir, "cluster_pathways_dict_tools.pkl")
     cutoff_percentage = "1"
 
     result = subprocess.run(
@@ -32,7 +32,7 @@ def test_edit_3D_visualization_json(tmp_path):
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
     recolor = os.path.join(script_dir, "easy_read_colors.json")
-    json = os.path.join(script_dir, "quick_precomputed_clusters_paths.json")
+    json = os.path.join(script_dir, "quick_precomputed_clusters_paths_tools.json")
 
     expected_message = (
         "Recoloring requires a valid -json to recolor."
@@ -67,7 +67,7 @@ def test_edit_3D_visualization_json(tmp_path):
     
     assert len(generated_files) > 0, "No recolored json file was generated."
 
-    os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_recolored.json"))
+    os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_tools_recolored.json"))
 
     result = subprocess.run(
         [
@@ -121,7 +121,7 @@ def test_edit_3D_visualization_json(tmp_path):
     
     assert len(generated_files) > 0, "No rescaled json file was generated."
 
-    os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_scaled_3.0.json"))
+    os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_tools_scaled_3.0.json"))
 
     result = subprocess.run(
         [
@@ -174,7 +174,7 @@ def test_edit_3D_visualization_json(tmp_path):
     
     assert len(generated_files) > 0, "No flattend json file was generated."
 
-    os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_flat_3.0.json"))
+    os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_tools_flat_3.0.json"))
 
     result = subprocess.run(
         [
@@ -229,12 +229,12 @@ def test_edit_3D_visualization_json(tmp_path):
     
     assert len(generated_files) > 0, "No cluster-scaled json file was generated."
 
-    os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_cluster_scaled_3.0.json"))
+    os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_tools_cluster_scaled_3.0.json"))
 
 def test_path_comparison(tmp_path):
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    atop = os.path.join(script_dir, "residue_coordinates.pkl")
+    atop = os.path.join(script_dir, "residue_coordinates_tools.pkl")
     bcluster = os.path.join(script_dir, "cluster_pathways_dict_testpc.pkl")
     expected_message = (
         "Topology (residue_coordinates) and bcluster (cluster) are required and a json needed for comparing two simulations."
@@ -281,6 +281,8 @@ def test_path_comparison(tmp_path):
     
     assert len(generated_files) > 0, "No rescaled json file was generated."
 
+
+
 def test_multitraj_analysis(tmp_path):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     
@@ -304,5 +306,6 @@ def test_multitraj_analysis(tmp_path):
     generated_files = glob.glob(os.path.join(tmp_path, "multitraj_clusters_paths.json"))
 
     assert len(generated_files) > 0, "No rescaled json file was generated."
+
 
 
