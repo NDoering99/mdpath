@@ -26,9 +26,9 @@ For each cluster, a separate picture is generated with the prefix: GPCR_2D_pathw
 
 This function compares different analyses performed on the same or similar topology files. It generates an output that morphs the results of one analysis onto the backbone of another topology file.
 
-.. code-block:: text
+.. code-block:: Inputs
 
-    -atop   Path to residue_coordinates.pkl from the analysis to visualize the paths on.
+    -atop     Path to residue_coordinates.pkl from the analysis to visualize the paths on.
     -bcluster Path to cluster_pathways_dict.pkl from the other analysis, whose paths will be plotted on the topology specified by -atop.
   
 Keep in mind that the initial topologies must have the same residue numbering; otherwise, the analysis will fail.
