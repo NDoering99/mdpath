@@ -58,9 +58,24 @@ def edit_3D_visualization_json():
     )
     args = parser.parse_args()
 
-    # Recoloring
+    
     if args.color and not args.json:
         print("\033[1mRecoloring requires a valid -json to recolor.\033[0m")
+        exit(1)
+    
+    if args.flat and args.scale:
+        print("\033[1mOnly one of those operations can be performed.\033[0m")
+        exit(1)
+    
+    if args.scale and args.clusterscale:
+        print("\033[1mOnly one of those operations can be performed.\033[0m")
+        exit(1)
+
+    if args.clusterscale and args.flat:
+        print("\033[1mOnly one of those operations can be performed.\033[0m")
+        exit(1)
+
+    # Recoloring
     if args.color and args.json:
         json_file = args.json
         color_file_path = args.color
