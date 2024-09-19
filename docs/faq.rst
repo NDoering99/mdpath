@@ -36,9 +36,14 @@ What does the -lig flag do?
 The -lig flag, named from its initial use in analyzing protein-ligand interactions, filters the paths to include only those that pass through a predefined residue. This enables the analysis of how protein-ligand interactions affect the protein's conformational state. Additionally, it can be used to explore protein-protein interactions, highlight specific paths in an allosteric network, or investigate the effects of point mutations. The possibilities are extensive, limited only by your computational resources and creativity.
 
 How can I contribute to the project? 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 As an open-source project, everyone is invited to contribute. You can:
 
 1. Create Pull Requests: Submit a pull request with your improvements or new features. Each pull request will be reviewed before merging into the main branch.
 2. Report Issues: Report bugs or suggest enhancements. Issue reporting is crucial for improving the tool.
 
 Your contributions help enhance the project and are greatly appreciated!
+
+What tools can I use to track dynamic protein-ligand interactions?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Common tools for tracking protein-ligand interactions include Dynophores, OpenMMDL, and Prolif..
