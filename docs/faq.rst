@@ -46,4 +46,4 @@ Your contributions help enhance the project and are greatly appreciated!
 
 What tools can I use to track dynamic protein-ligand interactions?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Common tools for tracking protein-ligand interactions include Dynophores, OpenMMDL, and Prolif..
+Common tools for tracking protein-ligand interactions include Dynophores, OpenMMDL, and Prolif.
