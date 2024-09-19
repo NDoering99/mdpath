@@ -83,7 +83,7 @@ def edit_3D_visualization_json():
         with open(new_file, "w") as file:
             json.dump(data, file, indent=4)
         print(f"Saved the modified data with colors to {new_file}.")
-        exit()
+        exit(0)
     # Scaling
     if args.scale and args.json and not args.flat and not args.clusterscale:
         json_file = args.json
@@ -98,7 +98,7 @@ def edit_3D_visualization_json():
         with open(new_file, "w") as file:
             json.dump(data, file, indent=4)
         print("\033[1mSaved the modified data.\033[0m")
-        exit()
+        exit(0)
 
     if not args.scale and args.json and args.flat and not args.clusterscale:
         json_file = args.json
@@ -113,7 +113,7 @@ def edit_3D_visualization_json():
         with open(new_file, "w") as file:
             json.dump(data, file, indent=4)
         print("\033[1mSaved the modified data.\033[0m")
-        exit()
+        exit(0)
 
     if not args.scale and not args.flat and args.json and args.clusterscale:
         json_file = args.json
@@ -138,7 +138,7 @@ def edit_3D_visualization_json():
         with open(new_file, "w") as file:
             json.dump(data, file, indent=4)
         print("\033[1mSaved the modified data.\033[0m")
-        exit()
+        exit(0)
 
 
 def path_comparison():
@@ -171,12 +171,12 @@ def path_comparison():
         formatted_dict = MDPathVisualize.format_dict(updated_dict)
         with open("morphed_clusters_paths.json", "w") as json_file_2:
             json.dump(formatted_dict, json_file_2)
-        exit()
+        exit(0)
     else:
         print(
             "Topology (residue_coordinates) and bcluster (cluster) are required and a json needed for comparing two simulations."
         )
-        exit()
+        exit(1)
 
 
 def multitraj_analysis():
@@ -252,12 +252,12 @@ def multitraj_analysis():
         with open("multitraj_quick_precomputed_clusters_paths.json", "w") as out_file2:
             json.dump(quick_path_properties, out_file2, indent=4)
         print("\033[1mAnalyzed multiple trajectories.\033[0m")
-        exit()
+        exit(0)
     else:
         print(
             "Topology and pathways are required for merging and analyzing multiple trajectories."
         )
-        exit()
+        exit(1)
 
 
 def gpcr_2D_vis():
@@ -318,9 +318,9 @@ def gpcr_2D_vis():
         MDPathVisualize.create_gpcr_2d_path_vis(
             updated_cluster_residues, cutoff_percentage=cutoff_percentage
         )
-        exit()
+        exit(0)
     else:
         print(
             "Topology and cluster pathways are required for creating a 2D visualization of GPCR paths."
         )
-        exit()
+        exit(1)
