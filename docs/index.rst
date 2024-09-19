@@ -22,6 +22,7 @@ MDPath documentation
    
    running_mdpath
    mdpath_outputs
+   running_mdpath_tools
    mdpath_visualization
 
 .. toctree::
