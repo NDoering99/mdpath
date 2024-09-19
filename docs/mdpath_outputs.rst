@@ -20,6 +20,8 @@ The following images can be useful for debugging purposes or for visualizing sma
     clustered_paths.png  A picture of the hierarchical clustering dendrogram, which illustrates how pathways are grouped based on similarity.
     graph.png            A picture of the complete graph, which can be useful for fine-tuning the `graphdist` parameter in certain systems.
 
+**Bootstrapping Outputs**
+
 When using the bootstrapping flag, an additional set of outputs is generated. These outputs are valuable for assessing the variability and reliability of the analysis.
 
 .. code-block:: text
@@ -28,3 +30,14 @@ When using the bootstrapping flag, an additional set of outputs is generated. Th
     output.txt  This file includes the confidence intervals for each path in the analysis.
   
 Keep in mind that the standard error is also directly printed in the output log of the **MDPath** command when the bootstrapping flag is used.
+
+**MDPath Tools Outputs**
+
+MDPath Tools provides a collection of methods specifically designed to enhance the analysis of MDPath output. Below is a list of the various outputs that are exclusive to MDPath Tools. For detailed information on these methods, please refer to the MDPath Tools documentation.
+
+.. code-block:: text
+
+    residue_coordinates_dict   Contains residue coordinates used by mdpath_compare
+    cluster_pathways_dict.pkl  Holds key data from MDPath for mdpath_compare and mdpath_gpcr_image.
+
+    top_pathways.pkl           Contains data required for reclustering multiple runs with mdpath_multitraj
