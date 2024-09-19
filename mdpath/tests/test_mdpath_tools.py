@@ -1,311 +1,261 @@
-import pytest
-import subprocess
 import os
+import sys
 import glob
+import pytest
+from io import StringIO
+from mdpath.mdpath_tools import edit_3D_visualization_json
+from mdpath.mdpath_tools import path_comparison
+from mdpath.mdpath_tools import multitraj_analysis
 
 def test_gpcr_2D_vis(tmp_path):
     script_dir = os.path.dirname(os.path.abspath(__file__))
-
+    current_directory = os.getcwd()
     topology = os.path.join(script_dir, "test_topology.pdb")
     cluster_file = os.path.join(script_dir, "cluster_pathways_dict_tools.pkl")
     cutoff_percentage = "1"
 
-    result = subprocess.run(
-        [
-            "mdpath_gpcr_image",  
-            "-top", topology,
-            "-clust", cluster_file,
-            "-cut", cutoff_percentage
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
-    
-    assert result.returncode == 0
+    sys.argv = [
+        "mdpath_gpcr",  
+        "-top", topology,
+        "-clust", cluster_file,
+        "-cut", cutoff_percentage
+    ]
 
-    generated_files = glob.glob(os.path.join(tmp_path, "GPCR_2D_pathways_cluster*"))
-    
-    assert len(generated_files) > 0, "No GPCR_2D_pathways_cluster files were generated."
+    original_stdout = sys.stdout
+    sys.stdout = StringIO()
+
+    try:
+
+        from mdpath.mdpath_tools import gpcr_2D_vis
+        
+        with pytest.raises(SystemExit) as exc_info:
+            gpcr_2D_vis()
+        
+        assert exc_info.value.code == 0
+
+        generated_files = glob.glob(os.path.join(current_directory, "GPCR_2D_pathways_cluster*"))
+        assert len(generated_files) > 0, "No GPCR_2D_pathways_cluster files were generated."
+
+    finally:
+        sys.stdout = original_stdout
+
 
 def test_edit_3D_visualization_json(tmp_path):
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
     recolor = os.path.join(script_dir, "easy_read_colors.json")
-    json = os.path.join(script_dir, "quick_precomputed_clusters_paths_tools.json")
+    json_file = os.path.join(script_dir, "quick_precomputed_clusters_paths_tools.json")
 
-    expected_message = (
-        "Recoloring requires a valid -json to recolor."
-    ) #FAIL
+    expected_message = "Recoloring requires a valid -json to recolor."
 
-    result = subprocess.run(
-        [
-            "mdpath_json_editor",  
+    original_stdout = sys.stdout
+    sys.stdout = StringIO()
+
+    try:
+        sys.argv = [
+            "mdpath_json_editor",
             "-recolor", recolor,
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
-    
-    assert expected_message in result.stdout
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            edit_3D_visualization_json()
+        output = sys.stdout.getvalue()
+        assert expected_message in output
 
-    result = subprocess.run(
-        [
-            "mdpath_json_editor",  
+        sys.argv = [
+            "mdpath_json_editor",
             "-recolor", recolor,
-            "-json", json
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
+            "-json", json_file
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            edit_3D_visualization_json()
+        assert exc_info.value.code == 0  
 
-    assert result.returncode == 0  
+        generated_files = glob.glob(os.path.join(script_dir, "*_recolored*"))
+        assert len(generated_files) > 0, "No recolored json file was generated."
 
-    generated_files = glob.glob(os.path.join(script_dir, "*_recolored*"))
-    
-    assert len(generated_files) > 0, "No recolored json file was generated."
+        os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_tools_recolored.json"))
 
-    os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_tools_recolored.json"))
-
-    result = subprocess.run(
-        [
-            "mdpath_json_editor",  
+        sys.argv = [
+            "mdpath_json_editor",
             "-scale", "3",
-            "-json", json,
+            "-json", json_file,
             "-flat", "3",
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            edit_3D_visualization_json()
+        generated_files = glob.glob(os.path.join(script_dir, "*_scaled_*"))
+        assert len(generated_files) == 0, "Files should not be created!"
 
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
-
-    generated_files = glob.glob(os.path.join(script_dir, "*_scaled_*"))
-    
-    assert len(generated_files) == 0, "Files should not be created!"
-
-    result = subprocess.run(
-        [
-            "mdpath_json_editor",  
+        sys.argv = [
+            "mdpath_json_editor",
             "-scale", "3",
-            "-json", json,
-            "-clusterscale" "3",
+            "-json", json_file,
+            "-clusterscale", "3",  
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            edit_3D_visualization_json()
+        generated_files = glob.glob(os.path.join(script_dir, "*_scaled_*"))
+        assert len(generated_files) == 0, "Files should not be created!"
 
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
-
-    generated_files = glob.glob(os.path.join(script_dir, "*_scaled_*"))
-    
-    assert len(generated_files) == 0, "Files should not be created!"
-
-    result = subprocess.run(
-        [
-            "mdpath_json_editor",  
+        sys.argv = [
+            "mdpath_json_editor",
             "-scale", "3",
-            "-json", json,
+            "-json", json_file,
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            edit_3D_visualization_json()
+        assert exc_info.value.code == 0
+        generated_files = glob.glob(os.path.join(script_dir, "*_scaled_*"))
+        assert len(generated_files) > 0, "No rescaled json file was generated."
 
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
+        os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_tools_scaled_3.0.json"))
 
-    assert result.returncode == 0
-
-    generated_files = glob.glob(os.path.join(script_dir, "*_scaled_*"))
-    
-    assert len(generated_files) > 0, "No rescaled json file was generated."
-
-    os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_tools_scaled_3.0.json"))
-
-    result = subprocess.run(
-        [
-            "mdpath_json_editor",  
+        sys.argv = [
+            "mdpath_json_editor",
             "-flat", "3",
-            "-json", json,
+            "-json", json_file,
             "-scale", "3",
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            edit_3D_visualization_json()
+        generated_files = glob.glob(os.path.join(script_dir, "*_flat_*"))
+        assert len(generated_files) == 0, "Files should not be created!"
 
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
-
-    generated_files = glob.glob(os.path.join(script_dir, "*_flat_*"))
-    
-    assert len(generated_files) == 0, "Files should not be created!"
-
-    result = subprocess.run(
-        [
-            "mdpath_json_editor",  
+        sys.argv = [
+            "mdpath_json_editor",
             "-flat", "3",
-            "-json", json,
+            "-json", json_file,
             "-clusterscale", "3",
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            edit_3D_visualization_json()
+        generated_files = glob.glob(os.path.join(script_dir, "*_flat_*"))
+        assert len(generated_files) == 0, "Files should not be created!"
 
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
-
-    generated_files = glob.glob(os.path.join(script_dir, "*_flat_*"))
-    
-    assert len(generated_files) == 0, "Files should not be created!"
-
-    result = subprocess.run(
-        [
-            "mdpath_json_editor",  
+        sys.argv = [
+            "mdpath_json_editor",
             "-flat", "3",
-            "-json", json,
+            "-json", json_file,
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            edit_3D_visualization_json()
+        assert exc_info.value.code == 0
+        generated_files = glob.glob(os.path.join(script_dir, "*_flat_*"))
+        assert len(generated_files) > 0, "No flattened json file was generated."
 
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
+        os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_tools_flat_3.0.json"))
 
-    assert result.returncode == 0
-    generated_files = glob.glob(os.path.join(script_dir, "*_flat_*"))
-    
-    assert len(generated_files) > 0, "No flattend json file was generated."
-
-    os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_tools_flat_3.0.json"))
-
-    result = subprocess.run(
-        [
-            "mdpath_json_editor",  
+        sys.argv = [
+            "mdpath_json_editor",
             "-clusterscale", "3",
-            "-json", json,
-             "-flat", "3",
+            "-json", json_file,
+            "-flat", "3",
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            edit_3D_visualization_json()
+        generated_files = glob.glob(os.path.join(script_dir, "*_cluster_scaled_*"))
+        assert len(generated_files) == 0, "Files should not be created!"
 
-
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
-
-    generated_files = glob.glob(os.path.join(script_dir, "*_cluster_scaled_*"))
-    
-    assert len(generated_files) == 0, "Files should not be created!"
-
-    result = subprocess.run(
-        [
-            "mdpath_json_editor",  
+        sys.argv = [
+            "mdpath_json_editor",
             "-clusterscale", "3",
-            "-json", json,
-             "-scale", "3",
+            "-json", json_file,
+            "-scale", "3",
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            edit_3D_visualization_json()
+        generated_files = glob.glob(os.path.join(script_dir, "*_cluster_scaled_*"))
+        assert len(generated_files) == 0, "Files should not be created!"
 
-
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
-
-    generated_files = glob.glob(os.path.join(script_dir, "*_cluster_scaled_*"))
-    
-    assert len(generated_files) == 0, "Files should not be created!"
-
-    result = subprocess.run(
-        [
-            "mdpath_json_editor",  
+        sys.argv = [
+            "mdpath_json_editor",
             "-clusterscale", "3",
-            "-json", json
+            "-json", json_file
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            edit_3D_visualization_json()
+        assert exc_info.value.code == 0
+        generated_files = glob.glob(os.path.join(script_dir, "*_cluster_scaled_*"))
+        assert len(generated_files) > 0, "No cluster-scaled json file was generated."
 
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
+        os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_tools_cluster_scaled_3.0.json"))
 
-    assert result.returncode == 0
-    generated_files = glob.glob(os.path.join(script_dir, "*_cluster_scaled_*"))
-    
-    assert len(generated_files) > 0, "No cluster-scaled json file was generated."
+    finally:
+        sys.stdout = original_stdout
 
-    os.remove(os.path.join(script_dir, "quick_precomputed_clusters_paths_tools_cluster_scaled_3.0.json"))
 
-def test_path_comparison(tmp_path):
+def test_path_comparison():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-
+    current_directory = os.getcwd()
     atop = os.path.join(script_dir, "residue_coordinates_tools.pkl")
     bcluster = os.path.join(script_dir, "cluster_pathways_dict_testpc.pkl")
     expected_message = (
         "Topology (residue_coordinates) and bcluster (cluster) are required and a json needed for comparing two simulations."
-    ) #FAIL
+    )
 
-    result = subprocess.run(
-        [
-            "mdpath_compare",  
+    original_stdout = sys.stdout
+    sys.stdout = StringIO()
+
+    try:
+        sys.argv = [
+            "mdpath_compare",
             "-atop", atop
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
-    
-    assert expected_message in result.stdout
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            path_comparison()
+        output = sys.stdout.getvalue()
+        assert expected_message in output
 
-    result = subprocess.run(
-        [
-            "mdpath_compare",  
+        sys.argv = [
+            "mdpath_compare",
             "-bcluster", bcluster
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
-    
-    assert expected_message in result.stdout
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            path_comparison()
+        output = sys.stdout.getvalue()
+        assert expected_message in output
 
-    result = subprocess.run(
-        [
-            "mdpath_compare", 
-            "-atop", atop, 
+        sys.argv = [
+            "mdpath_compare",
+            "-atop", atop,
             "-bcluster", bcluster
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
-    
-    assert result.returncode == 0
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            path_comparison()
+        assert exc_info.value.code == 0
 
-    generated_files = glob.glob(os.path.join(tmp_path, "morphed_clusters_paths.json"))
-    
-    assert len(generated_files) > 0, "No rescaled json file was generated."
+        generated_files = glob.glob(os.path.join(current_directory, "morphed_clusters_paths.json"))
+        assert len(generated_files) > 0, "No morphed_clusters_paths.json file was generated."
 
+    finally:
+        sys.stdout = original_stdout
+        for file_path in generated_files:
+            os.remove(file_path)
 
-
-def test_multitraj_analysis(tmp_path):
+def test_multitraj_analysis():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    
+    current_directory = os.getcwd()
     topology = os.path.join(script_dir, "multitraj.pdb")
     multitraj_1 = os.path.join(script_dir, "top_pathways.pkl")
     
+    original_stdout = sys.stdout
+    sys.stdout = StringIO()
 
-    result = subprocess.run(
-        [
+    try:
+        sys.argv = [
             "mdpath_multitraj", 
             "-top", topology, 
             "-multitraj", multitraj_1, multitraj_1
-        ],
-        cwd=tmp_path,  
-        capture_output=True,
-        text=True
-    )
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            multitraj_analysis()
+        
+        assert exc_info.value.code == 0, "The command failed with non-zero exit code"
 
-    assert result.returncode == 0, f"Command failed with error: {result.stderr}"
+        generated_files = glob.glob(os.path.join(current_directory, "multitraj_clusters_paths.json"))
+        assert len(generated_files) > 0, "No multitraj_clusters_paths.json file was generated."
 
-    generated_files = glob.glob(os.path.join(tmp_path, "multitraj_clusters_paths.json"))
-
-    assert len(generated_files) > 0, "No rescaled json file was generated."
-
-
-
+    finally:
+        sys.stdout = original_stdout
+        for file_path in generated_files:
+            os.remove(file_path)
