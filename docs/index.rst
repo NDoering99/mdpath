@@ -13,7 +13,6 @@ MDPath documentation
    :caption: User Guide
 
    installation
-   tutorial
    faq
 
 .. toctree::
