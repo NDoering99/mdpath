@@ -79,3 +79,23 @@ An example input might look like this:
     mdpath_json_editor -recolor PATH/easy_read_colors.json -json PATH/quick_precomputed_clusters_paths.json
 
 The output will have the _recolor_ identifier.
+
+
+**Scaling**
+
+MDPath's main script scales correlated movements, rendering more frequently recurring paths as thicker, while less frequent paths are plotted thinner. Here’s a polished version for the documentation:
+
+The mdpath_json_editor allows you to customize this behavior. The -scale flag lets you adjust the radius of paths based on your input. Values greater than 1 will increase the size of the outputs, while values less than 1 will decrease them, as the flag's value is multiplied by the original radius.
+
+The -flat flag sets every radius in your visualization to the specified value, resulting in all paths appearing with the same thickness.
+
+The -clusterscale flag adjusts the thickness of each cluster based on its content. Larger clusters are plotted thicker, while smaller clusters are displayed with reduced thickness. The largest cluster corresponds to the value specified for -clusterscale.
+
+Those are the possible inputs:
+
+    -json          Path to quick_precomputed_clusters_paths.json or precomputed_clusters_paths.json for which you want to change the color.
+    -scale         Value each radius is multiplied by.
+    -flat          Value each radius is set to.
+    -clusterscale  Value of the radius within the greatest cluster.
+
+Ensure that you use only one of these flags at a time. Flag-specific named output files are generated, allowing you to apply multiple options sequentially.
