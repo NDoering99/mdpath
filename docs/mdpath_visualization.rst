@@ -18,8 +18,8 @@ Under the "File" menu, select the option "Run Script..." and navigate to the mdp
    :align: center
 
 
-From there, select the vis_pymol.py script.
 
+From there, select the vis_pymol.py script.
 Now, you can run the script from the command line using the following command:
 
 .. figure:: /_static/images/python_cmd.png
@@ -28,6 +28,7 @@ Now, you can run the script from the command line using the following command:
 
 
 Afterward, you can execute the visualization steps in PyMOL as you normally would.
+
 
 
 .. figure:: /_static/images/pymol_ray_example.png
