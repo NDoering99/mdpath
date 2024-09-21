@@ -15,10 +15,9 @@ For visualization using NGLView, open the corresponding Jupyter notebook. Then, 
 
 Afterward, simply execute the notebook and navigate through the visualization as you would in NGLView.
 
-
 .. figure:: /_static/images/ngl_example.png
    :figwidth: 725px
-   :align: cente
+   :align: center
 
 
 **Pymol Visualization**
