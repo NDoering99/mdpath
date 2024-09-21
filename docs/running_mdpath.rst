@@ -33,4 +33,4 @@ An example command line input for running **MDPath** could look like this:
 
 .. code-block:: text
 
-    mdpath -top [Path to your topology].top -traj [Path to your trajectory].dcd
+    mdpath -top [Path to your topology].pdb -traj [Path to your trajectory].dcd
