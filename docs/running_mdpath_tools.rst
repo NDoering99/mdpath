@@ -83,7 +83,7 @@ The output will have the _recolor_ identifier.
 
 **Scaling**
 
-MDPath's main script scales correlated movements, rendering more frequently recurring paths as thicker, while less frequent paths are plotted thinner. Here’s a polished version for the documentation:
+MDPath's main script scales correlated movements, rendering more frequently recurring paths as thicker, while less frequent paths are plotted thinner. 
 
 The mdpath_json_editor allows you to customize this behavior. The -scale flag lets you adjust the radius of paths based on your input. Values greater than 1 will increase the size of the outputs, while values less than 1 will decrease them, as the flag's value is multiplied by the original radius.
 
