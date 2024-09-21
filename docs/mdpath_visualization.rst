@@ -5,6 +5,20 @@ Currently, two options for 3D visualization are integrated into MDPath.
 
 **NGL Visualization**
 ==============
+For visualization using NGLView, open the corresponding Jupyter notebook. Then, insert the path to your topology or first_frame.pdb, along with the path to your desired MDPath output, such as quick_precomputed_clusters_paths.json or precomputed_clusters_paths.json.
+
+
+.. figure:: /_static/images/ngl_script.png
+   :figwidth: 725px
+   :align: center
+
+
+Afterward, simply execute the notebook and navigate through the visualization as you would in NGLView.
+
+
+.. figure:: /_static/images/ngl_example.png
+   :figwidth: 725px
+   :align: cente
 
 
 **Pymol Visualization**
