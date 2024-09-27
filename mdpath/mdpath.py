@@ -102,6 +102,14 @@ def main():
         default=500,
     )
 
+    parser.add_argument(
+        "-GMM",
+        dest="GMM",
+        help="Histograms are created using GMM instead of binning.",
+        required=False,
+        default=False,
+    )
+
     args = parser.parse_args()
     if not args.topology or not args.trajectory:
         print("Both trajectory and topology files are required!")
@@ -117,6 +125,7 @@ def main():
     closedist = float(args.closedist)
     graphdist = float(args.graphdist)
     numpath = int(args.numpath)
+    GMM = bool(args.GMM)
 
     # Prepare the trajectory for analysis
     with mda.Writer("first_frame.pdb", multiframe=False) as pdb:
@@ -136,8 +145,8 @@ def main():
     )
     print("\033[1mTrajectory is processed and ready for analysis.\033[0m")
 
-    # Calculate the mutual information and build the graph
-    nmi_calc = NMICalculator(df_all_residues)
+   # Calculate the mutual information and build the graph
+    nmi_calc = NMICalculator(df_all_residues, GMM = GMM)
     nmi_calc.mi_diff_df.to_csv("mi_diff_df.csv", index=False)
     graph_builder = GraphBuilder(
         topology, structure_calc.last_res_num, nmi_calc.mi_diff_df, graphdist
