@@ -25,10 +25,10 @@ import mdpath
 
 project = "mdpath"
 copyright = (
-    "2024, Marvin Taterra and Niklas Piet Doering. Project structure based on the "
+    "2024, Niklas Piet Doering and Marvin Taterra. Project structure based on the "
     "Computational Molecular Science Python Cookiecutter version 1.1"
 )
-author = "Marvin Taterra and Niklas Piet Doering"
+author = "Niklas Piet Doering and Marvin Taterra"
 
 # The short X.Y version
 version = ""
