@@ -13,15 +13,15 @@ MDPath documentation
    :caption: User Guide
 
    installation
-   tutorial
    faq
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
    :caption: MDPath
    
    running_mdpath
    mdpath_outputs
+   running_mdpath_tools
    mdpath_visualization
 
 .. toctree::

@@ -5,14 +5,14 @@ This page gives an overview of the different calsses and function contained in *
 For detailed ussage of  each class or function, please refer to the respective page.
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
     :caption: Main Modules
 
     mdpath_classes/mdpath
     mdpath_classes/mdpath_tools
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
     :caption: Utility Modules
 
     mdpath_classes/bootstrap
