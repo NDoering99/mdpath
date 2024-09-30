@@ -16,7 +16,7 @@ MDPath documentation
    faq
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
    :caption: MDPath
    
    running_mdpath
