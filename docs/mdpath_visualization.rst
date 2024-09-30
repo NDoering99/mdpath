@@ -4,7 +4,7 @@ MDPath visualization
 Currently, two options for 3D visualization are integrated into MDPath.
 
 **NGL Visualization**
-==============
+----------------------------
 For visualization using NGLView, open the corresponding Jupyter notebook. Then, insert the path to your topology or first_frame.pdb, along with the path to your desired MDPath output, such as quick_precomputed_clusters_paths.json or precomputed_clusters_paths.json.
 
 
@@ -21,7 +21,7 @@ Afterward, simply execute the notebook and navigate through the visualization as
 
 
 **Pymol Visualization**
-==============
+----------------------------
 To visualize the paths in PyMOL, start by launching PyMOL according to your installation method.
 Under the "File" menu, select the option "Run Script..." and navigate to the mdpath folder. 
 
