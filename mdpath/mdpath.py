@@ -12,6 +12,9 @@ Release under the MIT License. See LICENSE for details.
 This is the main script of MDPath. It is used to run MDPath from the command line.
 MDPath can be called from the comadline using 'mdapth' after instalation
 Use the -h flag to see the available options.
+
+Functions
+----------
 """
 
 import os
@@ -35,6 +38,20 @@ from mdpath.src.bootstrap import BootstrapAnalysis
 
 
 def main():
+    """Main function for running MDPath from the command line.
+    It can be called using 'mdpath' after installation.
+    
+    Command-line inputs:
+    -top: Topology file of your MD simulation
+    -traj: Trajectory file of your MD simulation
+    -cpu: Amount of cores used in multiprocessing (default: half of available cores)
+    -lig: Protein ligand interacting residues (default: False)
+    -bs: How often bootstrapping should be performed (default: False)
+    -fardist: Default distance for faraway residues (default: 12.0)
+    -closedist: Default distance for close residues (default: 12.0)
+    -graphdist: Default distance for residues making up the graph (default: 5.0)
+    -numpath: Default number of top paths considered for clustering (default: 500).
+    """
     parser = argparse.ArgumentParser(
         prog="mdpath",
         description="Calculate signal transduction paths in your MD trajectories",
