@@ -1,4 +1,4 @@
-**Installation**
+Installation
 ===============
 
 To install **MDPath** on your local machine or cluster, start by cloning the repository to your desired directory. 

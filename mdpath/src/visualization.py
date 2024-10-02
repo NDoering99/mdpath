@@ -2,6 +2,7 @@
 ==============================================================================
 
 This module contains the class `MDPathVisualize` which contains all visualization functions for the MDPath package.
+The class only contains static methods for visualization purposes.
 
 Classes
 --------
@@ -56,6 +57,7 @@ AAMAPPING = {
 
 
 class MDPathVisualize:
+    """Methods for visualization within the MDPath package."""
     def __init__(self) -> None:
         pass
 
@@ -88,16 +90,16 @@ class MDPathVisualize:
 
     @staticmethod
     def cluster_prep_for_visualisation(
-        cluster: list[list[int]], pdb_file: str
-    ) -> list[list[tuple[float]]]:
+        cluster: list, pdb_file: str
+    ) -> list:
         """Prepares pathway clusters for visualisation.
 
         Args:
-            cluster (list[list[int]]): Cluster of pathways.
+            cluster (list): Cluster of pathways.
             pdb_file (str): Path to PDB file.
 
         Returns:
-            cluster (list[list[tuple[float]]]): Cluster of pathways with CA atom coordinates.
+            cluster (list): Cluster of pathways with CA atom coordinates.
         """
         new_cluster = []
         parser = PDB.PDBParser(QUIET=True)
@@ -190,14 +192,14 @@ class MDPathVisualize:
         plt.savefig("graph.png", dpi=300, bbox_inches="tight")
 
     @staticmethod
-    def precompute_path_properties(json_data):
+    def precompute_path_properties(json_data: dict) -> list:
         """Precomputes path properties for quicker visualization in Jupyter notebook.
 
         Args:
             json_data (dict): Cluster data with pathways and CA atom coordinates.
 
         Returns:
-            path_properties (list[dict]): List of path properties. Contains clusterid, pathway index, path segment index, coordinates, color, radius, and path number.
+            path_properties (list): List of path properties. Contains clusterid, pathway index, path segment index, coordinates, color, radius, and path number.
         """
         cluster_colors = {}
         color_index = 0
@@ -247,7 +249,15 @@ class MDPathVisualize:
         return path_properties
 
     @staticmethod
-    def precompute_cluster_properties_quick(json_data):
+    def precompute_cluster_properties_quick(json_data: dict) -> list:
+        """Precomputes cluster properties for quicker visualization in Jupyter notebook.
+
+        Args:
+            json_data (dict): Cluster data with pathways and CA atom coordinates.
+
+        Returns:
+            cluster_properties (list): List of cluster properties. Contains clusterid,coordinates, color, and radius.
+        """
         cluster_colors = {}
         color_index = 0
         cluster_properties = []
@@ -290,14 +300,13 @@ class MDPathVisualize:
         return cluster_properties
 
     @staticmethod
-    def remove_non_protein(input_pdb, output_pdb):
-        """
-        Function to remove non-protein atoms (e.g., water, ligands, ions) from a PDB file
+    def remove_non_protein(input_pdb: str, output_pdb: str) -> None:
+        """Function to remove non-protein atoms (e.g., water, ligands, ions) from a PDB file
         and write only the protein atoms to a new PDB file.
 
-        Parameters:
-        input_pdb (str): Path to the input PDB file.
-        output_pdb (str): Path to the output PDB file to save the protein-only structure.
+        Args:
+            input_pdb (str): Path to the input PDB file.
+            output_pdb (str): Path to the output PDB file to save the protein-only structure.
         """
         sys = mda.Universe(input_pdb)
         protein = sys.select_atoms("protein")
@@ -305,8 +314,14 @@ class MDPathVisualize:
 
     @staticmethod
     def assign_generic_numbers(
-        pdb_file_path, output_file_path="numbered_structure.pdb"
-    ):
+        pdb_file_path: str, output_file_path: str="numbered_structure.pdb"
+    ) -> None:
+        """Assigns generic numbers to residues in a PDB file by querying the gpcrdb.org.
+        
+        Args:
+            pdb_file_path (str): Path to the PDB file.
+            output_file_path (str, optional): Path to save the new PDB file with generic numbers. Defaults to "numbered_structure.pdb".
+        """
         url = "https://gpcrdb.org/services/structure/assign_generic_numbers"
         with open(pdb_file_path, "rb") as pdb_file:
             files = {"pdb_file": pdb_file}
@@ -319,7 +334,15 @@ class MDPathVisualize:
             print(f"Failed to process the file: {response.status_code}")
 
     @staticmethod
-    def parse_pdb_and_create_dictionary(pdb_file_path):
+    def parse_pdb_and_create_dictionary(pdb_file_path: str) -> dict:
+        """Parses a PDB file and creates a dictionary with residue numbers, generic numbers, and amino acids.
+        
+        Args:
+            pdb_file_path (str): Path to the PDB file.
+            
+        Returns:
+            residue_dict (dict): Dictionary with residue numbers, generic numbers, and amino acids.
+        """
         processed_residues = []
         residue_dict = {}
         last_generic_number = 1
@@ -351,7 +374,17 @@ class MDPathVisualize:
         return residue_dict
 
     @staticmethod
-    def assign_generic_numbers_paths(cluster_pathways, generic_number_dict):
+    def assign_generic_numbers_paths(cluster_pathways: dict, generic_number_dict: dict) -> tuple:
+        """Assigns generic numbers to residues in the cluster pathways.
+        
+        Args:
+            cluster_pathways (dict): Dictionary with cluster pathways.
+            generic_number_dict (dict): Dictionary with residue numbers, generic numbers, and amino acids.
+            
+        Returns:
+            updated_cluster_residues (dict): Updated dictionary with cluster pathways and generic numbers.
+            no_genetic_number_list (list): List of residue numbers with no generic numbers.
+        """
         updated_cluster_residues = {}
         no_genetic_number_list = []
         for cluster_id, residue_lists in cluster_pathways.items():
@@ -372,19 +405,36 @@ class MDPathVisualize:
 
     @staticmethod
     def draw_column(
-        draw,
-        col,
-        res,
-        label,
-        circle_positions,
-        circle_diameter,
-        padding,
-        column_width,
-        height,
-        font,
-        title_font,
-        align="top",
-    ):
+        draw: ImageDraw.Draw,
+        col: int,
+        res: list,
+        label: str,
+        circle_positions: dict,
+        circle_diameter: int,
+        padding: int,
+        column_width: int,
+        height: int,
+        font: ImageFont,
+        title_font: ImageFont,
+        align: str="top",
+    ) -> None:
+        """Draws a column in the given pillow drawing context corresponding to a TM region or loop region with a label, a rectangle,
+        and circles with genetic numbers corresponding to residues in this region that are part of a path.
+        
+        Args:
+            draw (ImageDraw.Draw): The drawing context.
+            col (int): The column index (1-based).
+            res (list): A list of tuples containing data to be visualized, where each tuple contains an identifier and a genetic number.
+            label (str): The label for the column.
+            circle_positions (dict): A dictionary to store the positions of the circles, keyed by genetic number.
+            circle_diameter (int): The diameter of the circles to be drawn.
+            padding (int): The padding between elements.
+            column_width (int): The width of the column.
+            height (int): The height of the drawing area.
+            font (ImageFont): The font to be used for the genetic numbers.
+            title_font (ImageFont): The font to be used for the column label.
+            align (str, optional): The alignment of the circles within the column. Can be 'top' or 'bottom'. Defaults to 'top'.
+        """
 
         x = (col - 1) * (column_width + padding) + padding
 
@@ -431,13 +481,28 @@ class MDPathVisualize:
 
     @staticmethod
     def create_gpcr_2d_path_vis(
-        updated_cluster_residues,
-        cutoff_percentage=0,
-        image_name="GPCR_2D_pathways",
-        fontsize_tm=20,
-        fontsize_numbers=18,
-        fontfile=None,
-    ):
+        updated_cluster_residues: dict,
+        cutoff_percentage: int=0,
+        image_name: str="GPCR_2D_pathways",
+        fontsize_tm: int=20,
+        fontsize_numbers: int=18,
+        fontfile: str=None,
+    ) -> None:
+        """Creates a 2D visualization of pathways within a GPCR based on the provided cluster residues.
+        
+        Args:
+            updated_cluster_residues (dict): A dictionary where keys are cluster identifiers and values are lists of paths.
+                                             Each path is a list of residue identifiers in the format 'TMx.y'.
+            cutoff_percentage (int, optional): The percentage cutoff for drawing connections between residues. Only connections
+                                               with a frequency above this percentage will be drawn. Defaults to 0.
+            image_name (str, optional): The base name for the output image files. Defaults to "GPCR_2D_pathways".
+            fontsize_tm (int, optional): The font size for the transmembrane (TM) labels. Defaults to 20.
+            fontsize_numbers (int, optional): The font size for the residue numbers. Defaults to 18.
+            fontfile (str, optional): The path to a font file to use for text rendering. If None, the default Pillow font is used.
+                                      Defaults to None.
+        Returns:
+            None. The function saves the generated images to disk with filenames based on the provided image_name and cluster identifiers.
+        """
 
         for cluster in updated_cluster_residues.keys():
 

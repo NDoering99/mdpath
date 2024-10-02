@@ -1,24 +1,45 @@
+"""Notebook Visualization --- :mod:`mdpath.src.notebook_vis`
+==============================================================================
+
+This module contains the `NotebookVisualization` class which visualizes the structure and calculated paths in a Jupyter notebook using NGLView.
+
+Classes
+--------    
+
+:class:`NotebookVisualization`
+"""
+
 import json
 import nglview as nv
 
 
 class NotebookVisualization:
-    def __init__(self, pdb_path, json_path) -> None:
+    """Visualization of the structure and calculated paths in a Jupyter notebook using NGLView.
+    
+    Attributes:
+        pdb_path (str): Path to the PDB file for visualization.
+        view (nv.NGLWidget): NGL view object for visualizing the PDB file.
+        json_path (str): Path to the JSON file containing precomputed cluster properties for visualization.
+        precomputed_data (dict): Dictionary containing precomputed cluster properties for visualization.
+    """
+    def __init__(self, pdb_path: str, json_path: str) -> None:
         self.pdb_path = pdb_path
         self.view = self.load_ngl_view()
         self.json_path = json_path
         self.precomputed_data = self.load_precomputed_data()
 
     def load_ngl_view(self):
+        """Loads the NGL view object for visualizing the PDB file.
+        
+        Returns:
+            nv.NGLWidget: NGL view object of the PDB file.
+        """
         view = nv.show_file(self.pdb_path)
         view.display(gui=True, style="ngl")
         return view
 
     def load_precomputed_data(self) -> dict:
         """Loads precomputed cluster properties from a JSON file.
-
-        Args:
-            json_path (str): Path to the JSON file containing precomputed cluster properties.
 
         Returns:
             dict: Dictionary containing precomputed cluster properties for visualization
@@ -29,10 +50,6 @@ class NotebookVisualization:
 
     def generate_cluster_ngl_script(self) -> None:
         """Generates NGL script and edits view for visualizing precomputed cluster pathways as cones between residues.
-
-        Args:
-            precomputed_data (dict): Precomputed data for visualization.
-            view (nv.NGLWidget): NGL view object.
 
         Returns:
             None: Only edits the view object.
