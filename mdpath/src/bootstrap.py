@@ -19,6 +19,20 @@ import os
 
 
 class BootstrapAnalysis:
+    """
+    Perform bootstrap analysis on residue dihedral angle movements and path generation to check sample validity.
+
+    Attributes:
+        df_all_residues (pd.DataFrame): DataFrame containing all residue dihedral angle movements.
+        df_distant_residues (pd.DataFrame): DataFrame containing distant residues.
+        num_bootstrap_samples (int): Number of bootstrap samples to generate.
+        pdb (str): Path to the PDB file.
+        last_residue (int): Index of the last residue.
+        graphdist (int): Graph distance parameter.
+        num_bins (int): Number of bins to group dihedral angle movements into for NMI calculation. Defaults to 35.
+        common_counts (np.ndarray): Array with the counts of common paths between the original sample and bootstrap samples.
+        path_confidence_intervals (dict): Dictionary with the confidence intervals for each path.
+    """
     def __init__(
         self,
         df_all_residues,
@@ -44,11 +58,11 @@ class BootstrapAnalysis:
 
     def create_bootstrap_sample(
         self, df_dihedral: pd.DataFrame
-    ) -> tuple[int, set[tuple]]:
+    ) -> tuple:
         """Creates a sample from the dataframe with replacement for bootstrap analysis.
 
         Args:
-            df (pd.DataFrame):Pandas dataframe with residue dihedral angle movements.
+            df_dihedral (pd.DataFrame):Pandas dataframe with residue dihedral angle movements.
 
         Returns:
             bootstrap_sample (pd.DataFrame): Pandas dataframe containing the frames for the bootstrap analysis.
@@ -62,21 +76,19 @@ class BootstrapAnalysis:
 
     def process_bootstrap_sample(
         self,
-        pathways_set: Set[Tuple],
+        pathways_set: set,
         sample_num: int,
-    ) -> Tuple[int, List[List[int]]]:
+    ) -> tuple:
         """Process a bootstrap sample to find common paths with the original sample.
 
         Args:
-            df_all_residues (pd.DataFrame): Pandas dataframe with residue dihedral angle movements.
-            df_distant_residues (pd.DataFrame): Pandas dataframe with distant residues.
-            pathways_set (set[tuple]): Set of tuples with the pathways for bootstrapping.
-            numpath (int): Amount of top paths to consider.
-            num_bins (int, optional): Number of bins to group dihedral angle movements into for NMI calculation. Defaults to 35.
+
+            pathways_set (set): Set of tuples with the pathways for bootstrapping.
+            sample_num (int): Number of the bootstrap sample.
 
         Returns:
             common_count (int): Number of common paths between the bootstrap sample and the original sample.
-            bootstrap_pathways (list[list[int]]): List of paths within the bootstrap sample.
+            bootstrap_pathways (list): List of paths within the bootstrap sample.
         """
         bootstrap_sample = self.create_bootstrap_sample(self.df_all_residues)
         nmi_calculator = NMICalculator(bootstrap_sample, num_bins=self.num_bins)
@@ -104,16 +116,8 @@ class BootstrapAnalysis:
         common_count = len(common_elements)
         return common_count, bootstrap_pathways
 
-    def bootstrap_analysis(self) -> Tuple[np.ndarray, Dict]:
+    def bootstrap_analysis(self) -> Tuple:
         """Analyse the common paths between the original sample and bootstrap samples.
-
-        Args:
-            df_all_residues (pd.DataFrame): Pandas dataframe with residue dihedral angle movements.
-            df_distant_residues (pd.DataFrame): Pandas dataframe with distant residues.
-            sorted_paths (list[tuple]): List of tuples with the sorted paths.
-            num_bootstrap_samples (int): Amount of samples to generate for bootstrap analysis.
-            numpath (int): Number of top paths to consider.
-            num_bins (int, optional): Number of bins to group dihedral angle movements into for NMI calculation. Defaults to 35.
 
         Returns:
             common_counts (np.array): Array with the counts of common paths between the original sample and bootstrap samples.
@@ -157,6 +161,14 @@ class BootstrapAnalysis:
         return (common_counts, path_confidence_intervals)
 
     def bootstrap_write(self, file_name: str) -> None:
+        """Writes the path confidence intervals to a file.
+
+        Args:
+            file_name (str): The name of the file to write the path confidence intervals to.
+
+        Returns:
+            None
+        """
         for path, (mean, lower, upper) in self.path_confidence_intervals.items():
             path_str = " -> ".join(map(str, path))
             with open(file_name, "w") as file:

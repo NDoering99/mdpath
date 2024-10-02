@@ -1,3 +1,16 @@
+"""Structure Calculations --- :mod:`mdpath.src.structure`
+==============================================================================
+
+This module contains the class `StructureCalculations` which handels all structure related calculations based on the initial PDB file
+and the  class `DihedralAngles` which calculates the dihedral angle movements over the course of the given trajectory.
+
+Classes
+---------
+
+:class:`StructureCalculations`
+:class:`DihedralAngles`
+"""
+
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
@@ -9,16 +22,21 @@ from itertools import combinations
 
 
 class StructureCalculations:
+    """Calculate residue surroundings and distances between residues in a PDB structure.
+    
+    Attributes:
+        pdb (str): Path to the PDB file.
+        first_res_num (int): First residue number in the PDB file.
+        last_res_num (int): Last residue number in the PDB file.
+        num_residues (int): Total number of residues in the PDB file.    
+    """
     def __init__(self, pdb):
         self.pdb = pdb
         self.first_res_num, self.last_res_num = self.res_num_from_pdb()
         self.num_residues = self.last_res_num - self.first_res_num + 1
 
-    def res_num_from_pdb(self) -> tuple[int, int]:
+    def res_num_from_pdb(self) -> tuple:
         """Gets first and last residue number from a PDB file.
-
-        Args:
-            pdb (str): Path to PDB file.
 
         Returns:
             first_res_num (int): First residue number.
@@ -104,18 +122,27 @@ class StructureCalculations:
 
 
 class DihedralAngles:
-    def __init__(self, traj, first_res_num, last_res_num, num_residues) -> None:
+    """Calculate dihedral angle movements for residues in a molecular dynamics (MD) trajectory.
+
+    Attributes:
+        traj (mda.Universe): MDAnalysis Universe object containing the trajectory.
+        first_res_num (int): The first residue number in the trajectory.
+        last_res_num (int): The last residue number in the trajectory.
+        num_residues (int): The total number of residues in the trajectory.
+
+    """
+    
+    def __init__(self, traj: mda.Universe, first_res_num: int, last_res_num: int, num_residues: int) -> None:
         self.traj = traj
         self.first_res_num = first_res_num
         self.last_res_num = last_res_num
         self.num_residues = num_residues
 
-    def calc_dihedral_angle_movement(self, res_id: int) -> tuple[int, np.array]:
+    def calc_dihedral_angle_movement(self, res_id: int) -> tuple:
         """Calculates dihedral angle movement for a residue over the cours of the MD trajectory.
 
         Args:
             res_id (int): Residue number.
-            traj (mda.Universe): MDAnalysis Universe object containing the trajectory.
 
         Returns:
             res_id (int): Residue number.

@@ -20,7 +20,15 @@ from scipy.stats import entropy
 
 
 class NMICalculator:
-    def __init__(self, df_all_residues: pd.DataFrame, num_bins: int = 35, GMM = None) -> None:
+    """Calculate Normalized Mutual Information (NMI) between dihedral angle movements of residue pairs.
+    
+    Attributes:
+        df_all_residues (pd.DataFrame): DataFrame containing all residues.
+        num_bins (int): Number of bins to use for histogram calculations. Default is 35.
+        GMM (optional): Option to switch between histogram method and Gaussian Mixture Model for binning before NMI calculation. Default is False.
+        mi_diff_df (pd.DataFrame): DataFrame containing the mutual information differences. Is calculated using either GMM or histogram method.
+    """
+    def __init__(self, df_all_residues: pd.DataFrame, num_bins: int = 35, GMM = False) -> None:
         self.df_all_residues = df_all_residues
         self.num_bins = num_bins
         self.GMM = GMM
@@ -29,23 +37,25 @@ class NMICalculator:
         else:
             self.mi_diff_df = self.NMI_calcs()
             
+        
+    def select_n_components(data, max_components=10):
+        """Select the optimal number of GMM components using BIC"""
+        lowest_bic = np.inf
+        best_n_components = 1
+        bic_scores = []
+
+        for n in range(1, max_components + 1):
+            gmm = GaussianMixture(n_components=n)
+            gmm.fit(data)
+            bic = gmm.bic(data)
+            bic_scores.append(bic)
+            if bic < lowest_bic:
+                lowest_bic = bic
+                best_n_components = n
+        return best_n_components
+            
     def NMI_calcs_with_GMM(self) -> pd.DataFrame:
-        def select_n_components(data, max_components=10):
-            """Select the optimal number of GMM components using BIC"""
-            lowest_bic = np.inf
-            best_n_components = 1
-            bic_scores = []
-
-            for n in range(1, max_components + 1):
-                gmm = GaussianMixture(n_components=n)
-                gmm.fit(data)
-                bic = gmm.bic(data)
-                bic_scores.append(bic)
-                if bic < lowest_bic:
-                    lowest_bic = bic
-                    best_n_components = n
-            return best_n_components
-
+        """Nornmalized Mutual Information calculation for all residue pairs using Gaussian Mixture Models (GMM) for binning."""
         normalized_mutual_info = {}
         total_iterations = len(self.df_all_residues.columns) ** 2
 
@@ -58,8 +68,8 @@ class NMICalculator:
                     if col1 != col2:
                         data_col1 = self.df_all_residues[[col1]]
                         data_col2 = self.df_all_residues[[col2]]
-                        n_components_col1 = select_n_components(data_col1, max_components=10)
-                        n_components_col2 = select_n_components(data_col2, max_components=10)
+                        n_components_col1 = self.select_n_components(data_col1, max_components=10)
+                        n_components_col2 = self.select_n_components(data_col2, max_components=10)
 
                         gmm_col1 = GaussianMixture(n_components=n_components_col1).fit(data_col1)
                         gmm_col2 = GaussianMixture(n_components=n_components_col2).fit(data_col2)
@@ -89,8 +99,6 @@ class NMICalculator:
         
     def NMI_calcs(self) -> pd.DataFrame:
         """Nornmalized Mutual Information calculation for all residue pairs.
-
-        Args:
 
         Returns:
             mi_diff_df (pd.DataFrame): Pandas dataframe with residue pair and mutual information difference.

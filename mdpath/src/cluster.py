@@ -21,20 +21,29 @@ import seaborn as sns
 
 
 class PatwayClustering:
+    """Perform clustering of pathways based on the overlap of close residue pairs.
+    
+    Attributes:
+        df (pd.DataFrame): DataFrame containing close residue pairs.
+        pathways (list[list[int]]): List of pathways, where each pathway is a list of residue indices.
+        num_processes (int): Number of processes to use for parallel computation.
+        overlapp_df (pd.DataFrame): DataFrame containing the overlap between all pathway pairs.
+    """
+    
     def __init__(self, df_close_res, pathways, num_processes) -> None:
         self.df = df_close_res
         self.pathways = pathways
         self.num_processes = num_processes
         self.overlapp_df = self.calculate_overlap_parallel()
 
-    def calculate_overlap_for_pathway(self, args: tuple[int, list[int]]) -> list[dict]:
+    def calculate_overlap_for_pathway(self, args: tuple) -> list[dict]:
         """Calculates the overlap between a pathway and all other pathways.
 
         Args:
-            args (tuple[int, list[int], list[list[int]], pd.DataFrame]): Argument wrapper conatining the pathway index, the pathway, all pathways and the dataframe with close residue pairs.
+            args (tuple): Argument wrapper conatining the pathway index, the pathway, all pathways and the dataframe with close residue pairs.
 
         Returns:
-            result (list[dict]): List of dictionaries with the overlap between the given pathway and all other pathways.
+            result (list): List of dictionaries with the overlap between the given pathway and all other pathways.
         """
         i, path1 = args
         result = []
@@ -63,11 +72,6 @@ class PatwayClustering:
     def calculate_overlap_parallel(self) -> pd.DataFrame:
         """Parallelization wrapper for the calculate_overlap_for_pathway function.
 
-        Args:
-            pathways (list[list[int]]): List of all pathways.
-            df (pd.DataFrame): Pandas dataframe with close residue pairs.
-            num_processes (int): Number of processes to use for parallelization.
-
         Returns:
             overlap_df (pd.DataFrame): Pandas dataframe with the overlap between all pathways and all other pathways.
         """
@@ -89,17 +93,16 @@ class PatwayClustering:
         return overlap_df
 
     def pathways_cluster(
-        self, n_top_clust=0, save_path="clustered_paths.png"
-    ) -> dict[int, list[int]]:
+        self, n_top_clust: int=0, save_path:str ="clustered_paths.png"
+    ) -> dict:
         """Clustering of pathways based on the overlap between them.
 
         Args:
-            overlap_df (pd.DataFrame): Pandas dataframe with the overlap between all pathways.
             n_top_clust (int, optional): Number of clusters to output. Defaults to all.
             save_path (str, optional): Save path for cluster dendogram figure. Defaults to "clustered_paths.png".
 
         Returns:
-            clusters (dict[int, list[int]]): Dictionary with the clusters and their pathways.
+            clusters (dict): Dictionary with the clusters and their pathways.
         """
         overlap_matrix = self.overlapp_df.pivot(
             index="Pathway1", columns="Pathway2", values="Overlap"
@@ -152,7 +155,16 @@ class PatwayClustering:
                 clusters[cluster] = pathways
         return clusters
 
-    def pathway_clusters_dictionary(self, clusters, sorted_paths) -> dict:
+    def pathway_clusters_dictionary(self, clusters: dict, sorted_paths: list) -> dict:
+        """Generates a dictionary mapping cluster numbers to lists of pathways.
+        
+        Args:
+            clusters (dict): A dictionary where keys are cluster numbers and values are lists of pathway IDs.
+            sorted_paths (list): A list of pathways, where each pathway is a tuple and the first element is the pathway name.
+            
+        Returns:
+            dict: A dictionary where keys are cluster numbers and values are lists of pathways corresponding to each cluster.
+        """
         cluster_pathways_dict = {}
         for cluster_num, cluster_pathways in clusters.items():
             cluster_pathways_list = []
