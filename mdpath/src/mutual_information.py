@@ -15,11 +15,12 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 from sklearn.metrics import mutual_info_score
+from sklearn.mixture import GaussianMixture
 from scipy.stats import entropy
 
 
 class NMICalculator:
-    def __init__(self, df_all_residues: pd.DataFrame, num_bins: int = 35) -> None:
+    def __init__(self, df_all_residues: pd.DataFrame, num_bins: int = 35, GMM = None) -> None:
         self.df_all_residues = df_all_residues
         self.num_bins = num_bins
         self.GMM = GMM
