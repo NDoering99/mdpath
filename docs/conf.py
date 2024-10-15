@@ -15,6 +15,7 @@
 # Incase the project was not installed
 import os
 import sys
+from unittest.mock import MagicMock
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -58,6 +59,13 @@ extensions = [
     "sphinx.ext.todo",
 ]
 
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        return MagicMock()
+
+MOCK_MODULES = ["numpy", "pandas", "networkx", "tqdm", "Bio", "nglview", "PIL", "MDAnalysis", "scipy", "matplotlib", "sklearn"]
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 autosummary_generate = True
 napoleon_google_docstring = False
