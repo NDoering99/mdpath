@@ -16,4 +16,4 @@ Use the -h flag to see the available options.
 Functions
 ----------
 
-:func:`mdpath.mdapth.main` - Main function for running MDPath from the command line.
+.. autofunction:: mdpath.mdapth.main
