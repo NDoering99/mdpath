@@ -8,6 +8,17 @@ dependencies:
   - pip
   - sphinx
   - sphinx_design
+  - numpy
+  - pandas
+  - networkx
+  - tqdm
+  - biopython
+  - nglview
+  - pillow
+  - mdanalysis
+  - scipy
+  - matplotlib
+  - sklearn
   
 
 
