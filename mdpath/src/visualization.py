@@ -498,8 +498,7 @@ class MDPathVisualize:
             image_name (str, optional): The base name for the output image files. Defaults to "GPCR_2D_pathways".
             fontsize_tm (int, optional): The font size for the transmembrane (TM) labels. Defaults to 20.
             fontsize_numbers (int, optional): The font size for the residue numbers. Defaults to 18.
-            fontfile (str, optional): The path to a font file to use for text rendering. If None, the default Pillow font is used.
-                                      Defaults to None.
+            fontfile (str, optional): The path to a font file to use for text rendering. If None, the default Pillow font is used. Defaults to None.
         Returns:
             None. The function saves the generated images to disk with filenames based on the provided image_name and cluster identifiers.
         """

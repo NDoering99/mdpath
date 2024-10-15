@@ -30,6 +30,7 @@ This function compares different analyses performed on the same or similar topol
 
     -atop     Path to residue_coordinates.pkl from the analysis to visualize the paths on.
     -bcluster Path to cluster_pathways_dict.pkl from the other analysis, whose paths will be plotted on the topology specified by -atop.
+    
   
 Keep in mind that the initial topologies must have the same residue numbering; otherwise, the analysis will fail.
 Below is an example of a command line input:

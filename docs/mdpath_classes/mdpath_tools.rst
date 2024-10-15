@@ -6,10 +6,5 @@ All functions can be called from the command line after installation of the pack
 Functions
 -----------
 
-.. autofunction:: mdpath.mdapth_tools.edit_3D_visualization_json
+.. autofunction:: mdpath.mdpath_tools
 
-.. autofunction:: mdpath.mdapth_tools.path_comparison
-
-.. autofunction:: mdpath.mdapth_tools.multitraj_analysis
-
-.. autofunction:: mdpath.mdapth_tools.gpcr_2D_vis

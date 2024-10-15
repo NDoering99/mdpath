@@ -55,12 +55,12 @@ class StructureCalculations:
                     last_res_num = res_num
         return int(first_res_num), int(last_res_num)
 
-    def calculate_distance(self, atom1: int, atom2: int) -> float:
+    def calculate_distance(self, atom1: tuple, atom2: tuple) -> float:
         """Calculates the distance between two atoms.
 
         Args:
-            atom1 (tuple[float]): Coordinates of the first atom.
-            atom2 (tuple[float]): Coordinates of the second atom.
+            atom1 (tuple): Coordinates of the first atom.
+            atom2 (tuple): Coordinates of the second atom.
 
         Returns:
             distance (float): Normalized distance between the two atoms.
