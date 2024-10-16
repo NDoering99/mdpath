@@ -24,7 +24,7 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
         return MagicMock()
 
-MOCK_MODULES = ["numpy", "pandas", "networkx", "tqdm", "Bio", "nglview", "PIL", "MDAnalysis", "scipy", "scipy.stats", "scipy.cluster", "matplotlib", "sklearn", "sklearn.metrics", "sklearn.mixture", "MDAnalysis.analysis", "MDAnalysis.analysis.dihedrals", "matplotlib.pyplot"]
+MOCK_MODULES = ["seaborn", "numpy", "pandas", "networkx", "tqdm", "Bio", "nglview", "PIL", "MDAnalysis", "scipy", "scipy.stats", "scipy.cluster", "matplotlib", "sklearn", "sklearn.metrics", "sklearn.mixture", "MDAnalysis.analysis", "MDAnalysis.analysis.dihedrals", "matplotlib.pyplot"]
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 import mdpath
