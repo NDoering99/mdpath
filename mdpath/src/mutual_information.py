@@ -24,8 +24,11 @@ class NMICalculator:
     
     Attributes:
         df_all_residues (pd.DataFrame): DataFrame containing all residues.
+        
         num_bins (int): Number of bins to use for histogram calculations. Default is 35.
+        
         GMM (optional): Option to switch between histogram method and Gaussian Mixture Model for binning before NMI calculation. Default is False.
+        
         mi_diff_df (pd.DataFrame): DataFrame containing the mutual information differences. Is calculated using either GMM or histogram method.
     """
     def __init__(self, df_all_residues: pd.DataFrame, num_bins: int = 35, GMM = False) -> None:
@@ -38,8 +41,17 @@ class NMICalculator:
             self.mi_diff_df = self.NMI_calcs()
             
         
-    def select_n_components(data, max_components=10):
-        """Select the optimal number of GMM components using BIC"""
+    def select_n_components(data: pd.DataFrame, max_components: int=10) -> int:
+        """Select the optimal number of GMM components using BIC
+        
+        Args:
+            data (pd.DataFrame): Data to fit the GMM model.
+            
+            max_components (int): Maximum number of components to test. Default is 10.
+            
+        Returns:
+            best_n_components (int): Optimal number of components.
+        """
         lowest_bic = np.inf
         best_n_components = 1
         bic_scores = []
@@ -55,7 +67,10 @@ class NMICalculator:
         return best_n_components
             
     def NMI_calcs_with_GMM(self) -> pd.DataFrame:
-        """Nornmalized Mutual Information calculation for all residue pairs using Gaussian Mixture Models (GMM) for binning."""
+        """Nornmalized Mutual Information calculation for all residue pairs using Gaussian Mixture Models (GMM) for binning.
+        
+        Returns:
+            mi_diff_df (pd.DataFrame): Pandas dataframe with residue pair and mutual information difference."""
         normalized_mutual_info = {}
         total_iterations = len(self.df_all_residues.columns) ** 2
 

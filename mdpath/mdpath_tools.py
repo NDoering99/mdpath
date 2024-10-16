@@ -2,14 +2,6 @@
 =============================
 This module contains the command-line interface (CLI) functions for editing and visualizing the results of MDPath analysis.
 All functions can be called from the command line after installation of the package.
-
-Functions
------------
-
-:func:`edit_3D_visualization_json` - Edit the 3D visualization JSONS to your visualization needs from the command line.
-:func:`path_comparison` - Compare Pathways of different simulations.
-:func:`multitraj_analysis` - Merge and analyze multiple trajectories.
-:func:`gpcr_2D_vis` - Create a 2D Visualization of Paths through a GPCR using the Ballesteros-Weinstein-System for numbering(querries gpcrdb.org for numbering).
 """
 
 import os
@@ -36,19 +28,27 @@ def edit_3D_visualization_json():
     It cann be called using 'mdpath_json_editor' after installation.
     
     Command-line inputs:
-    -json (str): The path to the JSON file to edit for 3D visualization. 
-    -scale (float): The factor to multiply the radius of path cylinders with. 
-    -recolor (str): The path to the color file for 3D visualization colors.
-    -flat (float): Sets every radius of path cylinders to the input value.
-    -clusterscale (float): The maximum radius for the cluster-based scaling.
+        -json (str): The path to the JSON file to edit for 3D visualization. 
+        
+        -scale (float): The factor to multiply the radius of path cylinders with. 
+        
+        -recolor (str): The path to the color file for 3D visualization colors.
+        
+        -flat (float): Sets every radius of path cylinders to the input value.
+        
+        -clusterscale (float): The maximum radius for the cluster-based scaling.
+    
     
     Note: Only one operation can be performed at a time. If multiple operations are specified, an error will be displayed.
     
     Command-line usage:
-    $ mdpath_json_editor -json <path_to_json_file> -scale <scaling_factor_float>
-    $ mdpath_json_editor -json <path_to_json_file> -recolor <path_to_color_json_file>
-    $ mdpath_json_editor -json <path_to_json_file> -flat <flat_radius_value_float>
-    $ mdpath_json_editor -json <path_to_json_file> -clusterscale <scaling_factor_float>
+        $ mdpath_json_editor -json <path_to_json_file> -scale <scaling_factor_float>
+        
+        $ mdpath_json_editor -json <path_to_json_file> -recolor <path_to_color_json_file>
+        
+        $ mdpath_json_editor -json <path_to_json_file> -flat <flat_radius_value_float>
+        
+        $ mdpath_json_editor -json <path_to_json_file> -clusterscale <scaling_factor_float>
     """
     
     parser = argparse.ArgumentParser(
@@ -200,12 +200,13 @@ def path_comparison():
     It cann be called using 'mdpath_compare' after installation.
     
     Command-line inputs:
-    - atop: The path to the file containing the residue coordinates that are used as a template.
-    - bcluster: The path to the file containing the cluster that is morphed ontop.
+        - atop (str): The path to the file containing the residue coordinates that are used as a template.
+        
+        - bcluster (str): The path to the file containing the cluster that is morphed ontop.
 
 
     Command-line usage:
-    $ mdpath_compare -atop <path_to_atop_file> -bcluster <path_to_bcluster_file>
+        $ mdpath_compare -atop <path_to_atop_file> -bcluster <path_to_bcluster_file>
     """
     parser = argparse.ArgumentParser(
         prog="mdpath_compare",
@@ -255,13 +256,16 @@ def multitraj_analysis():
     
 
     Command-line inputs:
-        -top: Topology file of your MD simulation.
-        -multitraj: List of multiple pathways from previous analysis.
-        -cpu: Amount of cores used in multiprocessing.
-        -closedist: Default distance for close residues.
+        -top (str): Topology file of your MD simulation.
+        
+        -multitraj (list(str)): List of multiple pathways from previous analysis.
+        
+        -cpu (int): Amount of cores used in multiprocessing.(default: half of available cores)
+        
+        -closedist (float): Default distance for close residues.(default: 12.0)
 
     Command-line usage:
-    $ mdpath_multitraj -top <path_to_topology_file> -multitraj <path_to_multitraj_file> -cpu <number_of_cores> -closedist <default_distance>
+        $ mdpath_multitraj -top <path_to_topology_file> -multitraj <path_to_multitraj_file>
     """
     parser = argparse.ArgumentParser(
         prog="mdpath_multitraj",
@@ -352,16 +356,19 @@ def gpcr_2D_vis():
     Then a 2D visualization of the GPCR paths is created based on the updated cluster pathways and the specified cutoff percentage.
     
     Command-line inputs:
-    -top: Topology file of your MD simulation
-    -clust: Pickle file with cluster pathways dictionary
-    -cut: Percentage of the top paths to visualize (default is 0 = all paths are drawn)
-    -num: Path to write the numbered structure file to (default is "./numbered_structure.pdb")
+        -top (str): Topology file of your MD simulation
+        
+        -clust (str): Pickle file with cluster pathways dictionary
+        
+        -cut (float): Percentage of the top paths to visualize (default is 0 = all paths are drawn)
+        
+        -num (str): Path to write the numbered structure file to (default is "./numbered_structure.pdb")
 
 
     Note: This function requires access to the internet to query gpcrdb.org for the Ballesteros-Weinstein-System numbering.
 
     Example usage:
-    $ mdpath_gpcr_image -top <path_to_topology_file> -clust <path_to_cluster_pathways.pickl> -cut <cutoff_float> -num <path_where_to_save_numberd_structure>
+        $ mdpath_gpcr_image -top <path_to_topology_file> -clust <path_to_cluster_pathways.pickl> -cut <cutoff_float> -num <path_where_to_save_numberd_structure>
     """
     parser = argparse.ArgumentParser(
         prog="mdpath_gpcr",

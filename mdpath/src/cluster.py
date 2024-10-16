@@ -25,18 +25,21 @@ class PatwayClustering:
     
     Attributes:
         df (pd.DataFrame): DataFrame containing close residue pairs.
-        pathways (list[list[int]]): List of pathways, where each pathway is a list of residue indices.
+        
+        pathways (list): List of pathways, where each pathway is a list of residue indices.
+        
         num_processes (int): Number of processes to use for parallel computation.
+        
         overlapp_df (pd.DataFrame): DataFrame containing the overlap between all pathway pairs.
     """
     
-    def __init__(self, df_close_res, pathways, num_processes) -> None:
+    def __init__(self, df_close_res: pd.DataFrame, pathways: list, num_processes: int) -> None:
         self.df = df_close_res
         self.pathways = pathways
         self.num_processes = num_processes
         self.overlapp_df = self.calculate_overlap_parallel()
 
-    def calculate_overlap_for_pathway(self, args: tuple) -> list[dict]:
+    def calculate_overlap_for_pathway(self, args: tuple) -> list:
         """Calculates the overlap between a pathway and all other pathways.
 
         Args:
@@ -99,6 +102,7 @@ class PatwayClustering:
 
         Args:
             n_top_clust (int, optional): Number of clusters to output. Defaults to all.
+            
             save_path (str, optional): Save path for cluster dendogram figure. Defaults to "clustered_paths.png".
 
         Returns:
@@ -160,6 +164,7 @@ class PatwayClustering:
         
         Args:
             clusters (dict): A dictionary where keys are cluster numbers and values are lists of pathway IDs.
+            
             sorted_paths (list): A list of pathways, where each pathway is a tuple and the first element is the pathway name.
             
         Returns:

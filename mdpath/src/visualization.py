@@ -57,7 +57,10 @@ AAMAPPING = {
 
 
 class MDPathVisualize:
-    """Methods for visualization within the MDPath package."""
+    """Methods for visualization within the MDPath package.
+    
+    Attributes:
+        None (only static methods)"""
     def __init__(self) -> None:
         pass
 
@@ -67,6 +70,7 @@ class MDPathVisualize:
 
         Args:
             pdb_file (str): Path to PDB file.
+            
             end (int): Last residue to consider.
 
         Returns:
@@ -96,6 +100,7 @@ class MDPathVisualize:
 
         Args:
             cluster (list): Cluster of pathways.
+            
             pdb_file (str): Path to PDB file.
 
         Returns:
@@ -126,7 +131,9 @@ class MDPathVisualize:
 
         Args:
             original_dict (dict): Cluster pathways dictionary.
+            
             translation_dict (dict): Residue coordinates dictionary.
+            
         Returns:
             updated_dict (dict): Updated cluster pathways dictionary with residue coordinates.
         """
@@ -173,7 +180,9 @@ class MDPathVisualize:
 
         Args:
             graph (nx.Graph): Residue graph.
+            
             k (float, optional): Distance between individual nodes. Defaults to 0.1.
+            
             node_size (int, optional): Size of individual nodes. Defaults to 200.
         """
         labels = {i: str(i) for i in graph.nodes()}
@@ -306,6 +315,7 @@ class MDPathVisualize:
 
         Args:
             input_pdb (str): Path to the input PDB file.
+            
             output_pdb (str): Path to the output PDB file to save the protein-only structure.
         """
         sys = mda.Universe(input_pdb)
@@ -320,6 +330,7 @@ class MDPathVisualize:
         
         Args:
             pdb_file_path (str): Path to the PDB file.
+            
             output_file_path (str, optional): Path to save the new PDB file with generic numbers. Defaults to "numbered_structure.pdb".
         """
         url = "https://gpcrdb.org/services/structure/assign_generic_numbers"
@@ -379,10 +390,12 @@ class MDPathVisualize:
         
         Args:
             cluster_pathways (dict): Dictionary with cluster pathways.
+            
             generic_number_dict (dict): Dictionary with residue numbers, generic numbers, and amino acids.
             
         Returns:
             updated_cluster_residues (dict): Updated dictionary with cluster pathways and generic numbers.
+            
             no_genetic_number_list (list): List of residue numbers with no generic numbers.
         """
         updated_cluster_residues = {}
@@ -491,14 +504,18 @@ class MDPathVisualize:
         """Creates a 2D visualization of pathways within a GPCR based on the provided cluster residues.
         
         Args:
-            updated_cluster_residues (dict): A dictionary where keys are cluster identifiers and values are lists of paths.
-                                             Each path is a list of residue identifiers in the format 'TMx.y'.
-            cutoff_percentage (int, optional): The percentage cutoff for drawing connections between residues. Only connections
-                                               with a frequency above this percentage will be drawn. Defaults to 0.
+            updated_cluster_residues (dict): A dictionary where keys are cluster identifiers and values are lists of paths. Each path is a list of residue identifiers in the format 'TMx.y'.
+            
+            cutoff_percentage (int, optional): The percentage cutoff for drawing connections between residues. Only connections with a frequency above this percentage will be drawn. Defaults to 0.
+            
             image_name (str, optional): The base name for the output image files. Defaults to "GPCR_2D_pathways".
+            
             fontsize_tm (int, optional): The font size for the transmembrane (TM) labels. Defaults to 20.
+            
             fontsize_numbers (int, optional): The font size for the residue numbers. Defaults to 18.
+            
             fontfile (str, optional): The path to a font file to use for text rendering. If None, the default Pillow font is used. Defaults to None.
+            
         Returns:
             None. The function saves the generated images to disk with filenames based on the provided image_name and cluster identifiers.
         """
