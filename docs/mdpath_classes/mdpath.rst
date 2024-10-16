@@ -16,4 +16,4 @@ Use the -h flag to see the available options.
 Functions
 ----------
 
-.. autofunction:: mdapth.mdpath.main
+.. autofunction:: mdpath.mdpath.main
