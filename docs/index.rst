@@ -1,15 +1,5 @@
-.. mdpath documentation master file, created by
-   sphinx-quickstart on Thu Mar 15 13:55:56 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-MDPath documentation
+`MDPath <https://github.com/NDoering99/mdpath>`_ documentation
 =========================================================
-.. raw:: html
-
-   <div style="position: absolute; top: 0; right: 0;">
-      <a href="https://github.com/NDoering99/mdpath" class="btn btn-primary">GitHub</a>
-   </div>
 
 **MDPath** is a Python package designed to calculate and visualize allosteric communication pathways in proteins using molecular dynamics (MD) simulations. It employs mutual information calculations to identify connected residues and graph-building techniques to map out pathways between them. This documentation will guide you through the installation, usage, and functionalities of MDPath, providing detailed instructions and examples to help you explore protein dynamics and interactions effectively.
 
