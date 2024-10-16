@@ -25,9 +25,13 @@ class GraphBuilder:
     
     Attributes:
         pdb (str): Path to the PDB file.
+        
         end (int): The last residue number to consider in the graph.
+        
         mi_diff_df (pd.DataFrame): DataFrame containing mutual information differences between residue pairs.
+        
         dist (int): Cutoff distance for graph edges in Angstroms.
+        
         graph (nx.Graph): The constructed residue interaction graph.
     """
     
@@ -112,10 +116,12 @@ class GraphBuilder:
 
         Args:
             source (int): Starting node.
+            
             target (int): Target node.
 
         Returns:
             best_path (List): List of nodes in the shortest path with the highest weight.
+            
             total_weight (float): Total weight of the shortest path.
         """
         all_shortest_paths = list(
@@ -142,6 +148,7 @@ class GraphBuilder:
 
         Args:
             residue_graph (nx.Graph): Residue graph.
+            
             df_distant_residues (pd.DataFrame): Panda dataframe with distant residues.
 
         Returns:

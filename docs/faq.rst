@@ -1,4 +1,4 @@
-Frequently Asked Questions
+FAQ
 ==========================
 
 What OS does MDPath support?
@@ -10,19 +10,19 @@ Can MDPath run on older Python versions?
 MDPath has been successfully tested on Python versions as old as 3.9. However, we do not recommend using older distributions, as they are not consistently tested.
 
 What should I keep in mind when setting up simulations to be evaluated by MDPath?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Ensure that the state you aim to capture is consistent throughout the simulation, as major conformational shifts within a single analysis can lead to problematic outcomes. In our tests, we saved 1,000 frames from simulations run for 200 ns each. For the complete setup, please refer to our main paper.
 
 What do I need to cite when using MDPath in my work?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Please cite the main MDPath publication and any relevant papers mentioned in the documentation. Refer to the “Citing MDPath” section for the full citation details.
 
 Do you plan to add other visualization options?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Yes, we are continuously working on expanding visualization features. Stay tuned for updates in future releases.
 
 How can I implement this for a system not related to G-protein coupled receptors?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 MDPath can be adapted for other systems by modifying the input files and parameters according to your specific needs. Refer to the documentation for guidelines on customizing the analysis for different molecular systems. Once we have validated papers describing other systems, we will share and update the tool’s parameters accordingly to ensure adherence to good scientific practices.
 
 What does the bootstrap flag do?
@@ -42,8 +42,9 @@ As an open-source project, everyone is invited to contribute. You can:
 1. Create Pull Requests: Submit a pull request with your improvements or new features. Each pull request will be reviewed before merging into the main branch.
 2. Report Issues: Report bugs or suggest enhancements. Issue reporting is crucial for improving the tool.
 
-Your contributions help enhance the project and are greatly appreciated!
+For more information, refer to :doc:`Developer Guide <developer_guide>` in the documentation.
+Your contributions are greatly appreciated!
 
-What tools can I use to track dynamic protein-ligand interactions?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Common tools for tracking protein-ligand interactions include Dynophores, OpenMMDL, and Prolif.
+What tools can I use to track dynamic protein-ligand interactions for the -lig flag?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+We recomend using either `Dynophores <https://github.com/wolberlab/dynophores>` or `OpenMMDL<https://github.com/wolberlab/OpenMMDL>`

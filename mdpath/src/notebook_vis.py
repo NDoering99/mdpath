@@ -18,8 +18,11 @@ class NotebookVisualization:
     
     Attributes:
         pdb_path (str): Path to the PDB file for visualization.
+        
         view (nv.NGLWidget): NGL view object for visualizing the PDB file.
+        
         json_path (str): Path to the JSON file containing precomputed cluster properties for visualization.
+        
         precomputed_data (dict): Dictionary containing precomputed cluster properties for visualization.
     """
     def __init__(self, pdb_path: str, json_path: str) -> None:
