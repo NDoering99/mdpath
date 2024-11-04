@@ -32,6 +32,7 @@ from mdpath.src.graph import GraphBuilder
 from mdpath.src.cluster import PatwayClustering
 from mdpath.src.visualization import MDPathVisualize
 from mdpath.src.bootstrap import BootstrapAnalysis
+import os
 
 
 def main():
@@ -150,6 +151,8 @@ def main():
     GMM = bool(args.GMM)
 
     # Prepare the trajectory for analysis
+    if os.path.exists("first_frame.pdb"):
+        os.remove("first_frame.pdb")
     with mda.Writer("first_frame.pdb", multiframe=False) as pdb:
         traj.trajectory[0]
         pdb.write(traj.atoms)
@@ -169,6 +172,7 @@ def main():
 
    # Calculate the mutual information and build the graph
     nmi_calc = NMICalculator(df_all_residues, GMM = GMM)
+    nmi_calc.entropy_df.to_csv("entropy_df.csv", index=False)
     nmi_calc.mi_diff_df.to_csv("mi_diff_df.csv", index=False)
     graph_builder = GraphBuilder(
         topology, structure_calc.last_res_num, nmi_calc.mi_diff_df, graphdist
