@@ -31,6 +31,11 @@ The bootstrap flag enables the bootstrapping method to assess the stability and 
 
 Keep in mind that while a low standard error or high confidence intervals indicate statistical validity within the scope of the analysis, they do not guarantee that the observed findings are biologically correct.
 
+
+What to do if the results of the bootstrap analysis are unrealistic?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+We are currently aware of a bug that we recorded once when the analysis was run using multiprocessing on an AM2 cpu (amd ryzen 7 3800x). It is not clear if this is an AM2 specific issue or a multiprocessing issue, but when processes are started in close proximity to each other, the workload is not distributed correctly. Indications of a math error in these scenarios can be seen in an unusually small mi_dif file. A temporary workaround is to include the "-cpu 1" flag in the input, as this will prevent multiprocessing related problems. We are currently working on a hardware-optimized solution for this bootstrapping that will fix this bug and speed up the computation.
+
 What does the -lig flag do?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The -lig flag, named from its initial use in analyzing protein-ligand interactions, filters the paths to include only those that pass through a predefined residue. This enables the analysis of how protein-ligand interactions affect the protein's conformational state. Additionally, it can be used to explore protein-protein interactions, highlight specific paths in an allosteric network, or investigate the effects of point mutations. The possibilities are extensive, limited only by your computational resources and creativity.
