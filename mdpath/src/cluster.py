@@ -22,18 +22,20 @@ import seaborn as sns
 
 class PatwayClustering:
     """Perform clustering of pathways based on the overlap of close residue pairs.
-    
+
     Attributes:
         df (pd.DataFrame): DataFrame containing close residue pairs.
-        
+
         pathways (list): List of pathways, where each pathway is a list of residue indices.
-        
+
         num_processes (int): Number of processes to use for parallel computation.
-        
+
         overlapp_df (pd.DataFrame): DataFrame containing the overlap between all pathway pairs.
     """
-    
-    def __init__(self, df_close_res: pd.DataFrame, pathways: list, num_processes: int) -> None:
+
+    def __init__(
+        self, df_close_res: pd.DataFrame, pathways: list, num_processes: int
+    ) -> None:
         self.df = df_close_res
         self.pathways = pathways
         self.num_processes = num_processes
@@ -96,13 +98,13 @@ class PatwayClustering:
         return overlap_df
 
     def pathways_cluster(
-        self, n_top_clust: int=0, save_path:str ="clustered_paths.png"
+        self, n_top_clust: int = 0, save_path: str = "clustered_paths.png"
     ) -> dict:
         """Clustering of pathways based on the overlap between them.
 
         Args:
             n_top_clust (int, optional): Number of clusters to output. Defaults to all.
-            
+
             save_path (str, optional): Save path for cluster dendogram figure. Defaults to "clustered_paths.png".
 
         Returns:
@@ -161,12 +163,12 @@ class PatwayClustering:
 
     def pathway_clusters_dictionary(self, clusters: dict, sorted_paths: list) -> dict:
         """Generates a dictionary mapping cluster numbers to lists of pathways.
-        
+
         Args:
             clusters (dict): A dictionary where keys are cluster numbers and values are lists of pathway IDs.
-            
+
             sorted_paths (list): A list of pathways, where each pathway is a tuple and the first element is the pathway name.
-            
+
         Returns:
             dict: A dictionary where keys are cluster numbers and values are lists of pathways corresponding to each cluster.
         """

@@ -65,10 +65,7 @@ def test_mdpath_wrong_input(tmp_path):
     sys.stdout = StringIO()
 
     try:
-        sys.argv = [
-            "mdpath",  
-            "-top", top  
-        ]
+        sys.argv = ["mdpath", "-top", top]
 
         with pytest.raises(SystemExit) as exc_info:
             mdpath_main()
@@ -76,11 +73,12 @@ def test_mdpath_wrong_input(tmp_path):
         output = sys.stdout.getvalue()
         assert expected_message in output
 
-        assert exc_info.value.code != 0 
+        assert exc_info.value.code != 0
 
     finally:
         sys.stdout = original_stdout
         os.chdir(original_cwd)
+
 
 def test_mdpath_output_files():
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -128,7 +126,7 @@ def test_mdpath_output_files():
             "-bs",
             bootstrap,
             "-lig",
-            "272"
+            "272",
         ]
 
         mdpath_main()

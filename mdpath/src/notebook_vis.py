@@ -15,16 +15,17 @@ import nglview as nv
 
 class NotebookVisualization:
     """Visualization of the structure and calculated paths in a Jupyter notebook using NGLView.
-    
+
     Attributes:
         pdb_path (str): Path to the PDB file for visualization.
-        
+
         view (nv.NGLWidget): NGL view object for visualizing the PDB file.
-        
+
         json_path (str): Path to the JSON file containing precomputed cluster properties for visualization.
-        
+
         precomputed_data (dict): Dictionary containing precomputed cluster properties for visualization.
     """
+
     def __init__(self, pdb_path: str, json_path: str) -> None:
         self.pdb_path = pdb_path
         self.view = self.load_ngl_view()
@@ -33,7 +34,7 @@ class NotebookVisualization:
 
     def load_ngl_view(self):
         """Loads the NGL view object for visualizing the PDB file.
-        
+
         Returns:
             nv.NGLWidget: NGL view object of the PDB file.
         """

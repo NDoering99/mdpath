@@ -1,20 +1,12 @@
 Installation
 ===============
 
-To install **MDPath** on your local machine or cluster, start by cloning the repository to your desired directory. 
-You can clone it to your home directory by running the following commands:
+To install **MDPath** on your local machine or cluster, you can easily install it using pip. 
+First, open a terminal and run the following command:
 
 .. code-block:: text
 
-    cd ~
-    git clone https://github.com/NDoering99/mdpath.git
+    pip install mdpath
 
-Next, install all required dependencies. We recommend using Python version 3.10 or later to ensure compatibility with the package.
-You can easily install the dependencies using pip:
-
-.. code-block:: text
-
-    cd mdpath
-    pip install .
-
-Once the installation is complete, **MDPath** is ready to be used. You can now execute the package and start working with it.
+All required dependencies will be installed alongside **MDPath**. We recommend using Python version 3.10 or later to ensure compatibility with the package.
+Once the installation is complete, **MDPath** is ready to be used.

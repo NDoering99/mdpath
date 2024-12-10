@@ -24,23 +24,24 @@ class BootstrapAnalysis:
 
     Attributes:
         df_all_residues (pd.DataFrame): DataFrame containing all residue dihedral angle movements.
-        
+
         df_distant_residues (pd.DataFrame): DataFrame containing distant residues.
-        
+
         num_bootstrap_samples (int): Number of bootstrap samples to generate.
-        
+
         pdb (str): Path to the PDB file.
-        
+
         last_residue (int): Index of the last residue.
-        
+
         graphdist (int): Graph distance parameter.
-        
+
         num_bins (int): Number of bins to group dihedral angle movements into for NMI calculation. Defaults to 35.
-        
+
         common_counts (np.ndarray): Array with the counts of common paths between the original sample and bootstrap samples.
-        
+
         path_confidence_intervals (dict): Dictionary with the confidence intervals for each path.
     """
+
     def __init__(
         self,
         df_all_residues: pd.DataFrame,
@@ -64,9 +65,7 @@ class BootstrapAnalysis:
         self.num_bins = num_bins
         self.common_counts, self.path_confidence_intervals = self.bootstrap_analysis()
 
-    def create_bootstrap_sample(
-        self, df_dihedral: pd.DataFrame
-    ) -> tuple:
+    def create_bootstrap_sample(self, df_dihedral: pd.DataFrame) -> tuple:
         """Creates a sample from the dataframe with replacement for bootstrap analysis.
 
         Args:
@@ -92,12 +91,12 @@ class BootstrapAnalysis:
         Args:
 
             pathways_set (set): Set of tuples with the pathways for bootstrapping.
-            
+
             sample_num (int): Number of the bootstrap sample.
 
         Returns:
             common_count (int): Number of common paths between the bootstrap sample and the original sample.
-            
+
             bootstrap_pathways (list): List of paths within the bootstrap sample.
         """
         bootstrap_sample = self.create_bootstrap_sample(self.df_all_residues)
@@ -131,7 +130,7 @@ class BootstrapAnalysis:
 
         Returns:
             common_counts (np.array): Array with the counts of common paths between the original sample and bootstrap samples.
-            
+
             path_confidence_intervals (dict): Dictionary with the confidence intervals for each path.
         """
         os.makedirs("bootstrap", exist_ok=True)
