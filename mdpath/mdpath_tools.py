@@ -22,35 +22,35 @@ from mdpath.src.visualization import MDPathVisualize
 
 def edit_3D_visualization_json():
     """Edit the 3D visualization JSONS to your visualization needs from the command line.
-    
+
     This function provides a command-line interface (CLI) for editing 3D visualization JSON files.
     It supports various operations such as recoloring, scaling, and flatting the radius of the entries in the JSON file.
     It cann be called using 'mdpath_json_editor' after installation.
-    
+
     Command-line inputs:
-        -json (str): The path to the JSON file to edit for 3D visualization. 
-        
-        -scale (float): The factor to multiply the radius of path cylinders with. 
-        
+        -json (str): The path to the JSON file to edit for 3D visualization.
+
+        -scale (float): The factor to multiply the radius of path cylinders with.
+
         -recolor (str): The path to the color file for 3D visualization colors.
-        
+
         -flat (float): Sets every radius of path cylinders to the input value.
-        
+
         -clusterscale (float): The maximum radius for the cluster-based scaling.
-    
-    
+
+
     Note: Only one operation can be performed at a time. If multiple operations are specified, an error will be displayed.
-    
+
     Command-line usage:
         $ mdpath_json_editor -json <path_to_json_file> -scale <scaling_factor_float>
-        
+
         $ mdpath_json_editor -json <path_to_json_file> -recolor <path_to_color_json_file>
-        
+
         $ mdpath_json_editor -json <path_to_json_file> -flat <flat_radius_value_float>
-        
+
         $ mdpath_json_editor -json <path_to_json_file> -clusterscale <scaling_factor_float>
     """
-    
+
     parser = argparse.ArgumentParser(
         prog="mdpath_json_edit",
         description="Edit the 3D visualization JSONS to your visualization needs.",
@@ -94,15 +94,14 @@ def edit_3D_visualization_json():
     )
     args = parser.parse_args()
 
-    
     if args.color and not args.json:
         print("\033[1mRecoloring requires a valid -json to recolor.\033[0m")
         exit(1)
-    
+
     if args.flat and args.scale:
         print("\033[1mOnly one of those operations can be performed.\033[0m")
         exit(1)
-    
+
     if args.scale and args.clusterscale:
         print("\033[1mOnly one of those operations can be performed.\033[0m")
         exit(1)
@@ -194,14 +193,14 @@ def edit_3D_visualization_json():
 
 def path_comparison():
     """Compare Pathways of different simulations.
-    
+
     This function provides a command-line interface (CLI) for morphing the 3d visualization of a simulation to fit ontop of the coordinates of another simulatuion.
     This enables easy comparison of the pathways of different simulations.
     It cann be called using 'mdpath_compare' after installation.
-    
+
     Command-line inputs:
         - atop (str): The path to the file containing the residue coordinates that are used as a template.
-        
+
         - bcluster (str): The path to the file containing the cluster that is morphed ontop.
 
 
@@ -253,15 +252,15 @@ def multitraj_analysis():
     It requires the topology file of the MD simulation and a list of multiple pathways from previous analysis.
     The function calculates various properties of the merged pathways, clusters them, and saves the results in JSON files.
     It cann be called using 'mdpath_multitraj' after installation.
-    
+
 
     Command-line inputs:
         -top (str): Topology file of your MD simulation.
-        
+
         -multitraj (list(str)): List of multiple pathways from previous analysis.
-        
+
         -cpu (int): Amount of cores used in multiprocessing.(default: half of available cores)
-        
+
         -closedist (float): Default distance for close residues.(default: 12.0)
 
     Command-line usage:
@@ -354,14 +353,14 @@ def gpcr_2D_vis():
     This function provides a command-line interface (CLI) for creating a 2D visualization of paths through a GPCR.
     It queries gpcrdb.org for the Ballesteros-Weinstein-System numbering and assigns generic numbers to the protein atoms.
     Then a 2D visualization of the GPCR paths is created based on the updated cluster pathways and the specified cutoff percentage.
-    
+
     Command-line inputs:
         -top (str): Topology file of your MD simulation
-        
+
         -clust (str): Pickle file with cluster pathways dictionary
-        
+
         -cut (float): Percentage of the top paths to visualize (default is 0 = all paths are drawn)
-        
+
         -num (str): Path to write the numbered structure file to (default is "./numbered_structure.pdb")
 
 

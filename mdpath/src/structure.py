@@ -23,16 +23,17 @@ from itertools import combinations
 
 class StructureCalculations:
     """Calculate residue surroundings and distances between residues in a PDB structure.
-    
+
     Attributes:
         pdb (str): Path to the PDB file.
-        
+
         first_res_num (int): First residue number in the PDB file.
-        
+
         last_res_num (int): Last residue number in the PDB file.
-        
-        num_residues (int): Total number of residues in the PDB file.    
+
+        num_residues (int): Total number of residues in the PDB file.
     """
+
     def __init__(self, pdb: str) -> None:
         self.pdb = pdb
         self.first_res_num, self.last_res_num = self.res_num_from_pdb()
@@ -43,7 +44,7 @@ class StructureCalculations:
 
         Returns:
             first_res_num (int): First residue number.
-            
+
             last_res_num (int): Last residue number.
         """
         parser = PDB.PDBParser(QUIET=True)
@@ -64,7 +65,7 @@ class StructureCalculations:
 
         Args:
             atom1 (tuple): Coordinates of the first atom.
-            
+
             atom2 (tuple): Coordinates of the second atom.
 
         Returns:
@@ -81,7 +82,7 @@ class StructureCalculations:
 
         Args:
             dist (float): Distance cutoff for residue pairs.
-            
+
             mode (str): 'close' to calculate close residues, 'far' to calculate faraway residues.
 
         Returns:
@@ -132,16 +133,22 @@ class DihedralAngles:
 
     Attributes:
         traj (mda.Universe): MDAnalysis Universe object containing the trajectory.
-        
+
         first_res_num (int): The first residue number in the trajectory.
-        
+
         last_res_num (int): The last residue number in the trajectory.
-        
+
         num_residues (int): The total number of residues in the trajectory.
 
     """
-    
-    def __init__(self, traj: mda.Universe, first_res_num: int, last_res_num: int, num_residues: int) -> None:
+
+    def __init__(
+        self,
+        traj: mda.Universe,
+        first_res_num: int,
+        last_res_num: int,
+        num_residues: int,
+    ) -> None:
         self.traj = traj
         self.first_res_num = first_res_num
         self.last_res_num = last_res_num
@@ -155,7 +162,7 @@ class DihedralAngles:
 
         Returns:
             res_id (int): Residue number.
-            
+
             dihedral_angle_movement (np.array): Dihedral angle movement for the residue over the course of the trajectory.
         """
         res = self.traj.residues[res_id]

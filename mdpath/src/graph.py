@@ -22,19 +22,19 @@ from mdpath.src.structure import StructureCalculations
 
 class GraphBuilder:
     """Build and analyze residue interaction graphs based on residue distances and mutual information between residue pais.
-    
+
     Attributes:
         pdb (str): Path to the PDB file.
-        
+
         end (int): The last residue number to consider in the graph.
-        
+
         mi_diff_df (pd.DataFrame): DataFrame containing mutual information differences between residue pairs.
-        
+
         dist (int): Cutoff distance for graph edges in Angstroms.
-        
+
         graph (nx.Graph): The constructed residue interaction graph.
     """
-    
+
     def __init__(
         self, pdb: str, last_residue: int, mi_diff_df: pd.DataFrame, graphdist: int
     ) -> None:
@@ -101,7 +101,7 @@ class GraphBuilder:
 
     def graph_builder(self) -> nx.Graph:
         """Wrapper function to build the residue graph.
-        
+
         Returns:
             residue_graph (nx.Graph): Full residue graph with edge weights assigned.
         """
@@ -109,19 +109,17 @@ class GraphBuilder:
         graph = self.graph_assign_weights(graph)
         return graph
 
-    def max_weight_shortest_path(
-        self, source: int, target: int
-    ) -> Tuple:
+    def max_weight_shortest_path(self, source: int, target: int) -> Tuple:
         """Finds the shortest path between 2 nodes with the highest total weight among all shortest paths.
 
         Args:
             source (int): Starting node.
-            
+
             target (int): Target node.
 
         Returns:
             best_path (List): List of nodes in the shortest path with the highest weight.
-            
+
             total_weight (float): Total weight of the shortest path.
         """
         all_shortest_paths = list(
@@ -141,14 +139,12 @@ class GraphBuilder:
 
         return best_path, max_weight
 
-    def collect_path_total_weights(
-        self, df_distant_residues: pd.DataFrame
-    ) -> list:
+    def collect_path_total_weights(self, df_distant_residues: pd.DataFrame) -> list:
         """Wrapper function to collect the shortest path and total weight between distant residues.
 
         Args:
             residue_graph (nx.Graph): Residue graph.
-            
+
             df_distant_residues (pd.DataFrame): Panda dataframe with distant residues.
 
         Returns:
