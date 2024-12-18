@@ -10,7 +10,7 @@ description = "MD signal transduction calculation"
 dynamic = ["version"]
 readme = "README.md"
 authors = [
-    { name = "Marvin Taterra and Niklas Piet Doering", email = "niklas.piet.doering@fu-berlin.de" }
+    { name = "Niklas Piet Doering and Marvin Taterra", email = "niklas.piet.doering@fu-berlin.de" }
 ]
 license = { text = "MIT" }
 # See https://pypi.org/classifiers/
