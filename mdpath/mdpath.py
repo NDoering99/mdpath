@@ -133,6 +133,14 @@ def main():
         default=False,
     )
 
+    parser.add_argument(
+        "-chain",
+        dest="chain",
+        help="Chain of the protein to be analyzed in the topology file.",
+        required=False,
+        default=False,
+    )
+
     args = parser.parse_args()
     if not args.topology or not args.trajectory:
         print("Both trajectory and topology files are required!")
@@ -156,6 +164,30 @@ def main():
     with mda.Writer("first_frame.pdb", multiframe=False) as pdb:
         traj.trajectory[0]
         pdb.write(traj.atoms)
+
+    # Chain selection
+    if args.chain:
+        chain = str(args.chain)
+        chain_atoms = traj.select_atoms(f"chainID {chain}")
+        if len(chain_atoms) == 0:
+            raise ValueError(f"No atoms found for chain {chain}")
+            exit()
+        chain_universe = mda.Merge(chain_atoms)
+        # Write new topology
+        chain_universe.atoms.write("selected_chain.pdb")
+
+        # Write trajectory
+        with mda.Writer("selected_chain.dcd", chain_atoms.n_atoms) as W:
+            for ts in traj.trajectory:
+                chain_universe.atoms.positions = chain_atoms.positions
+                W.write(chain_universe.atoms)
+        topology = "selected_chain.pdb"
+        trajectory = "selected_chain.dcd"
+        traj = mda.Universe(topology, trajectory)
+        print(
+            f"Chain {chain} selected and written to selected_chain.pdb and selected_chain.dcd and will now be analyzed."
+        )
+
     structure_calc = StructureCalculations(topology)
     df_distant_residues = structure_calc.calculate_residue_suroundings(fardist, "far")
     df_close_res = structure_calc.calculate_residue_suroundings(closedist, "close")
