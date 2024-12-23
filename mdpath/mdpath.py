@@ -136,7 +136,7 @@ def main():
     parser.add_argument(
         "-chain",
         dest="chain",
-        help="Chain of the protein to be analyzed in the topology file.",
+        help="Chain of the protein to be analyzed in the topology file. CAUTION: only one chain can be selected for analysis.",
         required=False,
         default=False,
     )
