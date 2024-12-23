@@ -5,6 +5,10 @@ mdpath
 [![codecov](https://codecov.io/gh/NDoering99/mdpath/graph/badge.svg?token=32D80PZOZV)](https://codecov.io/gh/NDoering99/mdpath)
 [![Documentation Status](https://readthedocs.org/projects/mdpath/badge/?version=latest)](https://mdpath.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+![PyPI - Version](https://img.shields.io/pypi/v/mdpath)
+
+
+
 
 MDPath - A tool for calculating allosteric communication pathways in proteins by analyzing the mutual information of residue dihedral angle movements throughout an MD simulation.  
 
