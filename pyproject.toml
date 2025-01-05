@@ -30,7 +30,8 @@ dependencies = [
     "tqdm",
     "seaborn",
     "nglview",
-    "pillow"
+    "pillow",
+    "numpy-stl"
 ]
 
 # Update the urls once the hosting is set up.
