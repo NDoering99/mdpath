@@ -19,7 +19,7 @@ from MDAnalysis.analysis.dihedrals import Dihedral
 from multiprocessing import Pool
 from Bio import PDB
 from itertools import combinations
-
+import logging
 
 class StructureCalculations:
     """Calculate residue surroundings and distances between residues in a PDB structure.
@@ -155,57 +155,70 @@ class DihedralAngles:
         self.num_residues = num_residues
 
     def calc_dihedral_angle_movement(self, res_id: int) -> tuple:
-        """Calculates dihedral angle movement for a residue over the cours of the MD trajectory.
+        """Calculates dihedral angle movement for a residue over the course of the MD trajectory.
 
         Args:
             res_id (int): Residue number.
 
         Returns:
-            res_id (int): Residue number.
-
-            dihedral_angle_movement (np.array): Dihedral angle movement for the residue over the course of the trajectory.
+            tuple[int, np.ndarray] | None: Tuple of (residue_id, dihedral_angles) if successful, None if failed.
         """
-        res = self.traj.residues[res_id]
-        ags = [res.phi_selection()]
-        R = Dihedral(ags).run()
-        dihedrals = R.results.angles
-        dihedral_angle_movement = np.diff(dihedrals, axis=0)
-        return res_id, dihedral_angle_movement
+        try:
+            res = self.traj.residues[res_id]
+            ags = [res.phi_selection()]
+            if not all(ags):  # Check if any selections are None
+                return None
+            R = Dihedral(ags).run()
+            dihedrals = R.results.angles
+            dihedral_angle_movement = np.diff(dihedrals, axis=0)
+            return res_id, dihedral_angle_movement
+        except (TypeError, AttributeError, IndexError) as e:
+            logging.debug(f"Failed to calculate dihedral for residue {res_id}: {str(e)}")
+            return None
 
     def calculate_dihedral_movement_parallel(
         self,
         num_parallel_processes: int,
-    ) -> pd.DataFrame:
+        ) -> pd.DataFrame:
         """Parallel calculation of dihedral angle movement for all residues in the trajectory.
 
         Args:
             num_parallel_processes (int): Amount of parallel processes.
 
         Returns:
-            df_all_residues (pd.DataFrame): Pandas dataframe with all residue dihedral angle movements.
+            pd.DataFrame: DataFrame with all residue dihedral angle movements.
         """
+        df_all_residues = pd.DataFrame()
+    
         try:
             with Pool(processes=num_parallel_processes) as pool:
-                df_all_residues = pd.DataFrame()
                 with tqdm(
                     total=self.num_residues,
                     ascii=True,
                     desc="\033[1mProcessing residue dihedral movements\033[0m",
                 ) as pbar:
-                    for res_id, result in pool.imap_unordered(
+                    results = pool.imap_unordered(
                         self.calc_dihedral_angle_movement,
                         range(self.first_res_num, self.last_res_num + 1),
-                    ):
+                    )
+                
+                    for result in results:
+                        if result is None:
+                            pbar.update(1)
+                            continue
+                        
+                        res_id, dihedral_data = result
                         try:
-                            df_residue = pd.DataFrame(result, columns=[f"Res {res_id}"])
+                            df_residue = pd.DataFrame(dihedral_data, columns=[f"Res {res_id}"])
                             df_all_residues = pd.concat(
                                 [df_all_residues, df_residue], axis=1
                             )
-                            pbar.update(1)
                         except Exception as e:
-                            print(
-                                f"\033[1mError processing residue {res_id}: {e}\033[0m"
-                            )
+                            logging.error(f"\033[1mError processing residue {res_id}: {e}\033[0m")
+                        finally:
+                            pbar.update(1)
+                        
         except Exception as e:
-            print(f"{e}")
+            logging.error(f"Parallel processing failed: {str(e)}")
+        
         return df_all_residues
