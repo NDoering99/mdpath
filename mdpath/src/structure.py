@@ -21,6 +21,7 @@ from Bio import PDB
 from itertools import combinations
 import logging
 
+
 class StructureCalculations:
     """Calculate residue surroundings and distances between residues in a PDB structure.
 
@@ -173,13 +174,15 @@ class DihedralAngles:
             dihedral_angle_movement = np.diff(dihedrals, axis=0)
             return res_id, dihedral_angle_movement
         except (TypeError, AttributeError, IndexError) as e:
-            logging.debug(f"Failed to calculate dihedral for residue {res_id}: {str(e)}")
+            logging.debug(
+                f"Failed to calculate dihedral for residue {res_id}: {str(e)}"
+            )
             return None
 
     def calculate_dihedral_movement_parallel(
         self,
         num_parallel_processes: int,
-        ) -> pd.DataFrame:
+    ) -> pd.DataFrame:
         """Parallel calculation of dihedral angle movement for all residues in the trajectory.
 
         Args:
@@ -189,7 +192,7 @@ class DihedralAngles:
             pd.DataFrame: DataFrame with all residue dihedral angle movements.
         """
         df_all_residues = pd.DataFrame()
-    
+
         try:
             with Pool(processes=num_parallel_processes) as pool:
                 with tqdm(
@@ -201,24 +204,28 @@ class DihedralAngles:
                         self.calc_dihedral_angle_movement,
                         range(self.first_res_num, self.last_res_num + 1),
                     )
-                
+
                     for result in results:
                         if result is None:
                             pbar.update(1)
                             continue
-                        
+
                         res_id, dihedral_data = result
                         try:
-                            df_residue = pd.DataFrame(dihedral_data, columns=[f"Res {res_id}"])
+                            df_residue = pd.DataFrame(
+                                dihedral_data, columns=[f"Res {res_id}"]
+                            )
                             df_all_residues = pd.concat(
                                 [df_all_residues, df_residue], axis=1
                             )
                         except Exception as e:
-                            logging.error(f"\033[1mError processing residue {res_id}: {e}\033[0m")
+                            logging.error(
+                                f"\033[1mError processing residue {res_id}: {e}\033[0m"
+                            )
                         finally:
                             pbar.update(1)
-                        
+
         except Exception as e:
             logging.error(f"Parallel processing failed: {str(e)}")
-        
+
         return df_all_residues

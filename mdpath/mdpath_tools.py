@@ -20,7 +20,6 @@ from mdpath.src.cluster import PatwayClustering
 from mdpath.src.visualization import MDPathVisualize
 
 
-
 def edit_3D_visualization_json():
     """Edit the 3D visualization JSONS to your visualization needs from the command line.
 
@@ -433,6 +432,8 @@ def gpcr_2D_vis():
             "Topology and cluster pathways are required for creating a 2D visualization of GPCR paths."
         )
         exit(1)
+
+
 def spline():
     """
     Create a 3D Visualization of Paths through a protein using accurate spline representations.
@@ -445,7 +446,7 @@ def spline():
         -json (str): Json file of the MDPath analysis -> "quick_precomputed_clusters_paths"
 
     Example usage:
-        $ mdpath_spline -json <path_to_json> 
+        $ mdpath_spline -json <path_to_json>
     """
     parser = argparse.ArgumentParser(
         prog="mdpath_spline",
@@ -458,7 +459,7 @@ def spline():
         help="quick_precomputed_clusters_paths file of your MDPath analysis",
         required=True,
     )
-    
+
     args = parser.parse_args()
     json_file = args.json
     MDPathVisualize.create_splines(json_file)

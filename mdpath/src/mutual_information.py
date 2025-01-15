@@ -17,6 +17,7 @@ from tqdm import tqdm
 from sklearn.metrics import mutual_info_score
 from sklearn.mixture import GaussianMixture
 from scipy.stats import entropy
+from scipy.special import digamma
 
 
 class NMICalculator:
@@ -29,30 +30,40 @@ class NMICalculator:
 
         GMM (optional): Option to switch between histogram method and Gaussian Mixture Model for binning before NMI calculation. Default is False.
 
-        mi_diff_df (pd.DataFrame): DataFrame containing the mutual information differences. Is calculated using either GMM or histogram method.
+        nmi_df (pd.DataFrame): DataFrame containing the mutual information differences. Is calculated using either GMM or histogram method.
 
         entropy_df (pd.DataFrame): Pandas dataframe with residue and entropy values. Is calculated using either GMM or histogram method.
     """
 
     def __init__(
-        self, df_all_residues: pd.DataFrame, num_bins: int = 35, GMM=False
+        self,
+        df_all_residues: pd.DataFrame,
+        digamma_correction=False,
+        num_bins: int = 35,
+        GMM=False,
     ) -> None:
         self.df_all_residues = df_all_residues
         self.num_bins = num_bins
+        self.digamma_correction = digamma_correction
         self.GMM = GMM
         if GMM:
-            self.mi_diff_df, self.entropy_df = self.NMI_calcs_with_GMM()
+            self.nmi_df, self.entropy_df = self.NMI_calcs_with_GMM()
         else:
-            self.mi_diff_df, self.entropy_df = self.NMI_calcs()
+            self.nmi_df, self.entropy_df = self.NMI_calcs()
 
-    def NMI_calcs(self) -> pd.DataFrame:
-        """Nornmalized Mutual Information and Entropy calculation for all residue pairs.
+    def calculate_corrected_entropy(self, hist, total_points, num_bins):
+        """Calculate corrected entropy for a histogram."""
+        probabilities = hist / total_points
+        non_zero_probs = probabilities[probabilities > 0]
+        base_entropy = -np.sum(non_zero_probs * np.log(non_zero_probs))
+        correction = (num_bins - 1) / (2 * total_points)
+        digamma_correction = 1 / total_points * np.sum(
+            hist * digamma(hist + 1)
+        ) - digamma(total_points)
+        return base_entropy + correction + digamma_correction
 
-        Returns:
-            mi_diff_df (pd.DataFrame): Pandas dataframe with residue pair and mutual information difference.
-
-            entropy_df (pd.DataFrame): Pandas dataframe with residue and entropy values.
-        """
+    def NMI_calcs(self):
+        """Extended Normalized Mutual Information and Entropy calculation."""
         entropys = {}
         normalized_mutual_info = {}
         total_iterations = len(self.df_all_residues.columns) ** 2
@@ -63,36 +74,78 @@ class NMICalculator:
             for col1 in self.df_all_residues.columns:
                 for col2 in self.df_all_residues.columns:
                     if col1 != col2:
-                        hist_col1, _ = np.histogram(
-                            self.df_all_residues[col1], bins=self.num_bins
-                        )
-                        hist_col2, _ = np.histogram(
-                            self.df_all_residues[col2], bins=self.num_bins
-                        )
-                        hist_joint, _, _ = np.histogram2d(
-                            self.df_all_residues[col1],
-                            self.df_all_residues[col2],
-                            bins=self.num_bins,
-                        )
-                        mi = mutual_info_score(
-                            hist_col1, hist_col2, contingency=hist_joint
-                        )
-                        entropy_col1 = entropy(hist_col1)
-                        entropy_col2 = entropy(hist_col2)
-                        entropys[col1] = entropy_col1
-                        entropys[col2] = entropy_col2
-                        nmi = mi / np.sqrt(entropy_col1 * entropy_col2)
-                        normalized_mutual_info[(col1, col2)] = nmi
-                        progress_bar.update(1)
+                        if self.digamma_correction:
+                            # Adaptive binning
+                            data_col1 = self.df_all_residues[col1].values
+                            data_col2 = self.df_all_residues[col2].values
+                            hist_col1, bin_edges1 = np.histogram(
+                                data_col1, bins=self.num_bins
+                            )
+                            hist_col2, bin_edges2 = np.histogram(
+                                data_col2, bins=self.num_bins
+                            )
+                            hist_joint, _, _ = np.histogram2d(
+                                data_col1,
+                                data_col2,
+                                bins=(self.num_bins, self.num_bins),
+                            )
+
+                            # Total data points
+                            total_points = len(data_col1)
+
+                            # Corrected entropy estimates
+                            entropy_col1 = self.calculate_corrected_entropy(
+                                hist_col1, total_points, self.num_bins
+                            )
+                            entropy_col2 = self.calculate_corrected_entropy(
+                                hist_col2, total_points, self.num_bins
+                            )
+                            joint_entropy = self.calculate_corrected_entropy(
+                                hist_joint.flatten(), total_points, self.num_bins**2
+                            )
+
+                            # Mutual Information
+                            mi = entropy_col1 + entropy_col2 - joint_entropy
+                            entropys[col1] = entropy_col1
+                            entropys[col2] = entropy_col2
+
+                            # Normalized MI
+                            nmi = mi / np.sqrt(entropy_col1 * entropy_col2)
+                            normalized_mutual_info[(col1, col2)] = nmi
+
+                            progress_bar.update(1)
+                        else:
+                            hist_col1, _ = np.histogram(
+                                self.df_all_residues[col1], bins=self.num_bins
+                            )
+                            hist_col2, _ = np.histogram(
+                                self.df_all_residues[col2], bins=self.num_bins
+                            )
+                            hist_joint, _, _ = np.histogram2d(
+                                self.df_all_residues[col1],
+                                self.df_all_residues[col2],
+                                bins=self.num_bins,
+                            )
+                            mi = mutual_info_score(
+                                hist_col1, hist_col2, contingency=hist_joint
+                            )
+                            entropy_col1 = entropy(hist_col1)
+                            entropy_col2 = entropy(hist_col2)
+                            entropys[col1] = entropy_col1
+                            entropys[col2] = entropy_col2
+                            nmi = mi / np.sqrt(entropy_col1 * entropy_col2)
+                            normalized_mutual_info[(col1, col2)] = nmi
+                            progress_bar.update(1)
+
         entropy_df = pd.DataFrame(entropys.items(), columns=["Residue", "Entropy"])
-        mi_diff_df = pd.DataFrame(
+        nmi_df = pd.DataFrame(
             normalized_mutual_info.items(), columns=["Residue Pair", "MI Difference"]
         )
-        max_mi_diff = mi_diff_df["MI Difference"].max()
-        mi_diff_df["MI Difference"] = (
-            max_mi_diff - mi_diff_df["MI Difference"]
-        )  # Calculate the the weights
-        return mi_diff_df, entropy_df
+        # max_mi_diff = mi_diff_df["MI Difference"].max()
+        # mi_diff_df["MI Difference"] = (
+        #     max_mi_diff - mi_diff_df["MI Difference"]
+        # )  # Calculate the the weights
+        return nmi_df, entropy_df
 
     def select_n_components(data: pd.DataFrame, max_components: int = 10) -> int:
         """Select the optimal number of GMM components using BIC
@@ -123,7 +176,7 @@ class NMICalculator:
         """Nornmalized Mutual Information and Entropy calculation for all residue pairs using Gaussian Mixture Models (GMM) for binning.
 
         Returns:
-            mi_diff_df (pd.DataFrame): Pandas dataframe with residue pair and mutual information difference.
+            nmi_df (pd.DataFrame): Pandas dataframe with residue pair and mutual information difference.
 
             entropy_df (pd.DataFrame): Pandas dataframe with residue and entropy values.
         """
@@ -168,13 +221,13 @@ class NMICalculator:
                         progress_bar.update(1)
 
         entropy_df = pd.DataFrame(entropys.items(), columns=["Residue", "Entropy"])
-        mi_diff_df = pd.DataFrame(
+        nmi_df = pd.DataFrame(
             normalized_mutual_info.items(), columns=["Residue Pair", "MI Difference"]
         )
 
-        max_mi_diff = mi_diff_df["MI Difference"].max()
-        mi_diff_df["MI Difference"] = (
-            max_mi_diff - mi_diff_df["MI Difference"]
-        )  # Calculate the weights
+        # max_mi_diff = mi_diff_df["MI Difference"].max()
+        # mi_diff_df["MI Difference"] = (
+        #     max_mi_diff - mi_diff_df["MI Difference"]
+        # )  # Calculate the weights
 
-        return mi_diff_df, entropy_df
+        return nmi_df, entropy_df
