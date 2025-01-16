@@ -55,6 +55,8 @@ def main():
         -closedist: Default distance for close residues (default: 12.0)
 
         -graphdist: Default distance for residues making up the graph (default: 5.0)
+        
+        -digamma_correction: Use digamma correction for entropy calculation (default: False)
 
         -numpath: Default number of top paths considered for clustering (default: 500)
     """
@@ -124,6 +126,14 @@ def main():
         required=False,
         default=500,
     )
+    
+    parser.add_argument(
+        "-digamma_correction",
+        dest="digamma_correction",
+        help="Use digamma correction for entropy calculation.",
+        required=False,
+        default=False,
+    )
 
     parser.add_argument(
         "-GMM",
@@ -156,7 +166,9 @@ def main():
     closedist = float(args.closedist)
     graphdist = float(args.graphdist)
     numpath = int(args.numpath)
+    digamma_correction = bool(args.digamma_correction)
     GMM = bool(args.GMM)
+    
 
     # Prepare the trajectory for analysis
     if os.path.exists("first_frame.pdb"):
@@ -203,11 +215,11 @@ def main():
     print("\033[1mTrajectory is processed and ready for analysis.\033[0m")
 
     # Calculate the mutual information and build the graph
-    nmi_calc = NMICalculator(df_all_residues, GMM=GMM)
+    nmi_calc = NMICalculator(df_all_residues, digamma_correction=digamma_correction, GMM=GMM)
     nmi_calc.entropy_df.to_csv("entropy_df.csv", index=False)
-    nmi_calc.mi_diff_df.to_csv("mi_diff_df.csv", index=False)
+    nmi_calc.nmi_df.to_csv("nmi_df.csv", index=False)
     graph_builder = GraphBuilder(
-        topology, structure_calc.last_res_num, nmi_calc.mi_diff_df, graphdist
+        topology, structure_calc.last_res_num, nmi_calc.nmi_df, graphdist
     )
     MDPathVisualize.visualise_graph(
         graph_builder.graph
