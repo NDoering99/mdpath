@@ -141,10 +141,6 @@ class NMICalculator:
         nmi_df = pd.DataFrame(
             normalized_mutual_info.items(), columns=["Residue Pair", "MI Difference"]
         )
-        # max_mi_diff = mi_diff_df["MI Difference"].max()
-        # mi_diff_df["MI Difference"] = (
-        #     max_mi_diff - mi_diff_df["MI Difference"]
-        # )  # Calculate the the weights
         return nmi_df, entropy_df
 
     def select_n_components(data: pd.DataFrame, max_components: int = 10) -> int:
@@ -224,10 +220,4 @@ class NMICalculator:
         nmi_df = pd.DataFrame(
             normalized_mutual_info.items(), columns=["Residue Pair", "MI Difference"]
         )
-
-        # max_mi_diff = mi_diff_df["MI Difference"].max()
-        # mi_diff_df["MI Difference"] = (
-        #     max_mi_diff - mi_diff_df["MI Difference"]
-        # )  # Calculate the weights
-
         return nmi_df, entropy_df
