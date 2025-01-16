@@ -132,7 +132,7 @@ def main():
         dest="digamma_correction",
         help="Use digamma correction for entropy calculation.",
         required=False,
-        default=True,
+        default=False,
     )
 
     parser.add_argument(
