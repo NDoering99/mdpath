@@ -41,11 +41,13 @@ class NMICalculator:
         digamma_correction=False,
         num_bins: int = 35,
         GMM=False,
+        invert=False,
     ) -> None:
         self.df_all_residues = df_all_residues
         self.num_bins = num_bins
         self.digamma_correction = digamma_correction
         self.GMM = GMM
+        self.invert = invert
         if GMM:
             self.nmi_df, self.entropy_df = self.NMI_calcs_with_GMM()
         else:
@@ -141,6 +143,11 @@ class NMICalculator:
         nmi_df = pd.DataFrame(
             normalized_mutual_info.items(), columns=["Residue Pair", "MI Difference"]
         )
+        if self.invert:
+            max_nmi_diff = nmi_df["MI Difference"].max()
+            nmi_df["MI Difference"] = (
+                max_nmi_diff - nmi_df["MI Difference"]
+            )
         return nmi_df, entropy_df
 
     def select_n_components(data: pd.DataFrame, max_components: int = 10) -> int:
@@ -220,4 +227,9 @@ class NMICalculator:
         nmi_df = pd.DataFrame(
             normalized_mutual_info.items(), columns=["Residue Pair", "MI Difference"]
         )
+        if self.invert:
+            max_nmi_diff = nmi_df["MI Difference"].max()
+            nmi_df["MI Difference"] = (
+                max_nmi_diff - nmi_df["MI Difference"]
+            )
         return nmi_df, entropy_df

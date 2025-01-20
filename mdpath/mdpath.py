@@ -150,6 +150,14 @@ def main():
         required=False,
         default=False,
     )
+    
+    parser.add_argument(
+        "-invert",
+        dest="invert",
+        help="Inverts NMI bei subtrackting each NMI from max NMI. Can be used to find Paths, that are the least correlated",
+        required=False,
+        default=False,
+    )
 
     args = parser.parse_args()
     if not args.topology or not args.trajectory:
@@ -168,6 +176,7 @@ def main():
     numpath = int(args.numpath)
     digamma_correction = bool(args.digamma_correction)
     GMM = bool(args.GMM)
+    invert = bool(args.invert)
 
     # Prepare the trajectory for analysis
     if os.path.exists("first_frame.pdb"):
@@ -215,7 +224,7 @@ def main():
 
     # Calculate the mutual information and build the graph
     nmi_calc = NMICalculator(
-        df_all_residues, digamma_correction=digamma_correction, GMM=GMM
+        df_all_residues, digamma_correction=digamma_correction, GMM=GMM, invert=invert
     )
     nmi_calc.entropy_df.to_csv("entropy_df.csv", index=False)
     nmi_calc.nmi_df.to_csv("nmi_df.csv", index=False)
