@@ -274,6 +274,8 @@ def test_multitraj_analysis():
     original_stdout = sys.stdout
     sys.stdout = StringIO()
 
+    generated_files = []  # Define an empty list for generated_files
+
     try:
         sys.argv = [
             "mdpath_multitraj",

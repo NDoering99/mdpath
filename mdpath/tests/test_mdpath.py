@@ -94,7 +94,7 @@ def test_mdpath_output_files():
 
     expected_files = [
         os.path.join(script_dir, "first_frame.pdb"),
-        os.path.join(script_dir, "mi_diff_df.csv"),
+        os.path.join(script_dir, "nmi_df.csv.csv"),
         os.path.join(script_dir, "output.txt"),
         os.path.join(script_dir, "residue_coordinates.pkl"),
         os.path.join(script_dir, "cluster_pathways_dict.pkl"),

@@ -21,7 +21,7 @@ def test_nmi_calculator(mocker):
     df_all_residues = pd.DataFrame(data)
 
     calculator = NMICalculator(df_all_residues)
-    result = calculator.mi_diff_df
+    result = calculator.nmi_df
 
     assert isinstance(result, pd.DataFrame), "Result should be a DataFrame"
 
