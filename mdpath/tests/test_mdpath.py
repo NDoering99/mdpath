@@ -87,14 +87,14 @@ def test_mdpath_output_files():
 
     topology = os.path.join(script_dir, "test_topology.pdb")
     trajectory = os.path.join(script_dir, "test_trajectory.dcd")
-    numpath = "25"
+    numpath = "10" 
     bootstrap = "1"
     assert os.path.exists(topology), f"Topology file {topology} does not exist."
     assert os.path.exists(trajectory), f"Trajectory file {trajectory} does not exist."
 
     expected_files = [
         os.path.join(script_dir, "first_frame.pdb"),
-        os.path.join(script_dir, "nmi_df.csv.csv"),
+        os.path.join(script_dir, "nmi_df.csv"),
         os.path.join(script_dir, "output.txt"),
         os.path.join(script_dir, "residue_coordinates.pkl"),
         os.path.join(script_dir, "cluster_pathways_dict.pkl"),

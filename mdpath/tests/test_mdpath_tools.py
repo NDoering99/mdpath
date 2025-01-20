@@ -283,7 +283,7 @@ def test_multitraj_analysis():
             topology,
             "-multitraj",
             multitraj_1,
-            multitraj_1,
+            multitraj_1
         ]
         with pytest.raises(SystemExit) as exc_info:
             multitraj_analysis()
