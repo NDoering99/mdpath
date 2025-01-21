@@ -75,7 +75,7 @@ def test_pathways_cluster(setup_clustering):
     clustering = setup_clustering
 
     with patch("matplotlib.pyplot.savefig") as mock_savefig:
-        clusters = clustering.pathways_cluster(n_top_clust=0)
+        clusters = clustering.pathways_cluster(n_top_clust=3)
 
     assert isinstance(clusters, dict)
     assert all(isinstance(k, int) and isinstance(v, list) for k, v in clusters.items())

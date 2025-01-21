@@ -21,6 +21,10 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import MDAnalysis as mda
 import requests
+import json
+from collections import defaultdict
+from scipy.interpolate import CubicSpline
+from stl import mesh
 
 Colors = [
     [0.1216, 0.4667, 0.7059],
@@ -653,3 +657,139 @@ class MDPathVisualize:
             # Save the image
             image.save(f"{image_name}_cluster_{cluster}.png")
             print(f"Image saved as {image_name}_cluster_{cluster}.png")
+
+    @staticmethod
+    def create_splines(
+        json_path: str,
+    ) -> None:
+
+        def group_clusters(data):
+            """Groups JSON elements by their clusterid."""
+            clusters = defaultdict(list)
+            for item in data:
+                clusters[item["clusterid"]].append(item)
+            return clusters
+
+        def find_connected_paths(clusters):
+            """Find continuous paths by connecting matching coordinates and their radii."""
+            paths = []
+            used_indices = set()
+            for i, cluster in enumerate(clusters):
+                if i in used_indices:
+                    continue
+
+                current_path = [cluster["coord1"], cluster["coord2"]]
+                current_radii = [cluster["radius"], cluster["radius"]]
+                current_color = cluster["color"]
+                used_indices.add(i)
+
+                last_coord = cluster["coord2"]
+                while True:
+                    found_next = False
+                    for j, next_cluster in enumerate(clusters):
+                        if j in used_indices:
+                            continue
+
+                        if np.allclose(next_cluster["coord1"], last_coord):
+                            current_path.append(next_cluster["coord2"])
+                            current_radii.append(next_cluster["radius"])
+                            last_coord = next_cluster["coord2"]
+                            used_indices.add(j)
+                            found_next = True
+                            break
+
+                    if not found_next:
+                        break
+
+                paths.append(
+                    {
+                        "coords": current_path,
+                        "radii": current_radii,
+                        "color": current_color,
+                    }
+                )
+
+            return paths
+
+        def create_spline(coord_list, radii_list):
+            """Create splines for both coordinates and radii."""
+            coords = np.array(coord_list)
+            x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
+            t = np.linspace(0, 1, len(coords))
+
+            spline_x = CubicSpline(t, x)
+            spline_y = CubicSpline(t, y)
+            spline_z = CubicSpline(t, z)
+
+            spline_r = CubicSpline(t, radii_list)
+            t_fine = np.linspace(0, 1, 100)
+            x_fine = spline_x(t_fine)
+            y_fine = spline_y(t_fine)
+            z_fine = spline_z(t_fine)
+            r_fine = spline_r(t_fine)
+
+            points = np.vstack((x_fine, y_fine, z_fine)).T
+            return points, r_fine
+
+        def generate_path_faces(path):
+            """Generate faces with varying radii along the path."""
+            faces = []
+
+            spline_points, radii = create_spline(path["coords"], path["radii"])
+
+            segments = len(spline_points) - 1
+            for i in range(segments):
+                for j in range(8):
+                    theta1 = 2 * np.pi * j / 8
+                    theta2 = 2 * np.pi * (j + 1) / 8
+
+                    p1 = spline_points[i] + radii[i] * np.array(
+                        [np.cos(theta1), np.sin(theta1), 0]
+                    )
+                    p2 = spline_points[i + 1] + radii[i + 1] * np.array(
+                        [np.cos(theta1), np.sin(theta1), 0]
+                    )
+                    p3 = spline_points[i] + radii[i] * np.array(
+                        [np.cos(theta2), np.sin(theta2), 0]
+                    )
+                    p4 = spline_points[i + 1] + radii[i + 1] * np.array(
+                        [np.cos(theta2), np.sin(theta2), 0]
+                    )
+
+                    faces.append([p1, p2, p3])
+                    faces.append([p2, p4, p3])
+
+            return faces
+
+        def process_cluster(cluster_data, output_file):
+            """Process a single cluster and save it as an STL file."""
+            paths = find_connected_paths(cluster_data)
+            all_faces = []
+            for path in paths:
+                path_faces = generate_path_faces(path)
+                all_faces.extend(path_faces)
+
+            num_faces = len(all_faces)
+            data = np.zeros(num_faces, dtype=mesh.Mesh.dtype)
+            for i, face in enumerate(all_faces):
+                data[i]["vectors"] = np.array(face)
+
+            combined_mesh = mesh.Mesh(data)
+            combined_mesh.save(output_file)
+
+        directory = os.path.dirname(json_path)
+        mesh_folder = os.path.join(directory, "cluster_meshes")
+        os.makedirs(mesh_folder, exist_ok=True)
+
+        with open(json_path, "r") as json_file:
+            data = json.load(json_file)
+
+        clusters_dict = group_clusters(data)
+        for cluster_id, cluster_data in clusters_dict.items():
+            cluster_json_path = os.path.join(mesh_folder, f"cluster_{cluster_id}.json")
+            with open(cluster_json_path, "w") as f:
+                json.dump(cluster_data, f, indent=4)
+
+            cluster_stl_path = os.path.join(mesh_folder, f"cluster_{cluster_id}.stl")
+            process_cluster(cluster_data, cluster_stl_path)
+            print(f"Processed cluster {cluster_id}: JSON and STL files saved")

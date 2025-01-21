@@ -101,7 +101,7 @@ class BootstrapAnalysis:
         """
         bootstrap_sample = self.create_bootstrap_sample(self.df_all_residues)
         nmi_calculator = NMICalculator(bootstrap_sample, num_bins=self.num_bins)
-        bootstrap_mi_diff = nmi_calculator.mi_diff_df
+        bootstrap_mi_diff = nmi_calculator.nmi_df
         graph = GraphBuilder(
             self.pdb, self.last_residue, bootstrap_mi_diff, self.graphdist
         )

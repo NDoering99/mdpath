@@ -56,6 +56,8 @@ def main():
 
         -graphdist: Default distance for residues making up the graph (default: 5.0)
 
+        -digamma_correction: Use digamma correction for entropy calculation (default: False)
+
         -numpath: Default number of top paths considered for clustering (default: 500)
     """
     parser = argparse.ArgumentParser(
@@ -126,9 +128,33 @@ def main():
     )
 
     parser.add_argument(
+        "-digamma_correction",
+        dest="digamma_correction",
+        help="Use digamma correction for entropy calculation.",
+        required=False,
+        default=False,
+    )
+
+    parser.add_argument(
         "-GMM",
         dest="GMM",
         help="Histograms are created using GMM instead of binning.",
+        required=False,
+        default=False,
+    )
+
+    parser.add_argument(
+        "-chain",
+        dest="chain",
+        help="Chain of the protein to be analyzed in the topology file. CAUTION: only one chain can be selected for analysis.",
+        required=False,
+        default=False,
+    )
+    
+    parser.add_argument(
+        "-invert",
+        dest="invert",
+        help="Inverts NMI bei subtrackting each NMI from max NMI. Can be used to find Paths, that are the least correlated",
         required=False,
         default=False,
     )
@@ -148,7 +174,9 @@ def main():
     closedist = float(args.closedist)
     graphdist = float(args.graphdist)
     numpath = int(args.numpath)
+    digamma_correction = bool(args.digamma_correction)
     GMM = bool(args.GMM)
+    invert = bool(args.invert)
 
     # Prepare the trajectory for analysis
     if os.path.exists("first_frame.pdb"):
@@ -156,6 +184,30 @@ def main():
     with mda.Writer("first_frame.pdb", multiframe=False) as pdb:
         traj.trajectory[0]
         pdb.write(traj.atoms)
+
+    # Chain selection
+    if args.chain:
+        chain = str(args.chain)
+        chain_atoms = traj.select_atoms(f"chainID {chain}")
+        if len(chain_atoms) == 0:
+            raise ValueError(f"No atoms found for chain {chain}")
+            exit()
+        chain_universe = mda.Merge(chain_atoms)
+        # Write new topology
+        chain_universe.atoms.write("selected_chain.pdb")
+
+        # Write trajectory
+        with mda.Writer("selected_chain.dcd", chain_atoms.n_atoms) as W:
+            for ts in traj.trajectory:
+                chain_universe.atoms.positions = chain_atoms.positions
+                W.write(chain_universe.atoms)
+        topology = "selected_chain.pdb"
+        trajectory = "selected_chain.dcd"
+        traj = mda.Universe(topology, trajectory)
+        print(
+            f"Chain {chain} selected and written to selected_chain.pdb and selected_chain.dcd and will now be analyzed."
+        )
+
     structure_calc = StructureCalculations(topology)
     df_distant_residues = structure_calc.calculate_residue_suroundings(fardist, "far")
     df_close_res = structure_calc.calculate_residue_suroundings(closedist, "close")
@@ -171,11 +223,13 @@ def main():
     print("\033[1mTrajectory is processed and ready for analysis.\033[0m")
 
     # Calculate the mutual information and build the graph
-    nmi_calc = NMICalculator(df_all_residues, GMM=GMM)
+    nmi_calc = NMICalculator(
+        df_all_residues, digamma_correction=digamma_correction, GMM=GMM, invert=invert
+    )
     nmi_calc.entropy_df.to_csv("entropy_df.csv", index=False)
-    nmi_calc.mi_diff_df.to_csv("mi_diff_df.csv", index=False)
+    nmi_calc.nmi_df.to_csv("nmi_df.csv", index=False)
     graph_builder = GraphBuilder(
-        topology, structure_calc.last_res_num, nmi_calc.mi_diff_df, graphdist
+        topology, structure_calc.last_res_num, nmi_calc.nmi_df, graphdist
     )
     MDPathVisualize.visualise_graph(
         graph_builder.graph

@@ -432,3 +432,34 @@ def gpcr_2D_vis():
             "Topology and cluster pathways are required for creating a 2D visualization of GPCR paths."
         )
         exit(1)
+
+
+def spline():
+    """
+    Create a 3D Visualization of Paths through a protein using accurate spline representations.
+
+    This function provides a command-line interface (CLI) for creating a 3D visualization of paths through a protein.
+    It uses the pre-calculated cluster paths and recalculates them using accurate spline intrapolation.
+    The output meshfiles can be used directly in Blender to accurately capture paths.
+
+    Command-line inputs:
+        -json (str): Json file of the MDPath analysis -> "quick_precomputed_clusters_paths"
+
+    Example usage:
+        $ mdpath_spline -json <path_to_json>
+    """
+    parser = argparse.ArgumentParser(
+        prog="mdpath_spline",
+        description="Create a 3D Spline-Visualization of Paths through a protein.",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        "-json",
+        dest="json",
+        help="quick_precomputed_clusters_paths file of your MDPath analysis",
+        required=True,
+    )
+
+    args = parser.parse_args()
+    json_file = args.json
+    MDPathVisualize.create_splines(json_file)
