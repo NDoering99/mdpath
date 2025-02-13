@@ -24,7 +24,7 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
         return MagicMock()
 
-MOCK_MODULES = ["seaborn", "numpy", "pandas", "networkx", "tqdm", "Bio", "nglview", "PIL", "MDAnalysis", "scipy", "scipy.stats", "scipy.cluster", "scipy.special", "scipy.interpolate", "matplotlib", "sklearn", "sklearn.metrics", "sklearn.mixture", "MDAnalysis.analysis", "MDAnalysis.analysis.dihedrals", "matplotlib.pyplot"]
+MOCK_MODULES = ["seaborn", "numpy", "pandas", "networkx", "tqdm", "Bio", "nglview", "PIL", "MDAnalysis", "scipy", "scipy.stats", "scipy.cluster", "scipy.special", "scipy.interpolate", "matplotlib", "sklearn", "sklearn.metrics", "sklearn.mixture", "MDAnalysis.analysis", "MDAnalysis.analysis.dihedrals", "matplotlib.pyplot", "stl"]
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 import mdpath
@@ -71,7 +71,7 @@ napoleon_google_docstring = False
 napoleon_use_param = False
 napoleon_use_ivar = True
 
-autodoc_mock_imports = ["numpy", "pandas", "networkx", "tqdm", "Bio", "nglview", "PIL", "MDAnalysis", "scipy", "matplotlib", "sklearn", "seaborn", "numpy", "pandas", "networkx", "tqdm", "Bio", "nglview", "PIL", "MDAnalysis", "scipy", "scipy.stats", "scipy.cluster", "scipy.special", "scipy.interpolate", "matplotlib", "sklearn", "sklearn.metrics", "sklearn.mixture", "MDAnalysis.analysis", "MDAnalysis.analysis.dihedrals", "matplotlib.pyplot"]
+autodoc_mock_imports = ["numpy", "pandas", "networkx", "tqdm", "Bio", "nglview", "PIL", "MDAnalysis", "scipy", "matplotlib", "sklearn", "seaborn", "numpy", "pandas", "networkx", "tqdm", "Bio", "nglview", "PIL", "MDAnalysis", "scipy", "scipy.stats", "scipy.cluster", "scipy.special", "scipy.interpolate", "matplotlib", "sklearn", "sklearn.metrics", "sklearn.mixture", "MDAnalysis.analysis", "MDAnalysis.analysis.dihedrals", "matplotlib.pyplot", "stl"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
