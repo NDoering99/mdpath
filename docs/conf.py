@@ -15,17 +15,9 @@
 # Incase the project was not installed
 import os
 import sys
-from unittest.mock import MagicMock
 
 sys.path.insert(0, os.path.abspath(".."))
 
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        return MagicMock()
-
-MOCK_MODULES = ["seaborn", "numpy", "pandas", "networkx", "tqdm", "Bio", "nglview", "PIL", "MDAnalysis", "scipy", "scipy.stats", "scipy.cluster", "scipy.special", "scipy.interpolate", "matplotlib", "sklearn", "sklearn.metrics", "sklearn.mixture", "MDAnalysis.analysis", "MDAnalysis.analysis.dihedrals", "matplotlib.pyplot"]
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 import mdpath
 from mdpath import mdpath_tools, mdpath
@@ -71,7 +63,6 @@ napoleon_google_docstring = False
 napoleon_use_param = False
 napoleon_use_ivar = True
 
-autodoc_mock_imports = ["numpy", "pandas", "networkx", "tqdm", "Bio", "nglview", "PIL", "MDAnalysis", "scipy", "matplotlib", "sklearn", "seaborn", "numpy", "pandas", "networkx", "tqdm", "Bio", "nglview", "PIL", "MDAnalysis", "scipy", "scipy.stats", "scipy.cluster", "scipy.special", "scipy.interpolate", "matplotlib", "sklearn", "sklearn.metrics", "sklearn.mixture", "MDAnalysis.analysis", "MDAnalysis.analysis.dihedrals", "matplotlib.pyplot"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

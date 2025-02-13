@@ -23,7 +23,19 @@ dependencies:
 
 
 
-    # Pip-only installs
+
   - pip:
     - -e ../
+    - mdpath
+    - MDAnalysis>=2.7.0
+    - pandas
+    - scikit-learn
+    - networkx
+    - scipy
+    - biopython
+    - tqdm
+    - seaborn
+    - nglview
+    - pillow
+    - numpy-stl
 
