@@ -3,7 +3,7 @@ channels:
 
   - defaults
 dependencies:
-    # Base depends
+  # Base depends
   - python
   - pip
   - sphinx
@@ -19,10 +19,7 @@ dependencies:
   - scipy
   - matplotlib
   - sklearn
-  
-
-
-
+  - numpy-stl  # Add this line
 
   - pip:
     - -e ../
@@ -37,5 +34,5 @@ dependencies:
     - seaborn
     - nglview
     - pillow
-    - numpy-stl
+    - numpy-stl  
 
