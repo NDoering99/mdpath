@@ -1,5 +1,5 @@
 MDPath Classes and Functions
-================
+==================================
 
 This page gives an overview of the different calsses and function contained in **MDPath**. 
 For detailed ussage of  each class or function, please refer to the respective page.

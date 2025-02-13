@@ -1,5 +1,5 @@
 MDPath --- MD signal transduction calculation and visualization --- :mod:`mdapth.mdpath`
-====================================================================
+=====================================================================================================
 
 MDPath is a Python package for calculating signal transduction paths in molecular dynamics (MD) simulations. 
 The package uses mutual information to identify connections between residue movements.
