@@ -10,7 +10,12 @@ build:
 sphinx:
   configuration: docs/conf.py
 
-# Explicitly set the version of Python and its requirements
 python:
   install:
     - requirements: docs/readthedocs_templates.txt
+    - method: pip
+      path: .
+    - method: pip
+      requirements: docs/requirements.yaml  # Ensure all dependencies are installed
+
+formats: all
