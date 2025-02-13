@@ -16,6 +16,6 @@ python:
     - method: pip
       path: .
     - method: pip
-      requirements: docs/requirements.yaml  # Ensure all dependencies are installed
+      requirements: docs/requirements.txt  
 
 formats: all
