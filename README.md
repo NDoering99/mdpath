@@ -7,7 +7,7 @@ mdpath
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![PyPI - Version](https://img.shields.io/pypi/v/mdpath)](https://pypi.org/project/mdpath/)
 
-
+![MDPath_example_figure](docs/_static/images/spline_visualization.png)
 
 
 MDPath - A tool for calculating allosteric communication pathways in proteins by analyzing the mutual information of residue dihedral angle movements throughout an MD simulation.  
