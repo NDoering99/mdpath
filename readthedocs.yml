@@ -15,7 +15,8 @@ python:
     - requirements: docs/readthedocs_templates.txt
     - method: pip
       path: .
+  install:
+    - requirements: docs/requirements.txt
     - method: pip
-      requirements: docs/requirements.txt  
 
 formats: all
