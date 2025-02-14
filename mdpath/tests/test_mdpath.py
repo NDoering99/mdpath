@@ -80,62 +80,62 @@ def test_mdpath_wrong_input(tmp_path):
         os.chdir(original_cwd)
 
 
-#def test_mdpath_output_files():
-#    script_dir = os.path.dirname(os.path.abspath(__file__))
-#    project_root = os.path.dirname(script_dir)
-#    mdpath_dir = os.path.join(project_root, "mdpath")
-#
-#    topology = os.path.join(script_dir, "test_topology.pdb")
-#    trajectory = os.path.join(script_dir, "test_trajectory.dcd")
-#    numpath = "10" 
-#    bootstrap = "1"
-#    assert os.path.exists(topology), f"Topology file {topology} does not exist."
-#    assert os.path.exists(trajectory), f"Trajectory file {trajectory} does not exist."
-#
-#    expected_files = [
-#        os.path.join(script_dir, "first_frame.pdb"),
-#        os.path.join(script_dir, "nmi_df.csv"),
-#        os.path.join(script_dir, "output.txt"),
-#        os.path.join(script_dir, "residue_coordinates.pkl"),
-#        os.path.join(script_dir, "cluster_pathways_dict.pkl"),
-#        os.path.join(script_dir, "clusters_paths.json"),
-#        os.path.join(script_dir, "precomputed_clusters_paths.json"),
-#        os.path.join(script_dir, "quick_precomputed_clusters_paths.json"),
-#        os.path.join(script_dir, "bootstrap/bootstrap_sample_0.txt"),
-#    ]
-#
-#    sys.path.insert(0, mdpath_dir)
-#
-#    try:
-#        from mdpath.mdpath import main as mdpath_main
-#    except ImportError as e:
-#        raise ImportError(f"Error importing mdpath: {e}")
-#
-#    original_cwd = os.getcwd()
-#    os.chdir(script_dir)
-#
-#    try:
-#        sys.argv = [
-#            "mdpath",
-#            "-top",
-#            topology,
-#            "-traj",
-#            trajectory,
-#            "-numpath",
-#            numpath,
-#            "-bs",
-#            bootstrap,
-#            "-lig",
-#            "272",
-#        ]
-#
-#        mdpath_main()
-#
-#        for file in expected_files:
-#            assert os.path.exists(file), f"Expected output file {file} not found."
-#
-#    finally:
-#        for file in expected_files:
-#            if os.path.exists(file):
-#                os.remove(file)
-#        os.chdir(original_cwd)
+def test_mdpath_output_files():
+   script_dir = os.path.dirname(os.path.abspath(__file__))
+   project_root = os.path.dirname(script_dir)
+   mdpath_dir = os.path.join(project_root, "mdpath")
+
+   topology = os.path.join(script_dir, "test_topology.pdb")
+   trajectory = os.path.join(script_dir, "test_trajectory.dcd")
+   numpath = "10" 
+   bootstrap = "1"
+   assert os.path.exists(topology), f"Topology file {topology} does not exist."
+   assert os.path.exists(trajectory), f"Trajectory file {trajectory} does not exist."
+
+   expected_files = [
+       os.path.join(script_dir, "first_frame.pdb"),
+       os.path.join(script_dir, "nmi_df.csv"),
+       os.path.join(script_dir, "output.txt"),
+       os.path.join(script_dir, "residue_coordinates.pkl"),
+       os.path.join(script_dir, "cluster_pathways_dict.pkl"),
+       os.path.join(script_dir, "clusters_paths.json"),
+       os.path.join(script_dir, "precomputed_clusters_paths.json"),
+       os.path.join(script_dir, "quick_precomputed_clusters_paths.json"),
+       os.path.join(script_dir, "bootstrap/bootstrap_sample_0.txt"),
+   ]
+
+   sys.path.insert(0, mdpath_dir)
+
+   try:
+       from mdpath.mdpath import main as mdpath_main
+   except ImportError as e:
+       raise ImportError(f"Error importing mdpath: {e}")
+
+   original_cwd = os.getcwd()
+   os.chdir(script_dir)
+
+   try:
+       sys.argv = [
+           "mdpath",
+           "-top",
+           topology,
+           "-traj",
+           trajectory,
+           "-numpath",
+           numpath,
+           "-bs",
+           bootstrap,
+           "-lig",
+           "272",
+       ]
+
+       mdpath_main()
+
+       for file in expected_files:
+           assert os.path.exists(file), f"Expected output file {file} not found."
+
+   finally:
+       for file in expected_files:
+           if os.path.exists(file):
+               os.remove(file)
+       os.chdir(original_cwd)
