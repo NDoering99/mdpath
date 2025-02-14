@@ -117,7 +117,7 @@ class PatwayClustering:
         linkage_matrix = hierarchy.linkage(distance_matrix.values, method="complete")
 
         silhouette_scores = []
-        for n_clusters in range(2, len(overlap_matrix) + 1):
+        for n_clusters in range(2, len(overlap_matrix)):
             cluster_labels = hierarchy.fcluster(
                 linkage_matrix, n_clusters, criterion="maxclust"
             )
