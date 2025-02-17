@@ -56,8 +56,6 @@ def main():
 
         -graphdist: Default distance for residues making up the graph (default: 5.0)
 
-        -digamma_correction: Use digamma correction for entropy calculation (default: False)
-
         -numpath: Default number of top paths considered for clustering (default: 500)
     """
     parser = argparse.ArgumentParser(
@@ -127,21 +125,6 @@ def main():
         default=500,
     )
 
-    parser.add_argument(
-        "-digamma_correction",
-        dest="digamma_correction",
-        help="Use digamma correction for entropy calculation.",
-        required=False,
-        default=False,
-    )
-
-    parser.add_argument(
-        "-GMM",
-        dest="GMM",
-        help="Histograms are created using GMM instead of binning.",
-        required=False,
-        default=False,
-    )
 
     parser.add_argument(
         "-chain",
@@ -174,8 +157,6 @@ def main():
     closedist = float(args.closedist)
     graphdist = float(args.graphdist)
     numpath = int(args.numpath)
-    digamma_correction = bool(args.digamma_correction)
-    GMM = bool(args.GMM)
     invert = bool(args.invert)
 
     # Prepare the trajectory for analysis
@@ -224,7 +205,7 @@ def main():
 
     # Calculate the mutual information and build the graph
     nmi_calc = NMICalculator(
-        df_all_residues, digamma_correction=digamma_correction, GMM=GMM, invert=invert
+        df_all_residues, invert=invert
     )
     nmi_calc.entropy_df.to_csv("entropy_df.csv", index=False)
     nmi_calc.nmi_df.to_csv("nmi_df.csv", index=False)
