@@ -57,68 +57,27 @@ class NMICalculator:
             for col1 in self.df_all_residues.columns:
                 for col2 in self.df_all_residues.columns:
                     if col1 != col2:
-                        if self.digamma_correction:
-                            # Adaptive binning
-                            data_col1 = self.df_all_residues[col1].values
-                            data_col2 = self.df_all_residues[col2].values
-                            hist_col1, bin_edges1 = np.histogram(
-                                data_col1, bins=self.num_bins
-                            )
-                            hist_col2, bin_edges2 = np.histogram(
-                                data_col2, bins=self.num_bins
-                            )
-                            hist_joint, _, _ = np.histogram2d(
-                                data_col1,
-                                data_col2,
-                                bins=(self.num_bins, self.num_bins),
-                            )
-
-                            # Total data points
-                            total_points = len(data_col1)
-
-                            # Corrected entropy estimates
-                            entropy_col1 = self.calculate_corrected_entropy(
-                                hist_col1, total_points, self.num_bins
-                            )
-                            entropy_col2 = self.calculate_corrected_entropy(
-                                hist_col2, total_points, self.num_bins
-                            )
-                            joint_entropy = self.calculate_corrected_entropy(
-                                hist_joint.flatten(), total_points, self.num_bins**2
-                            )
-
-                            # Mutual Information
-                            mi = entropy_col1 + entropy_col2 - joint_entropy
-                            entropys[col1] = entropy_col1
-                            entropys[col2] = entropy_col2
-
-                            # Normalized MI
-                            nmi = mi / np.sqrt(entropy_col1 * entropy_col2)
-                            normalized_mutual_info[(col1, col2)] = nmi
-
-                            progress_bar.update(1)
-                        else:
-                            hist_col1, _ = np.histogram(
-                                self.df_all_residues[col1], bins=self.num_bins
-                            )
-                            hist_col2, _ = np.histogram(
-                                self.df_all_residues[col2], bins=self.num_bins
-                            )
-                            hist_joint, _, _ = np.histogram2d(
-                                self.df_all_residues[col1],
-                                self.df_all_residues[col2],
-                                bins=self.num_bins,
-                            )
-                            mi = mutual_info_score(
-                                hist_col1, hist_col2, contingency=hist_joint
-                            )
-                            entropy_col1 = entropy(hist_col1)
-                            entropy_col2 = entropy(hist_col2)
-                            entropys[col1] = entropy_col1
-                            entropys[col2] = entropy_col2
-                            nmi = mi / np.sqrt(entropy_col1 * entropy_col2)
-                            normalized_mutual_info[(col1, col2)] = nmi
-                            progress_bar.update(1)
+                        hist_col1, _ = np.histogram(
+                            self.df_all_residues[col1], bins=self.num_bins
+                        )
+                        hist_col2, _ = np.histogram(
+                            self.df_all_residues[col2], bins=self.num_bins
+                        )
+                        hist_joint, _, _ = np.histogram2d(
+                            self.df_all_residues[col1],
+                            self.df_all_residues[col2],
+                            bins=self.num_bins,
+                        )
+                        mi = mutual_info_score(
+                            hist_col1, hist_col2, contingency=hist_joint
+                        )
+                        entropy_col1 = entropy(hist_col1)
+                        entropy_col2 = entropy(hist_col2)
+                        entropys[col1] = entropy_col1
+                        entropys[col2] = entropy_col2
+                        nmi = mi / np.sqrt(entropy_col1 * entropy_col2)
+                        normalized_mutual_info[(col1, col2)] = nmi
+                        progress_bar.update(1)
 
         entropy_df = pd.DataFrame(entropys.items(), columns=["Residue", "Entropy"])
         nmi_df = pd.DataFrame(
