@@ -32,6 +32,11 @@ Acces this command to get an overview of all availible flags:
 For a detailed description of the available options and outputs, see:
 https://mdpath.readthedocs.io
 
+### Citing this work
+When using this tool for your research please reference this preprint:
+
+https://doi.org/10.1101/2025.03.27.645168
+
 ### Copyright
 
 Copyright (c) 2024, Niklas Piet Doering and Marvin Taterra
