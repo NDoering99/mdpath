@@ -94,6 +94,12 @@ def main():
         help="How often bootstrapping should be performed.",
         default=False,
     )
+    parser.add_argument(
+        "-spline",
+        dest="spline",
+        help="Create STL files for spline visualization.",
+        default=True,
+    )
     # TODO maybe move settingsflags to a conffile that can be changed
     # Settings Flags
     parser.add_argument(
@@ -125,7 +131,6 @@ def main():
         default=500,
     )
 
-
     parser.add_argument(
         "-chain",
         dest="chain",
@@ -133,7 +138,7 @@ def main():
         required=False,
         default=False,
     )
-    
+
     parser.add_argument(
         "-invert",
         dest="invert",
@@ -158,6 +163,7 @@ def main():
     graphdist = float(args.graphdist)
     numpath = int(args.numpath)
     invert = bool(args.invert)
+    spline = bool(args.spline)
 
     # Prepare the trajectory for analysis
     if os.path.exists("first_frame.pdb"):
@@ -204,9 +210,7 @@ def main():
     print("\033[1mTrajectory is processed and ready for analysis.\033[0m")
 
     # Calculate the mutual information and build the graph
-    nmi_calc = NMICalculator(
-        df_all_residues, invert=invert
-    )
+    nmi_calc = NMICalculator(df_all_residues, invert=invert)
     nmi_calc.entropy_df.to_csv("entropy_df.csv", index=False)
     nmi_calc.nmi_df.to_csv("nmi_df.csv", index=False)
     graph_builder = GraphBuilder(
@@ -290,6 +294,9 @@ def main():
     )
     with open("quick_precomputed_clusters_paths.json", "w") as out_file2:
         json.dump(quick_path_properties, out_file2, indent=4)
+
+    if spline:
+        MDPathVisualize.create_splines("quick_precomputed_clusters_paths.json")
 
 
 if __name__ == "__main__":

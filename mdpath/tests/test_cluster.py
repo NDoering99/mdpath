@@ -70,24 +70,25 @@ def setup_clustering(load_test_data):
 
     return PatwayClustering(df_close_res, top_pathways, num_parallel_processes)
 
+
 def test_pathways_cluster(setup_clustering):
-   clustering = setup_clustering
+    clustering = setup_clustering
 
-   with patch("matplotlib.pyplot.savefig") as mock_savefig:
-       clusters = clustering.pathways_cluster(n_top_clust=3)#
+    with patch("matplotlib.pyplot.savefig") as mock_savefig:
+        clusters = clustering.pathways_cluster(n_top_clust=3)  #
 
-   assert isinstance(clusters, dict)
-   assert all(isinstance(k, int) and isinstance(v, list) for k, v in clusters.items())
-   assert len(clusters) > 0
+    assert isinstance(clusters, dict)
+    assert all(isinstance(k, int) and isinstance(v, list) for k, v in clusters.items())
+    assert len(clusters) > 0
 
-   current_dir = os.path.dirname(os.path.abspath(__file__))
-   file_path = os.path.join(current_dir, "clusters.pkl")
-   with open(file_path, "rb") as file:
-       saved_clusters = pickle.load(file)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_dir, "clusters.pkl")
+    with open(file_path, "rb") as file:
+        saved_clusters = pickle.load(file)
 
-   assert clusters == saved_clusters
+    assert clusters == saved_clusters
 
-   mock_savefig.assert_called_once_with("clustered_paths.png")
+    mock_savefig.assert_called_once_with("clustered_paths.png")
 
 
 @pytest.fixture(scope="module")

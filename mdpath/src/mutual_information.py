@@ -85,14 +85,5 @@ class NMICalculator:
         )
         if self.invert:
             max_nmi_diff = nmi_df["MI Difference"].max()
-            nmi_df["MI Difference"] = (
-                max_nmi_diff - nmi_df["MI Difference"]
-            )
+            nmi_df["MI Difference"] = max_nmi_diff - nmi_df["MI Difference"]
         return nmi_df, entropy_df
-
-
-   
-
-        
-
-                        

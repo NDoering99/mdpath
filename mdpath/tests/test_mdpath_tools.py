@@ -266,39 +266,38 @@ def test_path_comparison():
 
 
 def test_multitraj_analysis():
-   script_dir = os.path.dirname(os.path.abspath(__file__))
-   current_directory = os.getcwd()
-   topology = os.path.join(script_dir, "multitraj.pdb")
-   multitraj_1 = os.path.join(script_dir, "top_pathways.pkl")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    current_directory = os.getcwd()
+    topology = os.path.join(script_dir, "multitraj.pdb")
+    multitraj_1 = os.path.join(script_dir, "top_pathways.pkl")
 
-   original_stdout = sys.stdout
-   sys.stdout = StringIO()
+    original_stdout = sys.stdout
+    sys.stdout = StringIO()
 
-   generated_files = []  # Define an empty list for generated_files
+    generated_files = []  # Define an empty list for generated_files
 
-   try:
-       sys.argv = [
-           "mdpath_multitraj",
-           "-top",
-           topology,
-           "-multitraj",
-           multitraj_1,
-           multitraj_1
-       ]
-       with pytest.raises(SystemExit) as exc_info:
-           multitraj_analysis()
+    try:
+        sys.argv = [
+            "mdpath_multitraj",
+            "-top",
+            topology,
+            "-multitraj",
+            multitraj_1,
+            multitraj_1,
+        ]
+        with pytest.raises(SystemExit) as exc_info:
+            multitraj_analysis()
 
-       assert exc_info.value.code == 0, "The command failed with non-zero exit code"
+        assert exc_info.value.code == 0, "The command failed with non-zero exit code"
 
+        generated_files = glob.glob(
+            os.path.join(current_directory, "multitraj_clusters_paths.json")
+        )
+        assert (
+            len(generated_files) > 0
+        ), "No multitraj_clusters_paths.json file was generated."
 
-       generated_files = glob.glob(
-           os.path.join(current_directory, "multitraj_clusters_paths.json")
-       )
-       assert (
-           len(generated_files) > 0
-       ), "No multitraj_clusters_paths.json file was generated."
-
-   finally:
-       sys.stdout = original_stdout
-       for file_path in generated_files:
-           os.remove(file_path)
+    finally:
+        sys.stdout = original_stdout
+        for file_path in generated_files:
+            os.remove(file_path)
