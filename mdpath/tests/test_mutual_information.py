@@ -88,7 +88,7 @@ def test_nmi_calculator():
     assert (
         result["MI Difference"] >= 0
     ).all(), "MI Difference values should be non-negative"
-    
+
     # Add your expected values here
     expected_values = {
         ("Residue1", "Residue2"): 0.6729976399990001,
