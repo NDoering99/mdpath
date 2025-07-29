@@ -37,6 +37,8 @@ class PatwayClustering:
         self, df_close_res: pd.DataFrame, pathways: list, num_processes: int
     ) -> None:
         self.df = df_close_res
+        self.close_pairs_set = set(zip(df_close_res['Residue1'], df_close_res['Residue2'])) | \
+                      set(zip(df_close_res['Residue2'], df_close_res['Residue1']))
         self.pathways = pathways
         self.num_processes = num_processes
         self.overlapp_df = self.calculate_overlap_parallel()
@@ -58,13 +60,7 @@ class PatwayClustering:
                 overlap_counter = 0
                 for res1 in path1:
                     for res2 in path2:
-                        if (
-                            (self.df["Residue1"] == res1)
-                            & (self.df["Residue2"] == res2)
-                        ).any() or (
-                            (self.df["Residue1"] == res2)
-                            & (self.df["Residue2"] == res1)
-                        ).any():
+                        if (res1, res2) in self.close_pairs_set:
                             overlap_counter += 1
                 result.append(
                     {"Pathway1": i, "Pathway2": j, "Overlap": overlap_counter}
