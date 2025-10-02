@@ -33,9 +33,9 @@ For a detailed description of the available options and outputs, see:
 https://mdpath.readthedocs.io
 
 ### Citing this work
-When using this tool for your research please reference this preprint:
+When using this tool for your research please reference this article:
 
-https://doi.org/10.1101/2025.03.27.645168
+Doering, N. P., Taterra, M., Bermúdez, M., & Wolber, G. (2025). MDPath: Unraveling allosteric communication paths of drug targets through molecular dynamics simulations. Journal of Chemical Information and Modeling. [https://doi.org/10.1021/acs.jcim.5c01590](https://doi.org/10.1021/acs.jcim.5c01590) 
 
 ### Copyright
 
