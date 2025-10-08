@@ -119,6 +119,11 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
+                    
+      - name: Install Tcl/Tk (Windows)
+        run: |
+          choco install tcltk
+          echo "Tcl/Tk installed"
 
       - name: Install package and its entry points
         run: |
