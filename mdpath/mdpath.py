@@ -216,6 +216,11 @@ def main():
     graph_builder = GraphBuilder(
         topology, structure_calc.last_res_num, nmi_calc.nmi_df, graphdist
     )
+    
+    # Save the graph for future data science
+    with open("graph.pkl", "wb") as pkl_file:
+        pickle.dump(graph_builder.graph, pkl_file)
+        
     MDPathVisualize.visualise_graph(
         graph_builder.graph
     )  # Exports image of the Graph to PNG
@@ -301,3 +306,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
